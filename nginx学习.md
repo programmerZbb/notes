@@ -20,3 +20,17 @@
 * 处理响应请求很快，nginx 处理静态文件的时候，响应速度很快
 * 具有很高的可靠性
 
+对比：
+
+* nginx 在处理静态页的效率要比 Apache 好很多，Apache 在处理动态页面上的效率要更好
+* Apache 安全性比 nginx 要好。
+
+有一种方案，静态资源让nginx 处理，PHP 动态页面让 Apache 来处理。lnmpa
+
+# 3. 修改文件之后的启动
+
+* Apache 运行 PHP 是通过 php5 模块运行。由于是 Apache 去加载 php5 模块，所以每次修改了 php.ini 配置文件需要重启 Apache 
+* nginx 运行 php 是通过网络连接 php-fpm (fastCGI) 方式运行，php-fpm 是一个独立的软件（默认端口9000），因此自nginx 下修改了 php.ini 配置文件需要重启 php-fpm 
+
+# 4. LNMP 的安装与配置
+

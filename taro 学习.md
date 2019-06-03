@@ -63,6 +63,10 @@ pages: [
 
 pages 下面的就是路由，没有在里面配置的就是组件。
 
+## 使用
+
+在 taro （react） 中只能够在 `""` 或者是`{}` 中写js代码。
+
 ## taro 框架学习
 
 ![taro生命周期](.\picture\taro生命周期.png)](.\picture\taro生命周期.png)
@@ -306,7 +310,7 @@ import { View, Text, Button } from '@taro.js/components'
   </View>
   ```
 
-  也可以使用 require 来引用，值得注意的是只有本地文件才能这样做，如果是线上图片直接赋值即可。
+  也可以使用 require 来引用，值得注意的是只有本地文件才能这样做，如果是线上图片直接赋值即可。（就是说本地的图片不能直接使用 src 赋值的形式来引入。）
 
   注意：上面的 Image 标签是从 taro 组件中引入的。
 
@@ -316,4 +320,4 @@ import { View, Text, Button } from '@taro.js/components'
 
   `import test from "./test.less"`
 
-  然后 test.less 中的样式就能够直接在当前页面中使用
+  然后 test.less 中的样式就能够直接在当前页面中使用。
