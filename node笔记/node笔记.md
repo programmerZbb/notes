@@ -330,7 +330,7 @@ server.listen(3000, function () {
     str = `adadadadd${str1}ppppppp`;
     ```
 
-    ​
+    
 
   ~~~javascript
   say()
@@ -350,7 +350,7 @@ server.listen(3000, function () {
   	.listen()
   ```
 
-  ​
+  
 
 * ==进程是资源的分配和调度的一个独立单元，而线程是CPU调度的基本单元==
 
@@ -443,7 +443,7 @@ server.listen(3000, function () {
   res.end()
   ```
 
-  ​
+  
 
   如果客户端发现收到服务器的响应的状态码是302，就会自动去响应头中找Location，然后对该地址发起新的请求。所有就可以看到客户端自动跳转
 
@@ -542,14 +542,21 @@ server.listen(3000, function () {
 * ECMAScript语言
 * 核心模块
   * 文件操作的fs
+  
   * http服务的http
+  
   * url路径操作系统
+  
   * path路径处理模块
+  
+    path.reslove() 方法会从右到左一直匹配直到匹配到 `/name ` 以`/`开头的字符串。如有一直都没有匹配到 `/` 开头的字符串，则会自动拼接当前的工作目录。
+  
   * os操作系统信息
 * 第三方模块
   * art-template
   * 必须通过npm来下载可以使用
 * 自己写 的模块
+  
   * 自己创建的模块
 
 #### 1.1 什么是模块化
@@ -1899,7 +1906,7 @@ Promise 容器：
      })
      ```
 
-     ​
+     
 
      * 中间件本身就是一个方法，该方法接收三个参数
 
