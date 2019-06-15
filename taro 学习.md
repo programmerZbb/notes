@@ -253,7 +253,7 @@ retunr (<View ontest={this.test}></View>)
 
 API -> 界面 -> 导航
 
-* Taro.navigateTo() 方法在微信小程序中的使用，==微信小程序最多支持打开五层webview，在开发的时候要注意==
+* Taro.navigateTo({url: '/pages/question/index'}) 方法在微信小程序中的使用，==微信小程序最多支持打开五层webview，在开发的时候要注意==
 
 * Taro.redirectTo() 方法能够将当前的webview 的路由更换成新的路由，不会打开新的 webview 窗口，能够规避小程序的五层限制
 

@@ -86,9 +86,9 @@ webpack-dev-server 通过express 来实现服务，只是在内存中打包，�
 package 脚本配置
 
 ```js
-{
-    "scripts": "webpack-dev-server"
-}
+"scripts": {
+    "dev": "webpack-dev-server"
+  }
 ```
 
 dev-server 启动配置，在webpack.config.js 中：
@@ -134,5 +134,6 @@ module.exports = {
  "dev": "webpack-dev-server --open --port 3000 --hot"
 ```
 
-
 中间不能有空格
+
+4  04.51
