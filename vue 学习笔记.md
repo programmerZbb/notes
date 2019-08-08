@@ -1949,6 +1949,10 @@ router.afterEach(function(to, from) {
 
 提醒一下，当使用路由参数时（就是第二种路由传参的方式），例如从 `/user/foo` 导航到 `/user/bar`，**原来的组件实例会被复用**。因为两个路由都渲染同个组件，比起销毁再创建，复用则显得更加高效。**不过，这也意味着组件的生命周期钩子不会再被调用**。
 
+==注意：==
+
+也可以在路由中手动设置 query 参数，但不会直接在地址中显示。
+
 ## $router 和 $route 的区别
 
 > $router 是 vue-router 的实例对象，$route 相当于 vue-router 内部的 routes 的实例对象，$router 能够使用 vue-router 提供的一些 api 去实现路由的跳转（还有一些全局的配置，比如使用的使命模式等），==重点查看mode和history两个选项== ；

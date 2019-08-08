@@ -783,7 +783,7 @@ function f(thunk) {
 
 #### Promise 补充
 
-* == Promise 新建后就会立即执行内部的代码。==
+* ==Promise 新建后就会立即执行内部的代码。==
 * resolve() 成功， reject() 失败。 resolve 和 reject 只能够执行一个。
 
 ```javascript
