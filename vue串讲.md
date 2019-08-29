@@ -232,12 +232,12 @@ document.getElementById("a").addEventListener("input", function(e) {
 
   ```html
   <children>
-  	<template slot="header">
+  	<template v-slot:header>
       	<h1>
               第一个内容
           </h1>
       </template>
-      <template slot="footer">
+      <template v-slot:footer>
       	<h1>
               第二个内容
           </h1>
@@ -330,6 +330,13 @@ document.getElementById("a").addEventListener("input", function(e) {
    `slotProps`是一个对象，slot 标签中绑定的数据都在这个对象中挂载着，也可以使用解构赋值的形式来接收传递的数据。
 
   接收到子组件的数据，在使用该插槽的时候，就能对子组件的数据进行个性化的处理。
+
+## 3.1 插槽使用注意（vue 2.6.0 起使用）
+
+==注意：== 具名插槽的使用
+
+	1. `v-slot:` 的形式能够用来命名插槽的name
+ 	2. `v-slot:name="slotProps"` slotProps 为子组件绑定的数据。
 
 # 4. 两个修饰符
 
