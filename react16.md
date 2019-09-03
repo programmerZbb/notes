@@ -187,6 +187,16 @@
 
 * ==react 事件绑定方法的this 不指向当前 class 的实例，需要在绑定事件的时候绑定 this==
 
+* 不推荐在绑定事件的时候去绑定 this ，推荐直接在constructor中绑定，能减少一部分性能的损耗。
+
+  ```js
+  constructor (props) {
+      this.handle = this.handle.bind(this)
+  }
+  ```
+
+  
+
 ## 5.3 引入样式文件
 
 *  直接引入样式文件，class 用 className 替换
@@ -208,4 +218,4 @@
 ### 5.4.1 组件的使用
 
 * 组件在react 中的使用，直接单闭合标签，首字母大写。
-* 09:09
+* 
