@@ -211,7 +211,7 @@ super.test()
 在react元素上绑定事件，如果需要调用组件内的方法，需要绑定 this，因为 this 直接调用是组件渲染完成的时候的 this，指向的是元素的 dom 对象，如果想调用组件内的方法，需要在定义的时候就绑定this
 
 ```jsx
-retunr (<View onClick={this.test}></View>)
+return (<View onClick={this.test}></View>)
 ```
 
 此时 test 方法的  this 指向的是绑定事件的dom对象，如果需要调用 class 里面的方法，需要在定义的时候就绑定 this。`onClick={this.test.bind(this)}` 
@@ -221,7 +221,7 @@ retunr (<View onClick={this.test}></View>)
 因为在小程序中绑定事件需要使用 on 给子组件传递（类似于 vue，h5则不需要加 on），因此在 taro 中向子组件传递函数，需要加 on  (不需要驼峰，和调用时候的使用方式一样即可)
 
 ```jsx
-retunr (<View ontest={this.test}></View>)
+return (<View ontest={this.test}></View>)
 ```
 > 相当于vue中的绑定事件加了一个 on 
 
@@ -253,7 +253,7 @@ retunr (<View ontest={this.test}></View>)
 
 API -> 界面 -> 导航
 
-* Taro.navigateTo() 方法在微信小程序中的使用，==微信小程序最多支持打开五层webview，在开发的时候要注意==
+* Taro.navigateTo({url: '/pages/question/index'}) 方法在微信小程序中的使用，==微信小程序最多支持打开五层webview，在开发的时候要注意==
 
 * Taro.redirectTo() 方法能够将当前的webview 的路由更换成新的路由，不会打开新的 webview 窗口，能够规避小程序的五层限制
 
