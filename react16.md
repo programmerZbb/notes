@@ -195,7 +195,29 @@
   }
   ```
 
-  
+### 5.2.3 react 绑定事件传参（非常重要）
+
+* react 在事件绑定的时候，不能够直接加`()`（和 vue 的区别），因为加上`()`之后，该事件绑定的方法就会立马执行。
+
+* 解决方案：
+
+  在绑定事件需要传参的时候，不能直接使用 `(参数)` 的形式来实现
+
+  1. 通过 bind 来实现事件传参
+
+     ```js
+     <div onClick={this.handleClick.bind(this, arg1)}>
+     ```
+
+     但是该方案会造成性能损耗的情况，不推荐使用。
+
+  2. 箭头函数的方式
+
+     ```js
+     <div onClick={() => {this.handleClick(arg1)}}>
+     ```
+
+     
 
 ## 5.3 引入样式文件
 
@@ -249,4 +271,72 @@
 
   ==但是该方式是异步的，在获取 e.target 的时候e需要在执行 setState 之前做值得保存。==
 
-  prevState 可以避免不小心改变 state的状态？（是不是浅拷贝，验证）
+  prevState 可以避免不小心改变 state的状态？（是不是浅拷贝，验证，不是浅拷贝，就是同一个对象）
+
+## 5.6 react 父子组件之间的传值
+
+1. 父组件传值给子组件
+
+   直接在使用子组件的时候，传递属性
+
+2. 子组件传值给父组件
+
+   在子组件中触发父组件的方法，实现传参的传值。
+
+## 5.7 PropsTypes 与 DefaultProps
+
+1. propTypes 对子组件接受的父组件的数据做强校验
+
+   ```js
+   // 在子组件中
+   import PropTypes from "prop-types"
+   // 在导出组件之前
+   Item.propTypes = {
+       content: PropTypes.string, //content 接受的值要为string类型
+       deleteItem: PropTypes.func, // 必须为 function
+       index: PropTypes.number.isRequired // 必须为number,必传
+   }
+   // 具体参考 react 官方文档
+   ```
+
+2. defaultProps
+
+   能给没传的属性一个默认值
+
+   ```js
+   Item.defaultProps = {
+       test: "default" // 这种情况就不会触发上面的检测
+   }
+   ```
+
+   
+
+# 6. react 思考
+
+1. 声明式开发
+
+   react 就是声明式开发，不必关心都DOM操作
+
+2. 可以与其他框架并存
+
+   react 只操作页面 id 为 root 的节点，需要操作其他节点可以使用 jquery 来实现。
+
+3. 组件化开发
+
+4. 单向数据流
+
+   父组件可以向子组件传递一个值，但是不能在子组件中直接改变这个值，`props` 是read-only 的。
+
+   但是可以通过调用父组件方法的方式，实现对父组件数据的更改（实质是父组件操作父组件的数据。）
+
+5. 视图层的框架
+
+   数据之间的传递，需要其他数据层的框架来实现。
+
+6. 函数式编程
+
+   自动化测试，直接检验一个函数的输入输出即可，如果全是函数的话方便自动化测试。
+
+7. 命令式开发
+
+   类似于 jquery 就是命令式开发
