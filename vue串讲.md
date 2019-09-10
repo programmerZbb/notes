@@ -290,13 +290,13 @@ document.getElementById("a").addEventListener("input", function(e) {
 正确的使用：
 
 ```html
-<template name="test"></template>
+<template slot="test"></template>
 ```
 
 错误的使用：
 
 ```html
-<h1 name="test"></h1>
+<h1 slot="test"></h1>
 ```
 
 ## 应用案例--轻松实现dialog的关闭
