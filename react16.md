@@ -271,6 +271,15 @@
 
   ==但是该方式是异步的，在获取 e.target 的时候e需要在执行 setState 之前做值得保存。==
 
+  prevState 可以避免不小心改变 state的状态？（是不是浅拷贝，验证）
+
+# 6. react 高级
+
+## 6.1 react 中 props、state、render函数
+
+* state 和 props 中的数据发生变化的时候，render函数就会去执行。 	 
+
+  父组件render执行子组件也会执行？？？
   prevState 可以避免不小心改变 state的状态？（是不是浅拷贝，验证，不是浅拷贝，就是同一个对象）
 
 ## 5.6 react 父子组件之间的传值
