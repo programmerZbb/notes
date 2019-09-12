@@ -382,3 +382,153 @@
 - 新的 DOM（DoucumentFragment） 和原始的DOM做对比，找差异
 - 找出新的 input 框发生了变化
 - 只用新的 DOM 中的 input 元素，替换吊老 DOM 中的input 元素。
+
+
+缺陷：
+
+性能的提升并不明显
+
+
+
+第三种方案： 虚拟的 DOM
+
+- state 数据
+
+- JSX 模板
+
+- 数据 +  模板 结合，生成 真实的 DOM，来显示
+
+- 数据+模板 生成虚拟的 DOM （==虚拟DOM就是一个JS对象，用它来描述真实DOM==）（增加了小部分性能的损耗）
+
+  虚拟 DOM 举例：
+
+  ```html
+  <div id="a">
+      <span>hello world</span>
+  </div>
+  ```
+
+  ```js
+  [
+      "div",
+      {id: "a"},
+      [
+          "span",
+          {},
+          "hello world"
+      ]
+  ]
+  ```
+
+- state 发生变化
+
+- 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
+
+  ```js
+  [
+      "div",
+      {id: "a"},
+      [
+          "span",
+          {},
+          "新的内容"
+      ]
+  ]
+  ```
+
+- 比较新的虚拟DOM和原始的区别，找到是内容发生了变化
+
+- 直接操作 DOM， 改变 span 中的内容。
+
+## 7.2 深入了解虚拟 DOM
+
+react 真实实现：（3和4 反过来）
+
+1. state 数据
+
+2. JSX 模板（render里面的就是模板）
+
+3. 数据+模板 生成虚拟的 DOM （==虚拟DOM就是一个JS对象，用它来描述真实DOM==）（增加了小部分性能的损耗）
+
+    虚拟 DOM 举例：
+
+    ```js
+    [
+        "div",
+        {id: "a"},
+        [
+            "span",
+            {},
+            "hello world"
+        ]
+    ]
+    ```
+
+4. 用虚拟的 DOM 的结构生成真实的 DOM，来显示
+	```html
+    <div id="a">
+        <span>hello world</span>
+    </div>
+   ```
+
+5. state 发生变化
+
+6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
+
+    ```js
+    [
+        "div",
+        {id: "a"},
+        [
+            "span",
+            {},
+            "新的内容"
+        ]
+    ]
+    ```
+
+
+7.  比较新的虚拟DOM和原始的区别，找到是内容发生了变化
+8.  直接操作 DOM， 改变 span 中的内容。
+
+
+
+JSX -> JS 对象 -> 真实的 DOM：
+
+JSX:
+
+```jsx
+render() {
+    return <div>我是内容</div>
+}
+```
+
+JS 对象 -> 真实的 DOM：
+
+```jsx
+// render 中也可以这样写
+render() {
+    return React.createElement("div", {}, "我是内容")
+}
+// 例2
+render() {
+    return React.createElement("div", {}, React.createElement("span", {}, "span里面的内容"))
+}
+```
+
+虚拟DOM的有点：
+
+1. 性能提升了
+2. 它是的跨端应用得以实现， React Native
+
+# 8. react diff 算法
+
+上面的 第7步，比较了俩个 DOM 的区别，diff 算法就是如何去比对
+
+![diff 算法](./pic/diff 算法.jpg)
+
+==setState 设计成异步的，是react为了节省性能，同时好几个state发生变化，最后做统一的虚拟DOM操作==
+
+第一层节点不一样，就删掉当前节点下面所有的DOM，重新生成 虚拟 DOM
+
+07:06
