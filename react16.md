@@ -303,7 +303,8 @@
    Item.propTypes = {
        content: PropTypes.string, //content 接受的值要为string类型
        deleteItem: PropTypes.func, // 必须为 function
-       index: PropTypes.number.isRequired // 必须为number,必传
+       index: PropTypes.number.isRequired, // 必须为number,必传
+       str: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
    }
    // 具体参考 react 官方文档
    ```
@@ -532,6 +533,9 @@ render() {
 第一层节点不一样，就删掉当前节点下面所有的DOM，重新生成 虚拟 DOM。
 
 1. react虚拟 DOM 对比是同层对比。（算法设计比较简单）
-
 2. 虚拟 DOM 的对比要对比循环的 key 值（key值比对），删除或增加之后key值会发生变化，因此最好别使用 index 值作为 key值，可以使用 item 的内容来作为 key值。
+
+# 9. ref 的使用
+
+* 在react中我们使用 ref 来操作 DOM
 
