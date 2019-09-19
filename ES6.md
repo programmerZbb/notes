@@ -1018,6 +1018,8 @@ class 趋于 Java
 
    注意，`super`虽然代表了父类`A`的构造函数，但是返回的是子类`B`的实例，即`super`内部的`this`指的是`B`，因此`super()`在这里相当于`A.prototype.constructor.call(this)`。
 
+   ==在super()执行之后，子类就拥有了父类的变量，不需要再super后面再写属性赋值了。==
+
 2. super 作为对象使用
 
    `super`作为对象时，在普通方法中，指向父类的原型对象；在静态方法中，指向父类。
