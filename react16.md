@@ -304,7 +304,8 @@
        content: PropTypes.string, //content 接受的值要为string类型
        deleteItem: PropTypes.func, // 必须为 function
        index: PropTypes.number.isRequired, // 必须为number,必传
-       str: PropTypes.oneOfType([PropTypes.number, PropTypes.string])
+       str: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+       mixType: PropTypes.arrayOf(PropTypes.number, PropTypes.string) // 一个数组，元素的类型为number、string
    }
    // 具体参考 react 官方文档
    ```
