@@ -271,7 +271,19 @@
 
   ==但是该方式是异步的，在获取 e.target 的时候e需要在执行 setState 之前做值得保存。==
 
-  prevState 可以避免不小心改变 state的状态？（是不是浅拷贝，验证）
+  prevState 可以避免不小心改变 state的状态？（是不是浅拷贝，验证，不是就是 state）
+  
+  setState 提供了异步执行之后的回调。
+  
+  ```jsx
+  this.setState((prevState) => ({ //prevState 是改变之前的 this.state
+      value: prevState.value
+  }), () => {
+      console.log(111)
+  })
+  ```
+  
+  
 
 # 6. react 高级
 
@@ -540,3 +552,13 @@ render() {
 
 * 在react中我们使用 ref 来操作 DOM
 
+* 使用：
+
+  ```jsx
+  // 在HTML属性中添加
+  <input ref={(input) => {
+  	this.input = input
+  }}>
+  ```
+
+  不推荐使用 ref 尽量别直接操作 DOM，使用数据驱动的方式。
