@@ -2003,6 +2003,8 @@ router.afterEach(function(to, from) {
 
 相当于在 data 中定义了一个 fullname 的变量，它的值 为后面的函数的处理结果。但是 data 中不需要再定义 fullname 变量了。
 
+==计算属性的值不能直接改变==
+
 计算属性默认只有 getter ，不过在需要时你也可以提供一个 setter ：
 
 ```js
