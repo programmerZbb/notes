@@ -922,6 +922,27 @@ New Image()
 
 *************
 
+### Symbol
+一个新的基本类型，能够创建一个不相同的值。
+
+```js
+let sym = Symbol("test")
+let sym1 = Symbol("test")
+// sym 不等于 sym1
+
+let obj = {
+    // [sym]: "aaaa"
+}
+// let sym = "test"
+
+obj[sym] = "i am symbol"
+obj[sym1] = "i am second"
+
+console.log(obj)
+```
+
+
+
 ## 面向对象
 
 class 趋于 Java
@@ -946,6 +967,7 @@ class 趋于 Java
   //相当于
   //A.prototype.foo 方式
   ```
+```
 
   如果想要直接给对象 A 添加直接方法，需要在它的constructor 方法中添加。
 
@@ -985,7 +1007,7 @@ class 趋于 Java
   var foo = new Foo();
   foo.classMethod()
   // TypeError: foo.classMethod is not a function
-  ```
+```
 
   上面代码中，`Foo`类的`classMethod`方法前有`static`关键字，表明该方法是一个静态方法，可以直接在`Foo`类上调用（`Foo.classMethod()`），而不是在`Foo`类的实例上调用。如果在实例上调用静态方法，会抛出一个错误，表示不存在该方法。
 
