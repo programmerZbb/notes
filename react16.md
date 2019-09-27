@@ -580,3 +580,4 @@ render() {
 5. componentWillUpdate 在组件将要更新的时候执行（更新之前 ）
 6. componentDidUpdate 组件更新完成之后
 7. componentWillReceiveProps 1. 一个组件接受父组件传递的参数；2、父组件的 render 重新函数执行；符合这俩就会执行这个钩子（因为第一次可以执行 componentWillUpdate）
+8. componentWillUnmount 组件将要去除的时候执行
