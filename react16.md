@@ -574,10 +574,14 @@ render() {
 
 
 1. componentWillMount 在组件将要被挂载的页面时候执行
-2. 页面渲染的时候执行，state 和 props 发生变化的时候，就会执行 render 函数（在之后数据发生变化的时候，render 函数还会执行，但是 component 相关的钩子不会再执行了）
+2. 页面渲染的时候执行，
+   1. state 和 props 发生变化的时候，就会执行 render 函数（在之后数据发生变化的时候，render 函数还会执行，但是 component 相关的钩子不会再执行了）
+   2. 就算 props 不改变，只要父组件render执行，子组件render也会执行。
 3. componentDidMount 组件被挂载到页面之上后执行
 4. shouldComponentUpdate 在 state 和 props 发生变化的时候，组件被更新之前会执行，要求返回一个Boolean类型的值，根据这个值来判断是否组件是否需要更新。
 5. componentWillUpdate 在组件将要更新的时候执行（更新之前 ）
 6. componentDidUpdate 组件更新完成之后
 7. componentWillReceiveProps 1. 一个组件接受父组件传递的参数；2、父组件的 render 重新函数执行；符合这俩就会执行这个钩子（因为第一次可以执行 componentWillUpdate）
 8. componentWillUnmount 组件将要去除的时候执行
+
+* 所有的生命周期函数中只有render 函数必须手写，因为react内置了所有的生命周期函数，唯独没有内置render函数。
