@@ -2,6 +2,7 @@
 
 * ES6是为了使得JavaScript 语言可以用来编写复杂的大型应用程序，成为企业级开发语言。
 * ECMAScript 和 JavaScript 的关系是，前者是后者的规格，后者是前者的一种实现（另外的 ECMAScript 方言还有 Jscript 和 ActionScript)
+  
   ##ES6开发环境的搭建
 * 有的浏览器不支持ES6，因此为了兼容在上线需要搭建环境，将项目放在生产环境当中。
 
@@ -941,7 +942,24 @@ obj[sym1] = "i am second"
 console.log(obj)
 ```
 
+#### Symbol.prototype.description
 
+* 可以通过 sym.description 的方式来获取一个 symbol 的描述
+
+#### Symbol.for()
+
+* 可以通过 Symbol.for() 方法来获取相同的 symbol 值，获取的symbol值一定是已经创建过的。
+
+  ```js
+  let sym = Symbol("ule")
+  
+  let sym1 = Symbol.for(sym)
+  sym == sym1 // false 因为所有直接通过 Symbol 创建的值都是唯一的
+  ```
+
+#### Symbol.keyFor()
+
+* Symbol.keyFor() 方法返回一个已登记的 Symbol 类型值的`key`(Symbol描述)
 
 ## 面向对象
 
