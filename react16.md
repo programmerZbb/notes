@@ -599,3 +599,49 @@ render() {
 
 * 所有的生命周期函数中只有render 函数必须手写，因为react内置了所有的生命周期函数，唯独没有内置render函数。
 
+
+
+## 1. 重点使用 css-transition <https://reactcommunity.org/react-transition-group/css-transition>
+
+```jsx
+return (
+    <div>
+      <CSSTransition in={inProp} timeout={200} classNames="my-node">
+        <div>
+          {"I'll receive my-node-* classes"}
+        </div>
+      </CSSTransition>
+      <button type="button" onClick={() => setInProp(true)}>
+        Click to Enter
+      </button>
+    </div>
+  );
+```
+
+* in 触发方式
+* timeout 时间
+* className 动画的样式
+
+* 添加之后会给该子元素添加如下的样式（example 就是 classNames 后面跟着的，如果不加 classNames,则为名字则为 fade）
+
+  * 动画刚刚进入入场动画的时候 example-enter
+  * example-enter-active  入场动画刚出现到完成之间出加上 该类
+  * fade-enter-done 进场动画结束的时候，会加上该类
+  * `fade-exit`, `fade-exit-active`, and `fade-exit-done`. 同样
+
+  全部根据变量的 true 和 false 来判定
+
+## 2. 能够使用 js 来实现动画
+
+* css-transition 提供了一些钩子函数能够实现动画，接受 dom 对象改写样式
+
+  1. onEnter 
+
+     ```jsx
+     <CSSTransition in={inProp} timeout={200} classNames="my-node" onEnter={(el) => { el.style.color = 'red' }}>
+     ```
+
+## 3. 元素第一次出现的时候也要动画效果
+
+* 在 cssTransition 标签上添加 `appear={true}` 代表刚出现也要动画效果，然后在 css 里面修改样式
+
