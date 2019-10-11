@@ -483,7 +483,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
 
 5. state 发生变化
 
@@ -599,3 +599,9 @@ render() {
 
 * 所有的生命周期函数中只有render 函数必须手写，因为react内置了所有的生命周期函数，唯独没有内置render函数。
 
+# 使用 charles 模拟请求数据（mock 数据）
+
+![charles本地mock](./picture/charles本地mock.png)
+
+* 在 tools 中的map local 中打开上图的步骤。
+* Charles 抓不到 localhost 的包的问题，需要把 localhost 统一改成localhost.charlesproxy.com

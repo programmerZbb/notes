@@ -877,6 +877,10 @@ fsRead().then((data)=>{
 
 注意： catch 方法只能够捕获Promise 对象中的错误，不能够捕获then 方法中的语法错误。
 
+##### then 方法中给 catch 方法中传值
+
+* 如果在 then 方法中想给 catch 方法中出传递值，能够通过 throw 一个对象（变量）的形式来实现对 catch 方法的传值。
+
 ******
 
 #### async 
