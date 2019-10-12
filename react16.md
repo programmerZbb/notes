@@ -605,3 +605,7 @@ render() {
 
 * 在 tools 中的map local 中打开上图的步骤。
 * Charles 抓不到 localhost 的包的问题，需要把 localhost 统一改成localhost.charlesproxy.com
+
+# 使用react-transition-group 实现动画
+
+* 一般的 css 动画只能实现 css 动画，不能实现js 动画，需要借助第三方工具来实现。
