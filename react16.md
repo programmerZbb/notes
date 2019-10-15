@@ -678,4 +678,4 @@ redux 设计理念：
 1. React  Component 是一个借书者
 2. action 是借书的动作
 3. store 是图书管理员
-4. Reducers 是记录本
+4. Reducers 是记录本(store 在 reducers 里面查询)
