@@ -666,3 +666,16 @@ return (
   组件之间传值的问题
 
 * redux = reducer + flux
+
+redux 设计理念：
+
+![redux 设计理念](./picture/redux 设计理念.png)
+
+## 1. Redux 工作流程
+
+![redux 工作流程](./picture/redux 工作流程.png)
+
+1. React  Component 是一个借书者
+2. action 是借书的动作
+3. store 是图书管理员
+4. Reducers 是记录本
