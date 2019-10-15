@@ -655,3 +655,14 @@ return (
 
 * 在 cssTransition 标签上添加 `appear={true}` 代表刚出现也要动画效果，然后在 css 里面修改样式
 
+## 4. 多个元素使用动画
+
+* 需要在最外层加上 `TransitionGroup` 标签
+
+# redux 
+
+* 数据层框架
+
+  组件之间传值的问题
+
+* redux = reducer + flux

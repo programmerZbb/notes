@@ -2674,3 +2674,19 @@ Object.defineProperty(obj, 'a', {
 > 既然 Vue 构造函数在创建 Vue 实例时会将 template 编译成 render 渲染函数，但我们在调用 new Vue 时的 Vue 选项对象中并没有包含 template 属性，那么 template 模板是从哪儿来的呢？
 >
 > 这涉及到 Vue 选项对象中的 el 属性、template属性和 render 渲染函数的关系问题，当 Vue 选项对象中有 render 渲染函数时，Vue 构造函数将直接使用渲染函数渲染 DOM 树，当选项对象中没有 render 渲染函数时，Vue 构造函数首先通过将 template 模板编译生成渲染函数，然后再渲染 DOM 树，而当 Vue 选项对象中既没有 render 渲染函数，也没有 template 模板时，会通过 el 属性获取挂载元素的 outerHTML 来作为模板，并编译生成渲染函数。
+
+# vue 遇到的一些问题
+
+## 1. 事件绑定
+
+* 普通的事件绑定的 this 指向当前绑定的 dom  对象，事件函数在 函数的参数中能够获取
+
+  ```js
+  document.getElementById('app').onclick = function (e) { console.log(e.target) }
+  ```
+
+* Vue 事件绑定中，绑定的事件不加 `()` 是可以的，但是刚方法的默认参数就是 event 事件对象
+
+  如果绑定事件加上 `()` 则，该方法的默认参数就位 `()`传递的参数，没有就采用默认的参数
+
+  但是，所有的this 都指向了 vm 对象，因为调用的方式为 对象调用的形式。
