@@ -495,6 +495,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
 
 5. state 发生变化
@@ -511,7 +512,7 @@ react 真实实现：（3和4 反过来）
             "新的内容"
         ]
     ]
-    ```
+  ```
 
 
 7.  比较新的虚拟DOM和原始的区别，找到是内容发生了变化
@@ -714,6 +715,12 @@ redux 设计理念：
    
    export default store
    ```
+   页面上使用 store 
+
+   ```js
+   import store form "./store"
+   
+   ```
 
 2. 在组件中使用 store
 
@@ -722,8 +729,34 @@ redux 设计理念：
      super(props)
      // store 提供了一个方法能获取到 store 里面的数据
      // store.getState()
-     
+     this.state = store.getState()
    }
+   ```
+
+
+* 使用 redux 开发者工具开发 redux
+
+  安装 redux devtools 之后打开控制台，进行配置
+
+  在store 里面加
+
+  ```js
+  const store = createStore(
+     reducer, /* preloadedState, */
+  +  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+   );
+  ```
+
+3. 页面调用 store里面的数据
+
+   ```js
+   // 页面的方法
+   const action = {
+       type: 'change_input_value',
+       value: e.target.value
+   }
+   store.dispatch(action)
+   // 调用 dispatch 吧 action 传递给 store
    ```
 
    
