@@ -237,6 +237,18 @@
   
   ==实际上在jsx语法中返回一个结构时，需要在最外层有一个元素，不能同时存在两个最外层元素。==
 
+### 5.3.1 直接在元素上写 样式
+
+* 直接在元素上写样式，因为 style  是双引号的
+
+  ```html
+  <input style={{widht: ’100px‘}} />
+  ```
+
+  第一个引号是表示js 区域，第二个引号是对象。
+
+  该对象里面的属性都将采用 驼峰民命
+
 ## 5.4 拆分组件与组件之间的传值
 
 ### 5.4.1 组件的使用
@@ -679,3 +691,42 @@ redux 设计理念：
 2. action 是借书的动作
 3. store 是图书管理员
 4. Reducers 是记录本(store 在 reducers 里面查询)
+
+## 2. Redux 使用
+
+1. 创建 store 
+
+   ```js
+   import { createStore } from 'redux'
+   
+   // 创建笔记本，存储想要存储的数据
+   const defaultState = {
+     inputValue: "",
+     list: []
+   }
+   const reducer = (state = defaultState, action) => {
+     // state 就是整个 redux 里面存储的数据
+     return state
+   }
+   
+   const store = createStore(reducer)
+   // 创建管理员，管理员还没有记录本，什么都不知道
+   
+   export default store
+   ```
+
+2. 在组件中使用 store
+
+   ```js
+   constructor(props) {
+     super(props)
+     // store 提供了一个方法能获取到 store 里面的数据
+     // store.getState()
+     
+   }
+   ```
+
+   
+
+# ant  design 
+

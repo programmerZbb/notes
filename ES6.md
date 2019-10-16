@@ -711,6 +711,23 @@ es6 属性名能使用 ["a"+"b"] 方括号的形式。
 
   返回一个数组，成员是参数自身的（不含继承的）所有可遍历属性的键值对数组。
 
+##### 对象的可枚举性
+
+* 每个对象的属性都有一个描述对象（descriptor）
+
+* `Object.getOwnPropertyDescriptor(obj, 'foo')` 通过该方法能够获取到该属性的描述对象
+
+  ```javascript
+  let obj = { foo: 123 };
+  Object.getOwnPropertyDescriptor(obj, 'foo')
+  //  {
+  //    value: 123,
+  //    writable: true,
+  //    enumerable: true,
+  //    configurable: true
+  //  }
+  ```
+	该对象的 enumerable 就是该属性的 “可枚举性”，如果该属性为 false  则该属性的某些操作不能进行
 #### 解决异步编程的问题
 
 所谓"异步"，简单说就是一个任务不是连续完成的，可以理解成该任务被人为分成两段，先执行第一段，然后转而执行其他任务，等做好了准备，再回过头执行第二段。
