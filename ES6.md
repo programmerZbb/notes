@@ -715,7 +715,7 @@ es6 属性名能使用 ["a"+"b"] 方括号的形式。
 
 * 每个对象的属性都有一个描述对象（descriptor）
 
-* `Object.getOwnPropertyDescriptor(obj, 'foo')` 通过该方法能够获取到该属性的描述对象
+* `Object.getOwnPropertyDescriptor(obj, 'foo')` 通过该方法能够获取到对象自身属性的描述对象
 
   ```javascript
   let obj = { foo: 123 };
@@ -728,6 +728,11 @@ es6 属性名能使用 ["a"+"b"] 方括号的形式。
   //  }
   ```
 	该对象的 enumerable 就是该属性的 “可枚举性”，如果该属性为 false  则该属性的某些操作不能进行
+	
+	- `for...in`循环：只遍历对象自身的和继承的可枚举的属性。
+	- `Object.keys()`：返回对象自身的所有可枚举的属性的键名。
+	- `JSON.stringify()`：只串行化对象自身的可枚举的属性。
+	- `Object.assign()`： 忽略`enumerable`为`false`的属性，只拷贝对象自身的可枚举的属性。
 #### 解决异步编程的问题
 
 所谓"异步"，简单说就是一个任务不是连续完成的，可以理解成该任务被人为分成两段，先执行第一段，然后转而执行其他任务，等做好了准备，再回过头执行第二段。

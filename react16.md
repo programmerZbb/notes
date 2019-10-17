@@ -495,9 +495,11 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
   ```
 
+	```
+	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -512,6 +514,7 @@ react 真实实现：（3和4 反过来）
             "新的内容"
         ]
     ]
+    ```
   ```
 
 
@@ -524,11 +527,11 @@ JSX -> JS 对象 -> 真实的 DOM：
 
 JSX:
 
-```jsx
+​```jsx
 render() {
     return <div>我是内容</div>
 }
-```
+  ```
 
 JS 对象 -> 真实的 DOM：
 
@@ -706,7 +709,9 @@ redux 设计理念：
      list: []
    }
    const reducer = (state = defaultState, action) => {
-     // state 就是整个 redux 里面存储的数据
+     // state 默认就是整个 redux 里面存储的数据
+     //  state 存储 store 着上次的数据
+     // action 就是用户穿过的一段话
      return state
    }
    
@@ -757,6 +762,34 @@ redux 设计理念：
    }
    store.dispatch(action)
    // 调用 dispatch 吧 action 传递给 store
+   ```
+
+4. store 需要把当前的数据和action转发给 reducers
+
+   ```js
+   const reducer = (state = defaultState, action) => {
+     // state 默认就是整个 redux 里面存储的数据
+     //  state 存储 store 着上次的数据
+     // action 就是用户穿过的一段话
+     if (action.type === 'change_input_value') {
+       const newState = JSON.parse(JSPN.stringify(state))
+       newState.inputValue = action.value  // 吧原来的 inputValue  修改
+       return newState
+       // reducer 可以接受 state ，但是绝对不能修改 state
+     }
+     return state
+     // store 拿到这个数据之后替换原来的数据 
+   }
+   ```
+
+5. 页面订阅 store 里面数据的改变
+
+   ```js
+   constructor (props) {
+     super(props)
+     store.subscribe(this.handelStoreChange)
+     // store 发生变化，调用 hangdelStoreChange 方法
+   }
    ```
 
    
