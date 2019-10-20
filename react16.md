@@ -495,11 +495,13 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
+
   ```
 
 	```
-	
+
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -791,8 +793,32 @@ redux 设计理念：
      // store 发生变化，调用 hangdelStoreChange 方法
    }
    ```
+   
+6. 使用 actionCreator 统一创建 action
+
+   就是把 action 统一放到一个文件中用函数处理
+
+   ```js
+   import { CHANGE_INPUT_VALUE } from './actionTypes'
+   
+   export const getInputChangeAction = (value) => ({
+       type: CHANGE_INPUT_VALUE,
+       value
+   })
+   ```
 
    
+
+## actionTypes 的拆分
+
+* 在开发的过程中 action 里面传递和接受字符串，如果字符串写错的话，不容易发现错误，（因为传递什么type action都不会报错的）因此我们可以吧 actionType 单独放到一个文件中，用变量的形式来获取该 type的名称，这样就算拼写错误也会找不到变量对应的 type 而报错。
+* 创建 actionTypes 文件来存放变量对应的字符串，然后导出
+
+## redux 开发原则
+
+1. store 是惟一的
+2. 只有 store 能改变自己的内容
+3. reducer 必须是纯函数（给定固定的输入，就一定有固定的输出。而且不会有副作用。就是说return 的数据只受输入的数据的影响，副作用是会对参数进行修改）
 
 # ant  design 
 
