@@ -846,7 +846,7 @@ const item = (props) => {
 }
 ```
 
-
+* 一般情况下 UI 组件能够通过 无状态组件来实现
 
 # ant  design 
 
