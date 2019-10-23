@@ -825,6 +825,46 @@ redux 设计理念：
 2. 只有 store 能改变自己的内容
 3. reducer 必须是纯函数（给定固定的输入，就一定有固定的输出。而且不会有副作用。就是说return 的数据只受输入的数据的影响，副作用是会对参数进行修改）
 
+## redux 发送异步请求获取数据
+
+### 1. Redux-thunk 中间件实现ajax请求
+
+参考文档
+
+```js
+import { createStore, applyMiddleware } from 'redux';
+import thunk from 'redux-thunk';
+import rootReducer from './reducers/index';
+
+// Note: this API requires redux@>=3.1.0
+const store = createStore(rootReducer, applyMiddleware(thunk));
+// applyMiddleware 里面是redux中间件
+```
+
+
+使用 thunk中间件，同时使用dev-tools(参考 dev-tools文档)
+```js
+import { createStore, applyMiddleware, compose } from 'redux';
+import thunk from 'redux-thunk';
+import rootReducer from './reducers/index';
+
+const composeEnhancers =
+  typeof window === 'object' &&
+  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?   
+    window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__() : compose;
+
+const enhancer = composeEnhancers(
+  applyMiddleware(...[thunk]),
+  // other store enhancers if any
+);
+
+// Note: this API requires redux@>=3.1.0
+const store = createStore(rootReducer, enhancer);
+// applyMiddleware 里面是redux中间件
+```
+
+* 使用了 thunk 之后，action 就能是对象或者函数了
+
 # ui 组件和容器组件
 
 * ui 组件（傻瓜组件）、容器组件（智能组件），逻辑和渲染分开。ui 组件专门做渲染，容器组件做逻辑
