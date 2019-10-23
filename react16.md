@@ -498,15 +498,17 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
+
+  ```
+
   ```
 
   ```
 
 	```
 
-	```
-	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -864,6 +866,19 @@ const store = createStore(rootReducer, enhancer);
 ```
 
 * 使用了 thunk 之后，action 就能是对象或者函数了
+
+  dispatch 这个action 之后 action 这个函数就会自动的执行返回的函数
+
+  ```js
+  // 在 actionCreator 文件中创建函数的 action
+  export const getTodoList = () => {
+      return (dispath) => {
+          // 这个 函数 action 的参数能接受到 store 的 dispatch  函数，可以调用本文件中的 action
+      }
+  }
+  ```
+
+  
 
 # ui 组件和容器组件
 
