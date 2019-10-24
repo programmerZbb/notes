@@ -498,7 +498,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
   ```
 
   ```
@@ -509,6 +509,8 @@ react 真实实现：（3和4 反过来）
 
 	```
 
+	```
+	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -831,6 +833,8 @@ redux 设计理念：
 
 ### 1. Redux-thunk 中间件实现ajax请求
 
+* 为了避免异步请求太多，钩子函数内逻辑复杂。便于做自动化测试，和代码的相应管理
+
 参考文档
 
 ```js
@@ -878,7 +882,54 @@ const store = createStore(rootReducer, enhancer);
   }
   ```
 
+### 2. redux 中间件
+
+* ==一定要记住是 redux 的中间件，不是 react 的中间件==
+
+![redux 执行流程](./picture/redux 执行流程.png)
+
+* 中间件指的是 action 和 store 中间
+
+  action 和 store 中间使用的 dispatch 方法，middleware 就是对 dispatch 的封装（升级）
+
+### 3. Redux-saga 中间件的使用
+
+* 可以替换 redux-thunk 来实现异步请求写到 action 中，常用
+
+```js
+import { createStore, applyMiddleware, compose } from 'redux';
+import createSagaMiddleware from 'redux-saga';
+import rootReducer from './reducers/index';
+import mySaga from './sagas'
+
+const sagaMiddleware = createSagaMiddleware()
+const composeEnhancers =
+  typeof window === 'object' &&
+  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?   
+    window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__() : compose;
+
+const enhancer = composeEnhancers(
+  applyMiddleware(...[sagaMiddleware]),
+  // other store enhancers if any
+);
+
+// Note: this API requires redux@>=3.1.0
+const store = createStore(rootReducer, enhancer);
+sagaMiddleware.run(mySaga)
+// applyMiddleware 里面是redux中间件
+```
+
+sagas.js 文件
+
+```js
+function* mySaga() {
   
+}
+
+export default mySaga;
+```
+
+
 
 # ui 组件和容器组件
 
