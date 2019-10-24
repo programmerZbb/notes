@@ -498,7 +498,11 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
+
+  ```
+
   ```
 
   ```
@@ -509,8 +513,6 @@ react 真实实现：（3和4 反过来）
 
 	```
 
-	```
-	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -929,7 +931,7 @@ function* mySaga() {
 export default mySaga;
 ```
 
-
+* 使用 saga action 里面还是写成对象
 
 # ui 组件和容器组件
 
