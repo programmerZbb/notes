@@ -498,7 +498,11 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
+
+  ```
+
   ```
 
   ```
@@ -513,8 +517,6 @@ react 真实实现：（3和4 反过来）
 
 	```
 
-	```
-	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -926,14 +928,27 @@ sagaMiddleware.run(mySaga)
 sagas.js 文件
 
 ```js
+import { call, put, takeEvery, takeLatest } from 'redux-saga/effects'
+// 使用 put 方法实现 store.dispatch 给 store传递action
+
 function* mySaga() {
-  
+  yield takeEvery("USER_FETCH_REQUESTED", fetchUser);
+    // action 类型，补货action，调用 fetchUser 方法
+}
+
+function* fetchUser(action) {
+   try {
+      const user = yield call(Api.fetchUser, action.payload.userId);
+      yield put({type: "USER_FETCH_SUCCEEDED", user: user});
+   } catch (e) {
+      yield put({type: "USER_FETCH_FAILED", message: e.message});
+   }
 }
 
 export default mySaga;
 ```
 
-* 使用 saga action 里面还是写成对象
+* 使用 saga action 里面还是写成对象，action 和 sagas.js 文件都能够接受到 action。一旦接受到这个action就执行后面的函数
 
 # ui 组件和容器组件
 
