@@ -498,7 +498,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
   ```
 
   ```
@@ -517,6 +517,8 @@ react 真实实现：（3和4 反过来）
 
 	```
 
+	```
+	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -900,7 +902,7 @@ const store = createStore(rootReducer, enhancer);
 
 ### 3. Redux-saga 中间件的使用
 
-* 可以替换 redux-thunk 来实现异步请求写到 action 中，常用
+* 可以替换 redux-thunk 来实现异步请求写到 action 中，常用拆分出一部的代码
 
 ```js
 import { createStore, applyMiddleware, compose } from 'redux';
@@ -948,7 +950,8 @@ function* fetchUser(action) {
 export default mySaga;
 ```
 
-* 使用 saga action 里面还是写成对象，action 和 sagas.js 文件都能够接受到 action。一旦接受到这个action就执行后面的函数
+* 使用 saga action 里面还是写成对象，action 和 sagas.js 文件都能够接受到 action。一旦接受到这个action就执行后面的函数。
+* generator 函数处理失败的情况可以使用 try catch 捕获
 
 # ui 组件和容器组件
 
