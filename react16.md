@@ -498,7 +498,11 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
+
+  ```
+
   ```
 
   ```
@@ -517,8 +521,6 @@ react 真实实现：（3和4 反过来）
 
 	```
 
-	```
-	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -952,6 +954,39 @@ export default mySaga;
 
 * 使用 saga action 里面还是写成对象，action 和 sagas.js 文件都能够接受到 action。一旦接受到这个action就执行后面的函数。
 * generator 函数处理失败的情况可以使用 try catch 捕获
+
+## react-redux 使用
+
+* 安装
+
+### 使用
+
+1. 提供 provider api 
+
+   index.js 文件
+
+   ```jsx
+   import { Provider } from 'react-redux'
+   import store from './store'
+   
+   const App = (
+   	<provider store='store'>
+           <Todolist />
+       </provider>
+   )
+   // provider 里面的组件都能获取到 store 里面的内容
+   ```
+
+   Todolist 文件
+
+   ```js
+   import connect from 'react-redux'
+   
+   // 在导出组件的时候，让组件和store 连接
+   export default connect(null, null)(Todolist)
+   ```
+
+   
 
 # ui 组件和容器组件
 
