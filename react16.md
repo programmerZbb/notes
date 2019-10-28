@@ -498,7 +498,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
   ```
 
   ```
@@ -521,6 +521,8 @@ react 真实实现：（3和4 反过来）
 
 	```
 
+	```
+	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -980,13 +982,34 @@ export default mySaga;
    Todolist 文件
 
    ```js
-   import connect from 'react-redux'
+   import { connect } from 'react-redux'
+   
+   // 将 store 里面state 的数据映射到 组件 props 里面的数据
+   const mapStateToProps = (state) => {
+     return {
+    inputValue: state.inputValue
+       // 直接在组件中使用 this.props.inputValue 来获取store 里面保存的值
+     }
+   }
+   
+   // store.dispatch, props 关联
+   const mapDispatchToProps = (dipatch) => {
+     // 直接使用 this.props.changeInputValue 的方式来调用该方法
+     return {
+       changeInputValue() {
+         const action = {
+           tyep: ""
+         }
+         dispatch(action)
+       }
+     }
+   }
    
    // 在导出组件的时候，让组件和store 连接
-   export default connect(null, null)(Todolist)
+   export default connect(mapStateToProps, mapDispatchToProps)(Todolist)
    ```
-
    
+   采用如上方式，就不需要引入store了
 
 # ui 组件和容器组件
 
