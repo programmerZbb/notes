@@ -1469,7 +1469,7 @@ this.$emit(function, arg1, args2...)
 
   * ref用在元素上，refs 获取到的就是该 DOM 节点。
 
-  * ref用在组件上，获取的就是该组件的引用。 	
+  * ==ref用在组件上，获取的就是该组件的引用。(能够通过 ref 来获取到该组件的方法和变量)==
 
 ### ref 的重要使用
 
@@ -1510,6 +1510,16 @@ v-model 默认绑定 input 事件，如果想要让其绑定 change 事件，需
 #### .trim 
 
 如果需要自动过滤用户输入的首尾空白字符串，可以给 v-model 添加 .trim 修饰符。
+
+## v-model 和 .sync 修饰符在组件上的使用
+
+* v-model 和 .sync 在组件上使用都需要在组件中 使用  props 来接受传递的参数
+
+* V-model 需要 `$emit("input", newVal)` 的方式来触发
+
+  .sync 需要 `$emit("update:title", newVal)`的方式来触发（title 为绑定的数据）
+
+* .sync 的方式更有语义化，推荐使用
 
 # 组件高级用法
 

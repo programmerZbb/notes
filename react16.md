@@ -644,6 +644,7 @@ render() {
 
 * 在 tools 中的map local 中打开上图的步骤。
 * Charles 抓不到 localhost 的包的问题，需要把 localhost 统一改成localhost.charlesproxy.com
+* 抓包y一定要关闭电脑的科学上网代理
 
 # 使用react-transition-group 实现动画
 
@@ -890,9 +891,19 @@ const store = createStore(rootReducer, enhancer);
   export const getTodoList = () => {
       return (dispath) => {
           // 这个 函数 action 的参数能接受到 store 的 dispatch  函数，可以调用本文件中的 action
+        // 这里面写异步请求
       }
   }
   ```
+  
+* 在页面中使用该 方法 action
+
+  ```js
+  const action = getTodoList()
+      store.dispatch(action)
+  ```
+
+  
 
 ### 2. redux 中间件
 
@@ -1009,7 +1020,9 @@ export default mySaga;
    export default connect(mapStateToProps, mapDispatchToProps)(Todolist)
    ```
    
-   采用如上方式，就不需要引入store了
+   采用如上方式，就不需要引入store了（props 里面的数据能够解构赋值定义）
+   
+   todilist 到处的是容器组件
 
 # ui 组件和容器组件
 
