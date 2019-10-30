@@ -498,7 +498,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
   ```
 
   ```
@@ -525,6 +525,8 @@ react 真实实现：（3和4 反过来）
 
 	```
 
+	```
+	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -985,7 +987,7 @@ export default mySaga;
    import store from './store'
    
    const App = (
-   	<provider store='store'>
+   	<provider store={store}>
            <Todolist />
        </provider>
    )
@@ -1061,6 +1063,8 @@ const item = (props) => {
 
 ## 2. 使用
 
+### 基本使用
+
 ```jsx
 import { BrowserRouter, Route } from 'react-router-dom'
 
@@ -1079,4 +1083,28 @@ import { BrowserRouter, Route } from 'react-router-dom'
 </Provider>
 ```
 
-注意：一般第三方工具提供的 API 组件内必须有一个最外层元素
+注意：一般第三方工具提供的 API 组件内必须有一个最外层元素。
+
+BrowserRouter 代表路由，route 表示路由规则
+
+### 升级
+
+```jsx
+import { BrowserRouter, Route } from 'react-router-dom'
+
+// 组件中使用,provider 外层要一个元素
+<Provider>
+    <div>
+    // 表示里面的内容用到路由,也只能有一个外层元素
+	<BrowserRouter>
+        <div>
+            <Route path="/" exact component={Home}></Route>
+                    //exact 表示路径必须完全匹配，而不是包含
+            <Route path="/" render={() => (返回的组件)></Route>
+        </div>
+	</BrowserRouter> 
+    </div>
+</Provider>
+```
+
+* 使用`component={Home}`的形式来规定渲染的组件
