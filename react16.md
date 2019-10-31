@@ -1139,12 +1139,47 @@ import { BrowserRouter, Route } from 'react-router-dom'
    ```js
    import styled from 'styled-components'
    
-   export const HeaderWarpper = styled.div`
+   export const HeaderWrapper = styled.div`
    	widht: 50px;
    `
    ```
 
-2. 
+2. 在页面中引入 styled  定义的组件
+
+   ```jsx
+   import { HeaderWrapper } from './style'
+   ```
+   
+   * 图片等静态的文件可以放到 static 文件夹下面
+   
+   ==注意：==
+   
+   在项目中引入图片
+   
+   ```js
+   // style.js 文件中
+   // 一般情况下
+    background: url('../../static/a.png')
+   
+   // 但是 webpack 中没法识别这样的配置，js 文件
+   import aPic from '../a,png'
+   `
+   background: url(${aPic})
+   `
+   
+   ```
+   
+3. Styled  定义的组件写属性
+
+   ```js
+   const Logo = styled.a.attrs({
+     href: '/'
+   })`
+   	width: 10px;
+   `
+   ```
+
+* 样式全部写到组件的后面，保证不会出现样式串了的问题
 
 ## 2. reset css
 
