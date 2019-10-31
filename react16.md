@@ -871,10 +871,7 @@ import { createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import rootReducer from './reducers/index';
 
-const composeEnhancers =
-  typeof window === 'object' &&
-  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?   
-    window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__() : compose;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 
 const enhancer = composeEnhancers(
   applyMiddleware(...[thunk]),
@@ -1108,3 +1105,47 @@ import { BrowserRouter, Route } from 'react-router-dom'
 ```
 
 * 使用`component={Home}`的形式来规定渲染的组件
+
+# 项目实战
+
+## 1. Styled-components
+
+* 在每个组件中都引入样式，会造成样式的混乱，为解决这个问题，引入 styled-components 
+
+1. 安装：
+
+`npm i styled-components`
+
+2. 使用
+
+   * 将样式文件 .css 命名为 .js 文件，
+
+   ```js
+   // 样式文件
+   import { injectGlobal } from 'styled-components'
+   
+   // 全局的样式
+   injectGlobal`
+   	body {
+   	background: "red"
+   }
+   `;
+   ```
+
+### header 组件的开发
+
+1. style.js 文件的开发，styled 定义组件
+
+   ```js
+   import styled from 'styled-components'
+   
+   export const HeaderWarpper = styled.div`
+   	widht: 50px;
+   `
+   ```
+
+2. 
+
+## 2. reset css
+
+* 一些基本样式，百度搜索 reset css 即可查到
