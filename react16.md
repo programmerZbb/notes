@@ -79,6 +79,8 @@
 
    ==render 最外层必须有一个顶级元素==
 
+   * 组件也可以通过 `React.createClass({})`的方式创建一个组件
+   
    导出：
    
    `export default App`
@@ -1176,6 +1178,11 @@ import { BrowserRouter, Route } from 'react-router-dom'
      href: '/'
    })`
    	width: 10px;
+   `
+   const nav = styled.div`
+   	&.left {
+   	float: right;
+   }
    `
    ```
 
