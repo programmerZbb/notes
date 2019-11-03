@@ -79,6 +79,8 @@
 
    ==render 最外层必须有一个顶级元素==
 
+   * 组件也可以通过 `React.createClass({})`的方式创建一个组件
+   
    导出：
    
    `export default App`
@@ -498,7 +500,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
   ```
 
   ```
@@ -525,6 +527,8 @@ react 真实实现：（3和4 反过来）
 
 	```
 
+	```
+	
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -869,10 +873,7 @@ import { createStore, applyMiddleware, compose } from 'redux';
 import thunk from 'redux-thunk';
 import rootReducer from './reducers/index';
 
-const composeEnhancers =
-  typeof window === 'object' &&
-  window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?   
-    window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__() : compose;
+const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 
 const enhancer = composeEnhancers(
   applyMiddleware(...[thunk]),
@@ -985,7 +986,7 @@ export default mySaga;
    import store from './store'
    
    const App = (
-   	<provider store='store'>
+   	<provider store={store}>
            <Todolist />
        </provider>
    )
@@ -1060,6 +1061,8 @@ const item = (props) => {
 `npm i react-router-dom`
 
 ## 2. 使用
+
+### 基本使用
 
 ```jsx
 import { BrowserRouter, Route, Link } from 'react-router-dom'
@@ -1148,3 +1151,112 @@ this.props.history.push('/home/')
   ```
 
   
+注意：一般第三方工具提供的 API 组件内必须有一个最外层元素。
+
+BrowserRouter 代表路由，route 表示路由规则
+
+### 升级
+
+```jsx
+import { BrowserRouter, Route } from 'react-router-dom'
+
+// 组件中使用,provider 外层要一个元素
+<Provider>
+    <div>
+    // 表示里面的内容用到路由,也只能有一个外层元素
+	<BrowserRouter>
+        <div>
+            <Route path="/" exact component={Home}></Route>
+                    //exact 表示路径必须完全匹配，而不是包含
+            <Route path="/" render={() => (返回的组件)></Route>
+        </div>
+	</BrowserRouter> 
+    </div>
+</Provider>
+```
+
+* 使用`component={Home}`的形式来规定渲染的组件
+
+# 项目实战
+
+## 1. Styled-components
+
+* 在每个组件中都引入样式，会造成样式的混乱，为解决这个问题，引入 styled-components 
+
+1. 安装：
+
+`npm i styled-components`
+
+2. 使用
+
+   * 将样式文件 .css 命名为 .js 文件，
+
+   ```js
+   // 样式文件
+   import { injectGlobal } from 'styled-components'
+   
+   // 全局的样式
+   injectGlobal`
+   	body {
+   	background: "red"
+   }
+   `;
+   ```
+
+### header 组件的开发
+
+1. style.js 文件的开发，styled 定义组件
+
+   ```js
+   import styled from 'styled-components'
+   
+   export const HeaderWrapper = styled.div`
+   	widht: 50px;
+   `
+   ```
+
+2. 在页面中引入 styled  定义的组件
+
+   ```jsx
+   import { HeaderWrapper } from './style'
+   ```
+   
+   * 图片等静态的文件可以放到 static 文件夹下面
+   
+   ==注意：==
+   
+   在项目中引入图片
+   
+   ```js
+   // style.js 文件中
+   // 一般情况下
+    background: url('../../static/a.png')
+   
+   // 但是 webpack 中没法识别这样的配置，js 文件
+   import aPic from '../a,png'
+   `
+   background: url(${aPic})
+   `
+   
+   ```
+   
+3. Styled  定义的组件写属性
+
+   ```js
+   const Logo = styled.a.attrs({
+     href: '/'
+   })`
+   	width: 10px;
+   `
+   const nav = styled.div`
+   	&.left {
+   	float: right;
+   }
+   `
+   ```
+
+* 样式全部写到组件的后面，保证不会出现样式串了的问题
+
+## 2. reset css
+
+* 一些基本样式，百度搜索 reset css 即可查到
