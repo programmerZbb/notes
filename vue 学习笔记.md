@@ -1812,7 +1812,13 @@ v-model 默认绑定 input 事件，如果想要让其绑定 change 事件，需
 
 ## .push() 方法(编程式导航)
 
+* 传递参数
 
+  1. `$router.push({ name: "", params: {}})`
+
+     params 的方式只能通过`name`的方式来实现，不能用`path`的形式，会覆盖后面的参数
+
+  2. `$router.push({ name: "", query: {}})` 的方式能够使用 `name`和`path`的方式
 
 ## 路由传递参数
 

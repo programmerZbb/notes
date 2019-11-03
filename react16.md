@@ -1062,7 +1062,7 @@ const item = (props) => {
 ## 2. 使用
 
 ```jsx
-import { BrowserRouter, Route } from 'react-router-dom'
+import { BrowserRouter, Route, Link } from 'react-router-dom'
 
 // 组件中使用,provider 外层要一个元素
 <Provider>
@@ -1070,9 +1070,19 @@ import { BrowserRouter, Route } from 'react-router-dom'
     // 表示里面的内容用到路由,也只能有一个外层元素
 	<BrowserRouter>
         <div>
+            <ul>
+            	<li>
+                	<Link to='/'>首页</Link>
+                </li>
+                <li>
+                	<Link to='/home'>首页</Link>
+                </li>
+            </ul>
+            // exact 精确匹配
             <Route path="/" exact render={() => (返回的组件)></Route>
                     //exact 表示路径必须完全匹配，而不是包含
-            <Route path="/" render={() => (返回的组件)></Route>
+            <Route path="/home" render={() => (返回的组件)></Route>
+                            // 不选精确匹配的话，相当于  '.home'.search('/')
         </div>
 	</BrowserRouter> 
     </div>
@@ -1080,3 +1090,61 @@ import { BrowserRouter, Route } from 'react-router-dom'
 ```
 
 注意：一般第三方工具提供的 API 组件内必须有一个最外层元素
+
+* 路由的开发过程
+
+  设置规则 -> 传递值 -> 接收值 -> 显示内容
+
+## 3. 传值
+
+```jsx
+ <Route path="/" exact render={() => (返回的组件)></Route>
+                    //exact 表示路径必须完全匹配，而不是包含
+<Route path="/home/:id" render={() => (返回的组件)></Route>
+                            // 不选精确匹配的话，相当于  '.home'.search('/')
+```
+
+* 接收值
+
+  `this.props.match` 下面有路由的一些信息，path url params
+
+  所有的路由方法都挂载到 `props`中去了
+
+## 4. 重定向
+
+```jsx
+import { Redirect } from 'react-router-dom'
+
+// ...
+
+// 在页面上
+<Redirect to='/home' />
+   // 整个也面就重定向到了 home 页面，后面的元素将不会再渲染
+    
+    // 函数式重定向
+this.props.history.push('/home/')
+	
+```
+
+## 路由的嵌套
+
+* 路由的嵌套就是直接书写完整路径来实现
+
+  `<Route to='/home/video' exact component={Video}></Route>`
+
+## 5. 路由的配置
+
+* 路由单独一个一个写比较麻烦，建议统一写一个路由配置，然后进行遍历
+
+  ```js
+  let routeConfig = [
+      {
+          path: "/",
+          title: "我是标题",
+          exact: false,
+          component: Video
+      }
+  ]
+  ```
+
+  
