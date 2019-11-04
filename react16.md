@@ -1082,9 +1082,9 @@ import { BrowserRouter, Route, Link } from 'react-router-dom'
                 </li>
             </ul>
             // exact 精确匹配
-            <Route path="/" exact render={() => (返回的组件)></Route>
+            <Route path="/" exact render={() => (返回的组件)}></Route>
                     //exact 表示路径必须完全匹配，而不是包含
-            <Route path="/home" render={() => (返回的组件)></Route>
+            <Route path="/home" render={() => (返回的组件)}></Route>
                             // 不选精确匹配的话，相当于  '.home'.search('/')
         </div>
 	</BrowserRouter> 
@@ -1151,6 +1151,7 @@ this.props.history.push('/home/')
   ```
 
   
+
 注意：一般第三方工具提供的 API 组件内必须有一个最外层元素。
 
 BrowserRouter 代表路由，route 表示路由规则
