@@ -1041,9 +1041,8 @@ class 趋于 Java
   //相当于
   //A.prototype.foo 方式
   ```
-```
 
-  如果想要直接给对象 A 添加直接方法，需要在它的constructor 方法中添加。
+  如果想要直接给对象 A 添加直接方法，需要在它的constructor 方法中添加。或者直接使用在constructor的外层使用` fn = () => {}` 的形式。
 
   对象 A 的 constructor 方法就是 A.prototype.constructor
 
@@ -1081,6 +1080,7 @@ class 趋于 Java
   var foo = new Foo();
   foo.classMethod()
   // TypeError: foo.classMethod is not a function
+  ```
 ```
 
   上面代码中，`Foo`类的`classMethod`方法前有`static`关键字，表明该方法是一个静态方法，可以直接在`Foo`类上调用（`Foo.classMethod()`），而不是在`Foo`类的实例上调用。如果在实例上调用静态方法，会抛出一个错误，表示不存在该方法。
@@ -1108,7 +1108,7 @@ class 趋于 Java
      }
    }
    
-   ```
+```
 
    
 
