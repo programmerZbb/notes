@@ -501,6 +501,7 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
   
 5. state 发生变化
@@ -517,7 +518,7 @@ react 真实实现：（3和4 反过来）
             "新的内容"
         ]
     ]
-    ```
+  ```
 
 
 
@@ -1246,3 +1247,22 @@ import { BrowserRouter, Route } from 'react-router-dom'
 ## 2. reset css
 
 * 一些基本样式，百度搜索 reset css 即可查到
+
+
+
+## 3. redux 拆分
+
+* 大型项目数据够多，需要把 reducer（记录本）拆分出去，每一个组件下面创建一个 store 文件夹，存放一个 reducer
+
+* redux 提供了一个组合reducer 的工具
+
+  ```js
+  import { combineReducers } from 'redux'
+  import hreaderReducer from "./header/store/reducer"
+  
+  export default combineReducers({
+      header: hreaderReducer
+  })
+  ```
+
+  这样 header 需要的数据就存放在 store header 中了。
