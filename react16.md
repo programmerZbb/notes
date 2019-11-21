@@ -349,7 +349,8 @@
    }
    ```
 
-   
+
+注意：上述两种情况也可以在 class 中使用 static 挂载到构造函数上。
 
 # 6. react 思考
 
@@ -501,38 +502,7 @@ react 真实实现：（3和4 反过来）
         <span>hello world</span>
     </div>
   ```
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-  ```
-
-	```
-
-	```
-	
+  
 5. state 发生变化
 
 6. 生成新的虚拟 DOM （极大的提升了性能，不用操作DOM）（==比较js对象不怎么消耗性能，比较DOM 会极大的消耗性能==）
@@ -548,7 +518,7 @@ react 真实实现：（3和4 反过来）
         ]
     ]
     ```
-  ```
+
 
 
 7.  比较新的虚拟DOM和原始的区别，找到是内容发生了变化
@@ -560,11 +530,11 @@ JSX -> JS 对象 -> 真实的 DOM：
 
 JSX:
 
-​```jsx
+```jsx
 render() {
     return <div>我是内容</div>
 }
-  ```
+```
 
 JS 对象 -> 真实的 DOM：
 
@@ -596,6 +566,10 @@ render() {
 
 1. react虚拟 DOM 对比是同层对比。（算法设计比较简单）
 2. 虚拟 DOM 的对比要对比循环的 key 值（key值比对），删除或增加之后key值会发生变化，因此最好别使用 index 值作为 key值，可以使用 item 的内容来作为 key值。
+
+## react 中 key 的问题
+
+* 在遍历的子元素中有多个子元素的情况下，会出现渲染错误。key 是虚拟 DOM diff的标识。
 
 # 9. ref 的使用
 
@@ -910,7 +884,10 @@ const store = createStore(rootReducer, enhancer);
       store.dispatch(action)
   ```
 
-  
+
+注意：使用 redux-thunk 之后能实现 redux  异步执行，不是直接就返回action
+
+​	thunk 异步代码完成之后会分发一个同步的action（对象），最重要的是把这个异步action同步分发。
 
 ### 2. redux 中间件
 
@@ -921,6 +898,8 @@ const store = createStore(rootReducer, enhancer);
 * 中间件指的是 action 和 store 中间
 
   action 和 store 中间使用的 dispatch 方法，middleware 就是对 dispatch 的封装（升级）
+  
+* 使用 applyMiddleware 方法来注册中间件
 
 ### 3. Redux-saga 中间件的使用
 
@@ -1053,6 +1032,8 @@ const item = (props) => {
 ```
 
 * 一般情况下 UI 组件能够通过 无状态组件来实现
+* 无状态组件不能操作 state
+* 无状态组件一定要使用箭头函数，才是省去this的绑定。
 
 # ant  design 
 
