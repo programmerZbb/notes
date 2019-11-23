@@ -501,7 +501,9 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
-   ```
+  ```
+  ```
+  
   ```
   
 5. state 发生变化
@@ -518,6 +520,7 @@ react 真实实现：（3和4 反过来）
             "新的内容"
         ]
     ]
+    ```
   ```
 
 
@@ -531,11 +534,11 @@ JSX -> JS 对象 -> 真实的 DOM：
 
 JSX:
 
-```jsx
+​```jsx
 render() {
     return <div>我是内容</div>
 }
-```
+  ```
 
 JS 对象 -> 真实的 DOM：
 
@@ -570,7 +573,32 @@ render() {
 
 ## react 中 key 的问题
 
-* 在遍历的子元素中有多个子元素的情况下，会出现渲染错误。key 是虚拟 DOM diff的标识。
+* 在遍历的子元素中有多个子元素（input 框）的情况下，会出现渲染错误。key 是虚拟 DOM diff的标识。
+
+前置知识：
+
+​	像 input   类型的元素，在修改 value 的时候，并不会直接修改在虚拟 DOM 中。（实际DOM的变化并不会直接修改虚拟的DOM）。
+
+因此，在遍历input 框的时候，如果用index 作为key，如果key一致的话，虚拟DOM的input 对象也一样，就沿用旧的虚拟DOM。
+
+```jsx
+this.state.list.map(item => (
+	<div>
+    <span>{ item }</span>
+    <input></input>
+  </div>
+))
+
+// 在真实的 DOM 输入值之后，然后添加一个元素，会出现 input 混乱
+```
+
+diff 规则：
+
+1. key 是否一样
+
+   Key 一样内容是否一样，内容不一样，采用新的虚拟DOM。
+
+   key 不一样，直接更新外层遍历的虚拟DOM。
 
 # 9. ref 的使用
 
