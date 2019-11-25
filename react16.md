@@ -1294,3 +1294,5 @@ import { BrowserRouter, Route } from 'react-router-dom'
   ```
 
   这样 header 需要的数据就存放在 store header 中了。
+  
+* reducer 的拆分就能间接实现 state 的拆分，数据就跑到了 header 里面。
