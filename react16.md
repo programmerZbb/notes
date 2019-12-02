@@ -1296,3 +1296,33 @@ import { BrowserRouter, Route } from 'react-router-dom'
   这样 header 需要的数据就存放在 store header 中了。
   
 * reducer 的拆分就能间接实现 state 的拆分，数据就跑到了 header 里面。
+
+# 使用 immutable.js 来管理store中的数据
+
+* 安装
+
+  `npm i immutable`
+
+* 使用：
+
+  ```js
+  import { fromJS } from 'immutable'
+  // 提供 fromJS 能够将对象转化为 immutable 对象
+  
+  ```
+
+  获取 immutable 对象的属性，需要使用 get 方法来获取，不能直接 `.`的形式获取
+
+  ```js
+  obj.get('key')
+  ```
+
+  设置新的对象
+
+  ```js
+  state.set('focused', true)
+  // 不会修改源对象，返回一个全新的对象，直接修改原对象会报错
+  ```
+
+  
+
