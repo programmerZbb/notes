@@ -254,6 +254,16 @@
 
   该对象里面的属性都将采用 驼峰民命
 
+### 5.3.2 img 引入图片
+
+```js
+import svg from '.tet.png'
+
+<img src={svg}>
+```
+
+* 采用引入图片然后再赋值 src 的形式
+
 ## 5.4 拆分组件与组件之间的传值
 
 ### 5.4.1 组件的使用
@@ -1217,6 +1227,8 @@ import { BrowserRouter, Route } from 'react-router-dom'
    }
    `;
    ```
+   
+   global 样式文件不需要 导出，组件才需要导出
 
 ### header 组件的开发
 
