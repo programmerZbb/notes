@@ -1309,7 +1309,7 @@ import { BrowserRouter, Route } from 'react-router-dom'
   
 * reducer 的拆分就能间接实现 state 的拆分，数据就跑到了 header 里面。
 
-# 使用 immutable.js 来管理store中的数据
+## 使用 immutable.js 来管理store中的数据
 
 * 安装
 
@@ -1320,21 +1320,30 @@ import { BrowserRouter, Route } from 'react-router-dom'
   ```js
   import { fromJS } from 'immutable'
   // 提供 fromJS 能够将对象转化为 immutable 对象
+  fromJS({
+    list: []
+})
   
   ```
-
+```
+  
   获取 immutable 对象的属性，需要使用 get 方法来获取，不能直接 `.`的形式获取
-
-  ```js
+  
+​```js
   obj.get('key')
-  ```
+```
 
   设置新的对象
 
   ```js
-  state.set('focused', true)
+state.set('focused', true)
   // 不会修改源对象，返回一个全新的对象，直接修改原对象会报错
   ```
 
-  
+*  注意：
 
+  `fromJS`方法会把 state 里面的数据全部转化成 immutable 对象，因此在改变 `list`的时候也需要把 list 转换成 immutable 对象
+
+## mock 数据
+
+* Create-react-app 是node服务器，当访问api下的接口，例：`api/header.json` 会到工程下面去找对应的路由，如果找不到，就去 public 文件夹下去找对应的路由（`api`文件中的文件）
