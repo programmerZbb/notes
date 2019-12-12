@@ -1122,6 +1122,10 @@ import { BrowserRouter, Route, Link } from 'react-router-dom'
 
   设置规则 -> 传递值 -> 接收值 -> 显示内容
 
+### 分类
+
+
+
 ## 3. 传值
 
 ```jsx

@@ -1523,3 +1523,51 @@ let fn = function () {}  这种的不能简写成上面的形式
   microtask 执行在当前 task 结束之后，下一个 task 开始之前。
 
   Promise 任务就是一个 microTask 
+  
+# proxy
+
+  ```javascript
+var proxy = new Proxy(target, handler);
+  ```
+
+* 基本的使用，Proxy 对象的所有用法，都是上面这种形式，不同的只是`handler`参数的写法。
+
+  其中，`new Proxy()`表示生成一个`Proxy`实例，`target`参数表示所要拦截的目标对象，`handler`参数也是一个对象，用来定制拦截行为。
+
+如果`handler`没有设置任何拦截，那就等同于直接通向原对象。
+
+```javascript
+var target = {};
+var handler = {};
+var proxy = new Proxy(target, handler);
+proxy.a = 'b';
+target.a // "b"
+```
+
+## 常用技巧
+
+一个技巧是将 Proxy 对象，设置到`object.proxy`属性，从而可以在`object`对象上调用。
+
+```js
+var object = { proxy: new Proxy(target, handler) };
+```
+
+* 一个对象常用的就是赋值，设置值。因此常用的捕获方法就是 对象的 `get/set`方法。
+
+  剩下都是 Object 的原生方法
+
+* 拦截一个方法调用常用的就是拦截就是拦截 apply 方法
+
+  `apply`方法拦截函数的调用、`call`和`apply`操作。
+
+  `apply`方法可以接受三个参数，分别是目标对象、目标对象的上下文对象（`this`）和目标对象的参数数组。
+
+```js
+let obj = { fn: function() { return '原始数据' } }
+
+let proxy = new Proxy(obj, { get: function(target, propertyKey, receiver) { console.log('拦截'); return target[propertyKey] } })
+
+proxy.fn()
+// 对象方法的调用会调用 get 方法
+```
+
