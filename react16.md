@@ -1329,20 +1329,21 @@ import { BrowserRouter, Route } from 'react-router-dom'
 })
   
   ```
-```
+
   
   获取 immutable 对象的属性，需要使用 get 方法来获取，不能直接 `.`的形式获取
   
-​```js
+
+```js
   obj.get('key')
 ```
 
   设置新的对象
 
-  ```js
+```js
 state.set('focused', true)
   // 不会修改源对象，返回一个全新的对象，直接修改原对象会报错
-  ```
+```
 
 *  注意：
 
