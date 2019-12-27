@@ -1348,6 +1348,8 @@ state.set('focused', true)
 *  注意：
 
   `fromJS`方法会把 state 里面的数据全部转化成 immutable 对象，因此在改变 `list`的时候也需要把 list 转换成 immutable 对象
+  
+  同样immutable 类型的数组也不能使用普通数据的方法，如果要使用，则需要转换成 普通的数组(toJS() 方法)
 
 ## mock 数据
 
