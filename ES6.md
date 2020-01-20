@@ -1312,6 +1312,7 @@ export default a
   // 错误
   export default var a = 1;
   ```
+* import 在导入模块的时候，需要先导入 default 的，才能导如其他类型的数据。
 
 ### 加载规则
 
