@@ -125,7 +125,29 @@
 
   fragment : 碎片，片段
 
+### 5.1.3 react 语法总结
 
+#### 基本语法
+
+1. html 结构可以直接在 js 中书写
+2. html 结构中书写 js 需要使用 `{}`来包围
+3. js 区域表达html 一定要返回一个 html 结构
+
+#### 数组在页面上的渲染
+
+* 在开发的过程中常常使用数组的元素为标签的形式来渲染数组，因为在 `jsx`语法中下列的写法存在，因此能直接把下列类型的数组在页面上渲染
+
+  ```jsx
+  {
+      [
+          <div>11111</div>,
+          <div>22222</div>,
+          <div>33333</div>,
+      ]
+  }
+  ```
+
+* 数组的形式在页面上渲染需要加上属性 `key`
 
 ## 5.2 React 中的响应式设计思想和事件绑定（重点）
 
@@ -511,9 +533,11 @@ react 真实实现：（3和4 反过来）
     <div id="a">
         <span>hello world</span>
     </div>
+   ```
   ```
+
   ```
-  
+
   ```
   
 5. state 发生变化
@@ -530,7 +554,7 @@ react 真实实现：（3和4 反过来）
             "新的内容"
         ]
     ]
-    ```
+  ```
   ```
 
 
@@ -909,9 +933,14 @@ const store = createStore(rootReducer, enhancer);
   ```js
   // 在 actionCreator 文件中创建函数的 action
   export const getTodoList = () => {
-      return (dispath) => {
+      return (dispatch) => {
           // 这个 函数 action 的参数能接受到 store 的 dispatch  函数，可以调用本文件中的 action
         // 这里面写异步请求
+          const action = {
+              type: 'test',
+              value
+          }
+          dispatch(action)
       }
   }
   ```
@@ -920,7 +949,7 @@ const store = createStore(rootReducer, enhancer);
 
   ```js
   const action = getTodoList()
-      store.dispatch(action)
+  store.dispatch(action)
   ```
 
 
@@ -1232,7 +1261,40 @@ import { BrowserRouter, Route } from 'react-router-dom'
    `;
    ```
    
-   global 样式文件不需要 导出，组件才需要导出
+   global 样式文件不需要 导出，直接像样式一样导入即可，组件才需要导出
+   
+   <https://blog.csdn.net/GoldenLegs/article/details/87451827>
+   
+   injectGlobal 废弃
+
+#### 新的使用方法
+
+```js
+import {createGlobalStyle} from 'styled-components';
+export const GlobalStyled = createGlobalStyle`
+body{
+    margin:0;
+    padding:0;
+    background:red;
+}`
+
+```
+
+```js
+import React from 'react';
+import {GlobalStyled} from './style.js';
+class App extends React.Components{
+	render(){
+	    return(
+	        <div className='App'>
+	            <GlobalStyled />
+	        </div>
+	    )
+	}
+}
+```
+
+
 
 ### header 组件的开发
 
@@ -1342,7 +1404,7 @@ import { BrowserRouter, Route } from 'react-router-dom'
 
 ```js
 state.set('focused', true)
-  // 不会修改源对象，返回一个全新的对象，直接修改原对象会报错
+  // 不会修改源对象，返回一个全新的对象，直接修改原对象会报错，也会返回一个 immutable 对象
 ```
 
 *  注意：
@@ -1350,7 +1412,27 @@ state.set('focused', true)
   `fromJS`方法会把 state 里面的数据全部转化成 immutable 对象，因此在改变 `list`的时候也需要把 list 转换成 immutable 对象
   
   同样immutable 类型的数组也不能使用普通数据的方法，如果要使用，则需要转换成 普通的数组(toJS() 方法)
+  
+  ```js
+  immuJs.toJS()
+  ```
+  
+
+### 修改多个数据
+
+* 可以使用链式的形式来设置多个数据
+
+* 也可以使用 immutable 对象提供的 merge 方法实现多个对象的修改
+
+  ```js
+  state.merge({
+      key1: "value1",
+      key2: "value2"
+  })
+  ```
+
+  
 
 ## mock 数据
 
-* Create-react-app 是node服务器，当访问api下的接口，例：`api/header.json` 会到工程下面去找对应的路由，如果找不到，就去 public 文件夹下去找对应的路由（`api`文件中的文件）
+* Create-react-app 是node服务器，当访问api下的接口，例：`api/header.json` 会到工程下面去找对应的路由，如果找不到，就去 public 文件夹下去找对应的文件（`api`文件中的文件）
