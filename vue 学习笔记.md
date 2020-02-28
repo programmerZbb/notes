@@ -1824,6 +1824,8 @@ v-model 默认绑定 input 事件，如果想要让其绑定 change 事件，需
 
   2. `$router.push({ name: "", query: {}})` 的方式能够使用 `name`和`path`的方式
 
+
+
 ## 路由传递参数
 
 因为 该路由实在一个页面上跳转，因此不能够使用HTTP 请求那样的设置请求参数。
@@ -2717,3 +2719,14 @@ Object.defineProperty(obj, 'a', {
 ## 2. computed 
 
 * 计算属性的值是不能够直接通过赋值的形式改变的
+
+## 3. scoped 中样式穿透
+
+* 在vue 样式书写中，不能再 scoped 的样式中，对第三方组件的样式进行修改，可以使用 `>>>`来实现对样式的穿透，在 less 或 sass 中不能识别 `>>>`，可以使用 `/deep/`来穿透
+
+```css
+/deep/ .el-select {
+        width: 100%;
+    }
+```
+

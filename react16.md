@@ -91,6 +91,8 @@
 
 3. react 中的组件都是单闭合使用方式，和 vue 的使用方式不太一样。
 
+   也可以写成双闭合标签，双闭合就可以写子元素了。
+
 4. 首页的书写：
 
    1. 使用js 中写结构的方式(jsx 语法)，一定要引入 react
@@ -332,7 +334,16 @@ import svg from '.tet.png'
   })
   ```
   
-  
+
+### PureComponent
+
+* 在页面使用redux 的时候，只要 redux store 里面的数据一更新，就会重新渲染改组件(因为关联了 props ，就会执行 componentWillUpdate)，因此 react fiber 引入了 PureComponent 来取代 Component，（不用自己写 shouldComponentUpdate，提高组件性能）
+
+  ```js
+  import { PureComponent } from 'react'
+  ```
+
+  注意：PureComponent 和 immutablejs 数据结合的较好，使用普通的数据类型，可能会遇到坑
 
 # 6. react 高级
 
@@ -1147,6 +1158,8 @@ import { BrowserRouter, Route, Link } from 'react-router-dom'
 
 注意：一般第三方工具提供的 API 组件内必须有一个最外层元素
 
+​	Route 和 Link 都要放在 BrowserRouter 的内部
+
 * 路由的开发过程
 
   设置规则 -> 传递值 -> 接收值 -> 显示内容
@@ -1157,18 +1170,31 @@ import { BrowserRouter, Route, Link } from 'react-router-dom'
 
 ## 3. 传值
 
+1. 动态路由的形式：
+
 ```jsx
- <Route path="/" exact render={() => (返回的组件)></Route>
+ <Route path="/" exact render={() => (返回的组件)}></Route>
                     //exact 表示路径必须完全匹配，而不是包含
-<Route path="/home/:id" render={() => (返回的组件)></Route>
+<Route path="/home/:id" render={() => (<Home></Home>)}></Route>
                             // 不选精确匹配的话，相当于  '.home'.search('/')
 ```
+
+```jsx
+ <Route path="/" exact component={Home}></Route>
+                    //exact 表示路径必须完全匹配，而不是包含
+<Route path="/home/:id" component={组件名称}</Route>
+                            // 不选精确匹配的话，相当于  '.home'.search('/')
+```
+
+​	上述两种方式。
 
 * 接收值
 
   `this.props.match` 下面有路由的一些信息，path url params
 
   所有的路由方法都挂载到 `props`中去了
+
+2. 在页面中使用 `this.props.location.search`能获取到
 
 ## 4. 重定向
 
@@ -1235,6 +1261,16 @@ import { BrowserRouter, Route } from 'react-router-dom'
 
 * 使用`component={Home}`的形式来规定渲染的组件
 
+## 6. 函数式导航
+
+* 导航的信息会自动挂载到组件的 `this.props`中，在页面中打印能够获取到路由信息。
+
+![react-router](.\picture\react 16\react-router.png)
+
+* 如上图所示history 属性中有 router 的方法，能够实现函数式编程，也包含 location
+* location 中保存着 pathname 的信息,search 是请求数据
+* match 中保存着当前路由的信息，类似于 vue-router 中的 `$route`，但是只有 params 参数，没有query 参数，需要自己去拼。
+
 # 项目实战
 
 ## 1. Styled-components
@@ -1293,6 +1329,39 @@ class App extends React.Components{
 	}
 }
 ```
+   global 样式文件不需要 导出，组件才需要导出
+
+3. 注意
+
+   `styled-component`会把标签原样渲染，所以有啥属性，直接能写在组件上，比如说 a 标签的 href 属性就能直接拼接到a 标签导出的组件上。
+
+   避免过度组件化：
+
+   https://www.jianshu.com/p/20215e035160
+
+4. 传递 props
+
+   导出的组件能够传递值，传递的值在 styled 的组件中使用 props 对象能够获取
+
+   ```jsx
+   const Button = styled.button`
+       background: ${props => props.primary ? 'palevioletred' : 'white'};
+       color: ${props => props.primary ? 'white' : 'palevioletred'};
+       font-size: 1em;
+       margin: 1em;
+       padding: 0.25em 1em;
+       border: 2px solid palevioletred;
+       border-radius: 3px;
+   `
+   render(
+       <div>
+           <Button>Normal</Button>
+           <Button primary>Primary</Button>
+       </div>
+   );
+   ```
+
+   
 
 
 
@@ -1350,6 +1419,24 @@ class App extends React.Components{
 
 * 样式全部写到组件的后面，保证不会出现样式串了的问题
 
+### styled-components 组件传值
+
+* 使用 styled-components 定义的组件也能通过行内的形式来传值，在定义组件的时候，通过 `${props => props.url}` 函数返回一个值得形式来获取这个值
+
+  ```js
+  styled.div`
+  	background: url(${props => props.url})
+  `
+  ```
+
+  页面：
+
+  ```jsx
+  <Item url={item.url}></Item>
+  ```
+
+  
+
 ## 2. reset css
 
 * 一些基本样式，百度搜索 reset css 即可查到
@@ -1374,6 +1461,8 @@ class App extends React.Components{
   这样 header 需要的数据就存放在 store header 中了。
   
 * reducer 的拆分就能间接实现 state 的拆分，数据就跑到了 header 里面。
+
+* header store 里面的数据还是按原来的写
 
 ## 使用 immutable.js 来管理store中的数据
 
@@ -1405,11 +1494,25 @@ class App extends React.Components{
 ```js
 state.set('focused', true)
   // 不会修改源对象，返回一个全新的对象，直接修改原对象会报错，也会返回一个 immutable 对象
+  // 不会修改源对象，返回一个全新的对象，直接修改原对象会报错，必须使用返回的这个对象
 ```
+
+* 设置、获取 深层结构中某属性的值
+
+  使用 `setIn()`，`getIn()`方法能够设置或获取深层的数据结构的数据
+
+  ```js
+  o.setIn(['header', 'focused'])
+  // 设置 immutable 对象 o 中的 header 中的 focused 的值
+  ```
+
+  
 
 *  注意：
 
-  `fromJS`方法会把 state 里面的数据全部转化成 immutable 对象，因此在改变 `list`的时候也需要把 list 转换成 immutable 对象
+  `fromJS`方法会把 state 里面的数据全部转化成 immutable 对象，因此在改变 `list`(state里面的一个数组)的时候也需要把 list 转换成 immutable 对象
+  
+  * immutablejs 还提供了一个方法 `List` 也能够将普通的数组转化为 immutable 数组。（只能把最外层的引用类型转化为immutable 对象）
   
   同样immutable 类型的数组也不能使用普通数据的方法，如果要使用，则需要转换成 普通的数组(toJS() 方法)
   
@@ -1417,6 +1520,10 @@ state.set('focused', true)
   immuJs.toJS()
   ```
   
+### 能使用数组的方法  
+
+* immutable 对象能够使用数组的 map 方法
+* 能使用数组的  concat 方法
 
 ### 修改多个数据
 
@@ -1432,6 +1539,25 @@ state.set('focused', true)
   ```
 
   
+
+具体知识：
+
+https://www.jianshu.com/p/0fa8c7456c15
+
+## 使用 redux-immutable 实现immutable 数据的整合
+
+* 在项目开发中需要把 immutable 对象和普通的js 对象实现整合
+* `npm i redux-immutable`
+
+```js
+import { combineReducers } from 'redux-immutable'
+```
+
+用这个取代`redux`中的`combineReducers`，即可实现 immutable 对象的整合
+
+## 使用 redux 开发思维
+
+* 使用 redux 开发，每个组件都有每个组件的 reducer，但是 store 只有最外层的 store，组件的 reducer 都要在外层的 store 里面整合。
 
 ## mock 数据
 

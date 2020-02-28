@@ -1312,6 +1312,7 @@ export default a
   // 错误
   export default var a = 1;
   ```
+* import 在导入模块的时候，需要先导入 default 的，才能导如其他类型的数据。
 
 ### 加载规则
 
@@ -1350,6 +1351,26 @@ import 'lodash';
 上面代码仅仅执行`lodash`模块，但是不输入任何值。
 
 * `import`命令输入的变量都是只读的，因为它的本质是输入接口。也就是说，不允许在加载模块的脚本里面，改写接口
+* import 会在编译的时候执行，不是在执行的时候执行，所以引入模块的时候要在顶层引入，不能再函数中或者if等代码块中执行
+
+### 问题
+
+* 上面的情况会导致 import 不能再需要的时候引入
+
+  所以，引入了 import() 函数，来执行按需加载，在需要的情况下执行或者按一定的条件执行
+
+  ```js
+  import('./dialogBox.js')
+    .then(dialogBox => {
+      dialogBox.open();
+    })
+    .catch(error => {
+      /* Error handling */
+    })
+  ```
+
+  执行完成会执行相应的回调函数
+
 * `import`命令会被 JavaScript 引擎静态分析，先于模块内的其他语句执行（`import`命令叫做“连接” binding 其实更合适）
 
 *******
