@@ -392,8 +392,115 @@ import svg from '.tet.png'
    }
    ```
 
-
 注意：上述两种情况也可以在 class 中使用 static 挂载到构造函数上。
+
+## 高阶组件（HOC-higherOrderComponent）
+
+* 高阶组件是参数为组件，返回值为新组件的函数。
+* 说白了还是为了代码的复用拆分
+* 组件是将 props 转换为 UI，而高阶组件是将组件转换为另一个组件。
+
+## 关于高阶组件（hoc）、mixin、render prop 的思考
+
+* mixin 是 es5 中公共方法的提取，提供了完整的生命周期，和 vue 中的mixin 相似
+* hoc 则是把公共的方法提取为外层父组件，把公共的方法通过 props 传给需要使用的组件，然后返回这个外层组件。有一些缺点，命名来源（多个hoc 是谁传入的 props 数据，命名冲突）
+* render prop 是把公共的部分当成子组件，父组件来传递一个 render 命名的函数，来控制子组件（公共方法的执行），但是会直接呈现在页面上（因为子组件的调用就是直接在页面上），因此类似于 vue 中的插槽，不能纯使用公共的方法，必须要返回 ui 。
+
+## 插槽
+
+* react 也可以像 vue的插槽一样 中在组件内部传入值
+
+使用：
+
+传值是一样的
+
+组件内部：需要使用 `ReactDOM.createPortal()` 方法将 children 对象渲染出来，并且用第二个参数（一个DOM对象）将该组件挂载到页面上。（第二个参数DOM 对象需要挂载到页面上，这个方法只是挂载到了这个DOM对象上了）
+
+```jsx
+import React, { Component } from 'react'
+import ReactDOM from 'react-dom'
+
+class Home extends Component {
+    constructor (props) {
+        super(props)
+        this.state = {}
+        this.ele = document.createElement('div')
+    }
+
+    componentDidMount () {
+        this.root = document.getElementsByClassName('home-box')[0]
+        this.root.appendChild(this.ele)
+    }
+
+    componentWillUnmount () {
+        this.root.removeChild(this.ele)
+    }
+
+    render () {
+        console.log(this.props)
+        return (
+            <div className='home-box'>
+                父组件
+                <div>把插槽安排到下面吧</div>
+                {
+                    ReactDOM.createPortal(this.props.children, this.ele)
+                }
+            </div>
+        )
+    }
+}
+
+export default Home
+
+```
+
+也可以直接就挂载到页面的DOM上
+
+```jsx
+import React, { Component } from 'react'
+import ReactDOM from 'react-dom'
+
+class Home extends Component {
+    constructor (props) {
+        super(props)
+        this.state = {
+            myDOM: null
+        }
+        this.ele = document.createElement('div')
+    }
+
+    componentDidMount () {
+        this.getPortal()
+    }
+
+    componentWillUnmount () {
+    }
+
+    getPortal () {
+        this.setState(() => ({
+            myDOM: ReactDOM.createPortal(this.props.children, document.getElementsByClassName('home-box')[0])
+        }))
+    }
+
+    render () {
+        console.log(this.props)
+        return (
+            <div className='home-box'>
+                父组件
+                <div>把插槽安排到下面吧</div>
+                {
+                    this.state.myDOM
+                }
+            </div>
+        )
+    }
+}
+
+export default Home
+
+```
+
+
 
 # 6. react 思考
 
@@ -659,6 +766,10 @@ diff 规则：
   ```
 
   不推荐使用 ref 尽量别直接操作 DOM，使用数据驱动的方式。
+
+注意：
+
+1. ref 是在页面渲染之后执行的，因此不能直接在页面渲染的时候去使用 ref 的DOM。
 
 # react 的生命周期
 
@@ -1164,6 +1275,16 @@ import { BrowserRouter, Route, Link } from 'react-router-dom'
 
   设置规则 -> 传递值 -> 接收值 -> 显示内容
 
+* Route 占位符与 vue-router 有区别，`vue-router`应该是官方封装的组件，Route 则需要指定导向地址，需要遍历。
+
+### switch 
+
+`Switch` 组件能够使得组件一定程度的精确匹配，避免重复匹配（两个相同的路径），但是 `/home/detail`和`/home`还是能匹配，如果非要精确的匹配，推荐使用 `exact`
+
+#### exact 
+
+* exact 有一些缺点，必须精确匹配。连传值也不能精确跳转
+
 ### 分类
 
 
@@ -1196,6 +1317,32 @@ import { BrowserRouter, Route, Link } from 'react-router-dom'
 
 2. 在页面中使用 `this.props.location.search`能获取到
 
+   query 传值，`Link 中to拼接 query`
+
+3. 隐式传值
+
+   ```js
+   this.props.history.push({
+               pathname: '/home',
+               state: {
+                   id: 111
+               }
+           })
+   ```
+
+   在 this.props.location 中的 state 能获取到。
+
+4. 函数式导航传值
+
+   ```js
+   this.props.history.push({
+       pathname: '/home/123',
+   })
+   // 在页面中使用 this.props.match.params 能够获取到
+   ```
+
+   
+
 ## 4. 重定向
 
 ```jsx
@@ -1217,6 +1364,10 @@ this.props.history.push('/home/')
 * 路由的嵌套就是直接书写完整路径来实现
 
   `<Route to='/home/video' exact component={Video}></Route>`
+  
+  把上面的占位写到父组件当中即可
+  
+  在父组件中打印`this.props.children`就能看到嵌套的子组件的信息。
 
 ## 5. 路由的配置
 
@@ -1260,6 +1411,7 @@ import { BrowserRouter, Route } from 'react-router-dom'
 ```
 
 * 使用`component={Home}`的形式来规定渲染的组件
+* 路由的所有配置可以单独封装成一个组件的
 
 ## 6. 函数式导航
 
@@ -1562,3 +1714,140 @@ import { combineReducers } from 'redux-immutable'
 ## mock 数据
 
 * Create-react-app 是node服务器，当访问api下的接口，例：`api/header.json` 会到工程下面去找对应的路由，如果找不到，就去 public 文件夹下去找对应的文件（`api`文件中的文件）
+
+## 异步组件和 withRouter 方法的使用
+
+* 在react项目中，所有的js 文件会在第一个请求时一次获取到，如果想做到按需加载，需要使用第三方模块 `react-loadable`
+
+  usage：<https://github.com/jamiebuilds/react-loadable>
+
+  ```shell
+  yarn add react-loadable
+  ```
+
+  ```jsx
+  import Loadable from 'react-loadable';
+  
+  const LoadableComponent = Loadable({
+    loader: () => import('./'), // 当前目录下的 index.js 文件
+    loading: () => {
+      	return (<div>loading 组件</div>)
+  	},
+  });
+  
+  export default () => {
+      return (
+      	<div>
+              无状态组件
+              <Detail></Detail>
+          </div>
+      )
+  }
+  ```
+
+  上述方式，`Detail`组件就不能使用 router 的信息了，因为在首页里：
+
+  ```jsx
+  import Detail from './pages/detail/loadable.js'
+  // ...
+  // 路由的使用
+  <Route to="/detail" component={Detail} exact></Route>
+  ```
+
+  因为引入的组件不再是detail 下的index.js 页面文件，因此不能直接在 Detail 组件中使用路由信息
+
+  解决方案：
+
+  ```jsx
+  import { withRouter } from 'react-router-dom'
+  
+  // ...
+  export default connect(null, null)(withRouter(Detail))
+  ```
+
+  使用 `withRouter` 后，该组件就能在 `this.props` 中使用router 的信息。
+
+  以上，该组件在请求js 的时候就会以 chunk 的形式按需加载。
+
+# React Hooks
+
+* react 16.8 新增
+
+## 1. 开始
+
+* react hooks 不再继承 Component 从 react 中，使用纯函数，不再使用 class 定义类的方式。
+
+## 1.2 useState
+
+```js
+import React, { useState } from 'react'
+
+export default () => {
+  const [count, setCount] = useState(() => {
+    return 0
+  })
+  // const [count, setCount] = useState(0)
+  // 也可以直接是数值
+  console.log(111)
+  return (
+    <div>
+      { count }
+      <button onClick={() => { setCount(x => x+1) }}>+1</button>
+		// <button onClick={() => { setCount(count+1) }}>+1</button>
+		// 也可以是数值，这里推荐这种写法，和 setState 一致
+    </div>
+  )
+}
+```
+
+* 注意：在使用函数式组件，每次都会执行函数内部的语句。相当于生命周期的 render
+* 设置多个 state 直接在后面写即可。
+* 设置多个 state  并不会多次render组件，会集中一次render。
+
+## 1.3 useEffect
+
+* 副作用函数，（会改变外界的值）
+* 第一个参数函数，写业务逻辑
+* 第二个参数 依赖，用来规定函数执行的依赖。
+
+### 和生命周期的对应（useEffect 能执行多次）
+
+* componentWillMount、constructor 直接在函数的前面线性执行。
+
+* 函数内部return 之前的语句相当于render
+
+* componentDidMount 
+
+  ```js
+  useEffect(() => {
+      console.log('componentDidMount')
+  }, [])
+  ```
+
+* componentWillReceiveProps
+
+* shouldComponentUpdate、componentDidUpdate
+
+  ```js
+  useEffect(() => {
+      console.log('componentDidUpdate')
+  }, [count])
+  // 依赖 count 执行更新
+  ```
+
+* componentWillUnmount
+
+  ```js
+  useEffect(() => {
+      console.log('componentDidUpdate')
+      return () => {
+          console.log('componentWillUnmount')
+      }
+  }, [])
+  // 后面的依赖加不加都行
+  ```
+
+  
+
+
+
