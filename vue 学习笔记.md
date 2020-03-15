@@ -2509,6 +2509,33 @@ store.dispatch({
 
 为了解决以上问题，Vuex 允许我们将 store 分割成**模块（module）**。每个模块拥有自己的 state、mutation、action、getter、甚至是嵌套子模块——从上至下进行同样方式的分割：
 
+## state 的获取2
+
+* vuex 提供了另一种获取state 的方式
+
+  ```js
+  import { mapState } from vuex
+  
+  /.......
+  computed: {
+      ...mapState(['count'])
+  }
+  ```
+
+## mutations 的调用2
+
+* vuex 提供了 mapMutations 方法，将该方法挂载到this 上
+
+  ```js
+  import { mapMutations } from 'vuex'
+  /...
+  methods: {
+      ...mapMutations(['add'])
+  }
+  ```
+
+  
+
 #  注意
 
 * > 所有的方法或者是其他的 vue  实例中的属性，想要获取其他方法中的属性，都能通过传值给 data 的形式来访问。 其他的属性也可以访问 methods 中的方法，this."方法名" 的形式，方法之间可以直接通过 this 访问，如果是方法内部的变量需要被访问，需要 使用 data 做中间传递的桥梁。还是要考虑作用域的。
@@ -2730,3 +2757,14 @@ Object.defineProperty(obj, 'a', {
     }
 ```
 
+## 4. 传值总结
+
+1. 父传子 v-bind 
+
+2. 子传父 v-on 事件绑定
+
+3. 兄弟直接传值
+
+   EventBus
+
+   事件总线，定义一个js 文件，导出一个 vue 对象，用这个对象来绑定事件，触发事件。

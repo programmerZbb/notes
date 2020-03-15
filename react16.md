@@ -126,6 +126,8 @@
   ```
 
   fragment : 碎片，片段
+  
+* label 的for 属性在react中要使用`htmlFor`来表达
 
 ### 5.1.3 react 语法总结
 
@@ -150,6 +152,14 @@
   ```
 
 * 数组的形式在页面上渲染需要加上属性 `key`
+
+#### 注释
+
+```jsx
+{/*注释*/}
+```
+
+
 
 ## 5.2 React 中的响应式设计思想和事件绑定（重点）
 
@@ -344,6 +354,11 @@ import svg from '.tet.png'
   ```
 
   注意：PureComponent 和 immutablejs 数据结合的较好，使用普通的数据类型，可能会遇到坑
+
+## 5.3 可控组件和不可控组件
+
+* 如果表单的 value 没有和 state 进行绑定，则该 input 组件就是不可控组件，反之则是可控组件
+* 原因：input 输入值并没有真正的改变虚拟DOM。
 
 # 6. react 高级
 
@@ -806,6 +821,10 @@ diff 规则：
 8. componentWillUnmount 组件将要去除的时候执行
 
 * 所有的生命周期函数中只有render 函数必须手写，因为react内置了所有的生命周期函数，唯独没有内置render函数。
+
+注意：
+
+* 在初次渲染的时候，子组件的生命周期函数都不会执行
 
 # 使用 charles 模拟请求数据（mock 数据）
 
@@ -1587,6 +1606,23 @@ class App extends React.Components{
   <Item url={item.url}></Item>
   ```
 
+  传值、传属性
+  
+  ```jsx
+  export const NavItem = styled.a.attrs({
+      href: props => props.link
+  })`
+      display: inline-block;
+      width: 100%;
+      min-height: 50px;
+      cursor: pointer;
+      margin-bottom: 6px;
+      border-radius: 4px;
+      background: url(${props => props.bgImg}) no-repeat center bottom;
+      background-size: auto 50px;
+  `
+  ```
+  
   
 
 ## 2. reset css
@@ -1847,7 +1883,12 @@ export default () => {
   // 后面的依赖加不加都行
   ```
 
-  
+## 3. useContext
 
 
 
+# 注意
+
+## 1. setState 不能设置到render里面
+
+* 这样会造成死循环，直接报错
