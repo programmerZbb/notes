@@ -2768,3 +2768,34 @@ Object.defineProperty(obj, 'a', {
    EventBus
 
    事件总线，定义一个js 文件，导出一个 vue 对象，用这个对象来绑定事件，触发事件。
+
+## 5. computed 和 watch
+
+* computed 具有缓存性，computed 计算之后，会直接在 this 中绑定这个值（新定义了一个data）
+
+  
+
+* watch 更多是观察的作用，无缓存性
+
+## 6. v-on 能绑定多个事件
+
+1. 方式1
+
+   ```vue
+   <a v-on='{click: handleClick, mousecover: handleMouseCover}'></a>
+   ```
+
+2. 方式2
+
+   ```vue
+   <a @click='a(), b()'>点击</a>
+   ```
+
+   
+
+## 7. vue 事件中使用 event 对象
+
+```vue
+<button @click='Event($event)'>
+```
+
