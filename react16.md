@@ -421,9 +421,10 @@ import svg from '.tet.png'
 * hoc 则是把公共的方法提取为外层父组件，把公共的方法通过 props 传给需要使用的组件，然后返回这个外层组件。有一些缺点，命名来源（多个hoc 是谁传入的 props 数据，命名冲突）
 * render prop 是把公共的部分当成子组件，父组件来传递一个 render 命名的函数，来控制子组件（公共方法的执行），但是会直接呈现在页面上（因为子组件的调用就是直接在页面上），因此类似于 vue 中的插槽，不能纯使用公共的方法，必须要返回 ui 。
 
-## 插槽
+## 插槽与子节点
 
 * react 也可以像 vue的插槽一样 中在组件内部传入值
+* react 的子节点就是插槽位置的节点
 
 使用：
 
@@ -781,6 +782,16 @@ diff 规则：
   ```
 
   不推荐使用 ref 尽量别直接操作 DOM，使用数据驱动的方式。
+  
+  也可以像 vue 一样简写
+  
+  ```jsx
+  <input ref='inout'></input>
+  
+  this.ref.inout
+  ```
+  
+  
 
 注意：
 
@@ -1892,3 +1903,47 @@ export default () => {
 ## 1. setState 不能设置到render里面
 
 * 这样会造成死循环，直接报错
+
+## 2. setState 是同步的还是异步的
+
+1. 生命周期函数中的 setState、react 事件监听回调中的 setState 都是异步的
+2. 定时器、原生事件回调、promise回调，setState 是同步执行的
+
+### 使用
+
+1. 函数类型的使用
+
+setState((state, props) => {}, callback)
+
+里面的state 和 props 总是最新的数据
+
+2. 对象类型的使用
+
+* setState 是异步调用的时候，才回去研究 render中执行的数据，同步调用不需要考虑render的渲染调用几次
+
+* 两种方式的调用都会合并成一次修改数据（在render上显示）
+* 调用对象的形式如果使用到 this.state ，这个数据不是最新的，因此建议使用 函数使用的形式
+
+## 3. react 事件绑定是根据事件委托来实现的
+
+## 4. react 组件相关
+
+* react 组件元素不能直接写子元素，不会显示，必须要在该组件的内部使用 创建插槽来实现渲染
+
+  ```jsx
+  <Item>
+  	<div>我不会显示</div>
+  </Item>
+  ```
+
+### 4.1 component 存在的问题
+
+* 继承 Component 的组件
+  1. 父组件的 render 一定会触发子组件的 render 
+  2. 档期组件 调用了 setState ，就会触发当前组件的 render，即使啥也没干
+
+### 4.2 PureComponent 的使用
+
+* 使用 PureComponent 能够实现组件数据没更新，不去执行 render 更新组件
+
+  实现了 `shouldComponentUpdate`的拦截，使用的浅层拷贝对比。只能识别到对象属性的属性的变化。

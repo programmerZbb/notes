@@ -2788,7 +2788,7 @@ Object.defineProperty(obj, 'a', {
 2. 方式2
 
    ```vue
-   <a @click='a(), b()'>点击</a>
+   <a @click='a(), b()'>点击1</a>
    ```
 
    
@@ -2799,3 +2799,36 @@ Object.defineProperty(obj, 'a', {
 <button @click='Event($event)'>
 ```
 
+## 8. 响应式原理
+
+* vue 实例中声明的数据，就是响应式的
+
+  数据发生变化，视图会重新渲染，更新最新的数据
+
+* 问题
+
+  1、Vue 是怎么知道数据改变？
+
+  2、Vue 在数据改变时，怎么知道通知哪些视图更新？
+
+  3、Vue 在数据改变时，视图怎么知道什么时候更新？
+
+  核心的三个概念： Object.defineProperty，依赖收集，依赖更新
+
+* 答案
+
+  1. vue 在 set 方法中做了数据劫持
+
+     data 中的每个属性，都拥有一个数组，保存着谁依赖了他，这就是依赖收集，依赖我的页面统统保存起来。
+
+     每个属性都有一个 dep 来保存这个属性的依赖，key值跟别是 id （属性的id），subs（依赖收集器） 数组中保存这所有依赖该属性的 watcher
+
+     watcher： 每个页面都有一个 watcher，可用于实例更新
+
+     总结： 每个属性都有一个专属的 dep 中保存这依赖数组 subs，每个使用到该属性的页面（watcher）都将添加到该数组 subs(依赖收集器) 里面。
+
+     依赖收集使用的就是 defineProperty 中的 getter
+
+  2. 当属性发生变化的时候，就用 setter 通知更新，遍历依赖收集器中的页面，逐个通知 watcher去更新视图
+
+  3. 当触发了 setter 的时候就要进行更新。
