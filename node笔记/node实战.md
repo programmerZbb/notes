@@ -172,7 +172,9 @@ req 的事件：
   })
   ```
 
-处理 http 请求(需要 tostring 方法可以将接受到的二进制转化成字符串)
+处理 post 请求(需要 tostring 方法可以将接受到的二进制转化成字符串)
+
+思路就是用一个水管将桶连起来，不断的接受，知道数据结束
 
 ```js
 const http = require('http')
@@ -191,3 +193,47 @@ server.listen(3000, () => {
     console.log('server is running')
 })
 ```
+
+### 文档
+
+* request 的文档对应着 [http.IncomingMessage 类](http://nodejs.cn/api/http.html#http_class_http_incomingmessage)
+
+* response 对应着 [http.ServerResponse 类](http://nodejs.cn/api/http.html#http_class_http_serverresponse)
+
+### 总结
+
+1. request 类中的 url 能获取到路由和queryString
+
+2. queryString 模块能解析 querystring 请求
+
+3. 响应的数据必须是字符串，用 JSON.stringify 序列化
+
+4. 还有一种方式能设置header
+
+   ```js
+   res.writeHeader(404, {'Content-type': 'text/plain'})
+   ```
+
+   修改返回内容的另一种方式（除了 end），不用再 end 里面修改数据
+
+   ```js
+   res.write('404 Not Found\n')
+   ```
+
+5. 获取到的 method 是大写的
+
+# 4. 搭建开发环境
+
+* 从 0 开始，不使用任何框架
+* 使用 nodemon 检测文件变化，自动重启node
+* 使用 cross-env 设置环境变量，兼容 mac、linux、windows
+
+# 5. 开发接口
+
+* 初始化路由： 根据之前技术方案的设计，做出路由
+* 返回假数据，将路由和数据处理分离，以符合设计原则
+
+接口分类：
+
+1. blog
+2. user

@@ -137,3 +137,23 @@ module.exports = {
 中间不能有空格
 
 4  04.51
+
+
+
+# 总结
+
+## 环境
+
+* NODE_ENV（有时候也叫 BUILD_ENV） 关键字来代表表示环境
+
+* `process.env.NODE_ENV`能设置node的环境，windows 下可能无法获取这个环境，因此需要搭配 cross-env 使用
+
+  首先安装 npm i cross-env -D
+
+  在 package.json 的 scripts 中
+
+  ```js
+  "dev": "cross-env NODE_ENV=development node build/build.js devBuild"
+  ```
+
+  
