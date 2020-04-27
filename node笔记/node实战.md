@@ -784,3 +784,36 @@ redis-cli.exe -h 127.0.0.1 -p 6379
 * 下载完成解压之后，在Nginx目录下`nginx.exe`文件执行
 * 在 conf 文件夹下的 `nginx.conf` 的文件能修改配置，用管理员权限打开
 
+配置文件：（注意不加冒号）
+
+```shell
+#user  nobody;
+worker_processes  2;
+#配置工作核数
+
+server {
+        listen       8080;
+# 端口修改
+        server_name  localhost;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+#        location / {
+#           root   html;
+#           index  index.html index.htm;
+#       }
+# 配置代理，所有静态文件代理到 8081
+		location / {
+		proxy_pass http://localhost:8081;
+		}
+		location /api/ {
+		proxy_pass http://localhost:8080;
+# 做代理之后 host 不一样了，需要把host传过去		
+		proxy_set_header Host $host;
+		}
+```
+
+
+
