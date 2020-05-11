@@ -473,7 +473,7 @@ function sum(x: number, y: number): number {
 
 函数的赋值类型：
 
-注意：函数的表达式需要在赋值的左边来定义输入输出的数据类型，不能够只在右边进行函数输入输出的定义。
+注意：函数的表达式需要在赋值的左边来定义输入输出的数据类型，不能够只在右边进行函数输入输出的定义。因为函数本身就是一种类型
 
 ```typescript
 let sum: (x: number, y: number) => number = function (x: number, y: number): number {
@@ -486,6 +486,8 @@ let sum: (x: number, y: number) => number = function (x: number, y: number): num
 在 TypeScript 的类型定义中，`=>` 用来表示函数的定义，左边是输入类型，需要用括号括起来，右边是输出类型。
 
 ==在ts中写接口的时候，冒号右边的可以想象成实现这个接口的时候右边的值的类型（包括函数的返回值的类型。）==
+
+ts 中冒号的右边是类型和实际的代码逻辑没有什么关系。
 
 ### 函数参数的可选
 
