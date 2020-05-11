@@ -815,5 +815,13 @@ server {
 		}
 ```
 
+* mac 的命令
+```shell
+# 修改nginx配置
+sudo vi nginx.conf
+# 测试nginx的语法错误
+nginx -t 
+```
+
 
 
