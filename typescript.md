@@ -549,7 +549,7 @@ let cat = buildName(undefined, 'Cat');
 
 在 tsx 语法（React 的 jsx 语法的 ts 版）中必须用后一种。
 
-类型断言就是在联合类型的情况下，对其中的一个类型进行if的赛选。
+类型断言就是在==联合类型==的情况下，对其中的一个类型进行if的赛选。
 
 ```ts
 function getLength(something: string | number): number {
@@ -565,7 +565,7 @@ function getLength(something: string | number): number {
 
 断言只能断言联合类型中的一个类型，也可以使用一种全部包含联合类型的类型，包含一个或多个。
 
-==注意：在使用断言的时候，后续的具体使用都要<类型>值的形式来使用。==
+==注意：在使用断言的时候，后续的具体使用都要<类型>值的形式来使用。类型的断言使用的interface所以跟着的类型是大写的==
 
 ## 声明文件
 
@@ -686,6 +686,17 @@ npm install @types/node --save-dev
 ```ts
 type Name = string
 ```
+
+应用：
+
+```typescript
+type PlusType = (a: number, b: number) => number;
+const plues: PlusType = (a: number, b: number): number => {
+    return a + b
+}
+```
+
+
 
 ## 字符串字面量类型
 
