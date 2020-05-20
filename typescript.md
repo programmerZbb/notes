@@ -34,6 +34,10 @@ tsc hello.ts
 
 > 约定使用 typescript 编写的文件使用 .ts 为后缀，使用 ts 编写 react 的时候以 `.tsx` 为后缀
 
+* 为什么用 `tsc`来编译
+
+  tsc 代表 typescript compiler 
+
 1. TypeScript 中，使用 `:` 指定变量的类型，`:` 的前后有没有空格都可以。
 
 * vscode 实现  .ts 文件的自动编译
@@ -64,6 +68,10 @@ tsc hello.ts
 * 如果要在报错的时候终止 js 文件的生成，可以在 `tsconfig.json` 中配置 `noEmitOnError` 即可。
 
 # 3. 基础
+
+## 0. JavaScript中的数据类型
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Data_structures
 
 ## 1. 原始数据类型
 
@@ -155,7 +163,7 @@ let n: null = null;
 
 `undefined` 类型的变量只能被赋值为 `undefined`，`null` 类型的变量只能被赋值为 `null`。
 
-与 `void` 的区别是，`undefined` 和 `null` 是所有类型的子类型。也就是说 `undefined` 类型的变量，可以赋值给 `number` 类型的变量：
+与 `void` 的区别是，==`undefined` 和 `null` 是所有类型的子类型==。也就是说 `undefined` 类型的变量，可以赋值给 `number` 类型的变量：
 
 > 主要是判断后面的类型是否在前面的类型里面包括
 
@@ -282,6 +290,16 @@ myFavoriteNumber = true;
 
 接口写法是一个对象，
 
+* 对对象的 shape 进行描述
+
+* 对类（class）进行抽象 
+
+* duck typing （鸭子类型 ），有一些共同的特点，那他就是那个东西（鸭子）
+
+  在动态语言中，更关注对象如何 被使用，而不是对象本身。
+
+
+
 #### 例子
 
 ```ts
@@ -353,7 +371,7 @@ let tom: Person = {
 
 ### 只读属性
 
-有时候我们希望一个属性在创建的时候被赋值，其他任何情况不能再改变该值，那么可以使用到`readonly`定义只读属性。
+有时候我们希望一个属性在创建的时候被赋值，其他任何情况不能再改变该值，那么可以使用到`readonly`定义只读属性。类似于`const`.
 
 ```ts
 interface Person {
@@ -381,8 +399,18 @@ tom.id = 9527;
 总结：
 
 1. 接口的写法就是对象的写法，后面的值就是他属性的类型。
-
 2. 在接口的书写中，后面可以使用分号来分割语句。
+
+### 在对象中使用定义属性的类型
+
+```ts
+const obj = {
+  a: '1' as string,
+  o: [] as any[],
+}
+```
+
+
 
 ## 数组的类型
 
@@ -406,6 +434,16 @@ fibonacci.push('8');
 ```
 
 上例中，`push` 方法只允许传入 `number` 类型的参数，但是却传了一个 `string` 类型的参数，所以报错了。
+
+#### 数组的联合类型
+
+```js
+let arr: (string | number)[] = ['1', '2', '3', 5]
+```
+
+#### 注意
+
+* 数组定义类型之后，数据的方法也会限定类型，比如说数组的push方法
 
 ### 数组泛型
 
@@ -457,6 +495,8 @@ function sum() {
 
 ==伪数组可以使用内置的接口来实现==
 
+不能把伪数组赋值成数组类型
+
 ## 函数的类型
 
 函数声明类型：
@@ -505,7 +545,7 @@ let tomcat = buildName('Tom', 'Cat');
 let tom = buildName('Tom');
 ```
 
-需要注意的是，可选参数必须接在必需参数后面。换句话说，**可选参数后面不允许再出现必须参数了**：
+需要注意的是，==可选参数必须接在必需参数后面==。换句话说，**可选参数后面不允许再出现必须参数了**：
 
 ### 参数的默认值
 
@@ -518,6 +558,8 @@ let cat = buildName(undefined, 'Cat');
 ```
 
 默认值的参数不受可选参数后面不能跟必选参数的限制。
+
+默认值的参数就相当于可选参数。
 
 ### 重载
 
@@ -704,7 +746,7 @@ const plues: PlusType = (a: number, b: number): number => {
 
 ## 元祖
 
-数组合并了相同类型的对象，而元祖（tuple）合并了不同类型的对象
+数组合并了相同类型的对象，而元祖（tuple）合并了不同类型的对象.
 
 ### 举例
 
@@ -721,6 +763,11 @@ let xcatliu: [string, number] = ['Xcat Liu', 25];
 当添加越界的元素时，它的类型会被限制为元组中每个类型的联合类型：
 
 当超出规定类型的元素时，这个元素会被定义成之前数组定义过的类型的联合类型。
+
+### 注意
+
+* 元祖是特俗的数组，在定义的时候长度不能变，要和左侧的类型对齐。
+* 元祖可以使用数组的方法来添加元素，比如说使用 push 方法。
 
 ## 枚举
 
@@ -758,8 +805,172 @@ enum Days {sun = 7, mon =1, tue, wed, thu}
 
 * 枚举的手动赋值也可以不为数字，需要使用断言来避免ts检测出错，ts枚举的实质就是后面的值等于前面的值＋1，当前面一个元素手动赋值成字符串类型的话，后面也需要手动赋值成为字符串类型的值。
 
+### 常亮枚举
+
+* 不能存在计算值，比如 `arr.length`
+
 ## 类
 
 TypeScript 除了实现了所有 ES6 中的类的功能以外，还添加了一些新的用法。
 
 typescript 类的使用规则：https://ts.xcatliu.com/advanced/class.html
+
+### 修饰符
+
+* 类上的方法和属性提供修饰符
+
+* publicre
+
+* private 子类也不能访问
+
+* Protected 外界不能访问，子类可以s
+
+* readonly 只读的，不能修改
+
+* 静态的 
+
+  static + 上面的修饰符
+
+### 面向对象
+
+封装、继承、多态
+
+### 类使用 interface
+
+* 两个抽象的类，有共同的方法（特性），但是没法抽象出一个共同的父类，可以抽象出一个interface
+
+```typescript
+interface Radio {
+  switchRadio(): void;
+}
+interface Battery {
+  checkBatteryStatus();
+}
+class car implements Radio {
+  switchRadio() {
+    
+  }
+}
+class phone implements Radio, Battery {
+  switchRadio() {
+    
+  }
+  checkBatteryStatus() {
+    
+  }
+}
+```
+
+* 可以实现两个接口，一个公共的，一个特有的
+
+甚至接口也可以继承接口，实现组合，继承一个接口即可。
+
+```typescript
+interface RadioWithBattery extends Battery {
+  
+}
+```
+
+## 泛型（牛的）（generics）
+
+泛型（Generics）是指在定义函数、接口或类的时候，不预先指定具体的类型，而在使用的时候再指定类型的一种特性。
+
+```js
+function show<T>(arg: T): T {
+  return arg
+}
+const result = show('111')
+// 会做类型推断，推断出result的类型为 string
+const result1 = show(true)
+// 会报错
+
+```
+
+多个泛型
+
+```js
+function swap<T, U>(tuple: [T, U]): [U, T] {
+  return [tuple[1], tuple[0]]
+}
+// 上边类型是元祖，不是数组
+```
+
+数组使用泛型
+
+```js
+function echoWithArr<T>(arr: T): T {
+  return arr.length;
+}
+//报错，因为类型不确定，不一定有 length 属性
+function echoWithArr<T>(arr: T[]): T[] {
+  console.log(T.length)
+  return arr
+}
+```
+
+### 泛型的继承
+
+* 如果一个泛型有一些公共的属性，可以抽象成一个 interface
+
+```typescript
+interface Types {
+    length: number;
+}
+function echoWithArr<T extends Types>(tuple: T): T {
+    console.log(tuple.length);
+    return tuple
+}
+```
+
+### 类中使用泛型
+
+```js
+class Queue<T> {
+  private data = []
+  push(num: T) {
+    this.data.push(num)
+  }
+	pop(): T {
+    return this.data.shift()
+  }
+}
+
+const queue = new Queue<number>()
+```
+
+### interface 中使用泛型
+
+```typescript
+interface KeyPair<T, U> {
+  k: T;
+  v: U;
+}
+let key1: KeyPair<string, number> = {
+  k: '111',
+  v: 111
+}
+```
+
+### 数组泛型
+
+```typescript
+const arr: Array<number> = [1, 2]
+```
+
+### 函数使用 interface 描述
+
+```typescript
+interface Iplus {
+  (a: number, b:number): number
+}
+function plus(a: number, b: number): number {
+  return a + b
+}
+const a: Iplus = plus
+```
+
+
+
+# 注意
+
+* 所有的类型都是在定义的时候规定的，在赋值的右边是不需要去定义类型的
