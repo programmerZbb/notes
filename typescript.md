@@ -400,6 +400,7 @@ tom.id = 9527;
 
 1. 接口的写法就是对象的写法，后面的值就是他属性的类型。
 2. 在接口的书写中，后面可以使用分号来分割语句。
+3. 只读属性存在于 对象 数组 元祖
 
 ### 在对象中使用定义属性的类型
 
@@ -440,6 +441,14 @@ fibonacci.push('8');
 ```js
 let arr: (string | number)[] = ['1', '2', '3', 5]
 ```
+#### 数组的 readonly
+
+```typescript
+const arr1: readonly number[] = [1, 2];
+```
+
+
+
 
 #### 注意
 
@@ -560,6 +569,16 @@ let cat = buildName(undefined, 'Cat');
 默认值的参数不受可选参数后面不能跟必选参数的限制。
 
 默认值的参数就相当于可选参数。
+
+### 函数参数只读
+
+```typescript
+const fn = function(a: string, b: readonly number[]) {
+    
+}
+```
+
+
 
 ### 重载
 
@@ -967,6 +986,16 @@ function plus(a: number, b: number): number {
   return a + b
 }
 const a: Iplus = plus
+```
+
+### 泛型中默认类型
+
+* 默认类型用等号来表示
+
+```typescript
+class A<T = {}> {
+    
+}
 ```
 
 
