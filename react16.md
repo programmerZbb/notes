@@ -1820,6 +1820,16 @@ import { combineReducers } from 'redux-immutable'
 
 * react 16.8 新增
 
+## 0. 背景
+
+* class 编写的组件
+
+  > 难以复用状态逻辑
+  >
+  > 难以捉摸的生命周期
+  >
+  > 混乱的副作用
+
 ## 1. 开始
 
 * react hooks 不再继承 Component 从 react 中，使用纯函数，不再使用 class 定义类的方式。
