@@ -369,6 +369,21 @@ let tom: Person = {
 
 上例中，任意属性的值允许是 `string`，但是可选属性 `age` 的值却是 `number`，`number` 不是 `string` 的子属性，所以报错了。`propName` 只是一个代称，可以使用其他的来代替，使用一个 p 也是可以的。
 
+#### 另一种任意类型
+
+* 在定义 interface 的时候，如果什么都没写，则这个对象的属性可以是任何值
+
+  ```typescript
+  interface IType = {}
+  
+  const types: IType = {
+    test1: '111',
+    test2: 222
+  }
+  ```
+
+  
+
 ### 只读属性
 
 有时候我们希望一个属性在创建的时候被赋值，其他任何情况不能再改变该值，那么可以使用到`readonly`定义只读属性。类似于`const`.
@@ -400,6 +415,7 @@ tom.id = 9527;
 
 1. 接口的写法就是对象的写法，后面的值就是他属性的类型。
 2. 在接口的书写中，后面可以使用分号来分割语句。
+3. 只读属性存在于 对象 数组 元祖
 
 ### 在对象中使用定义属性的类型
 
@@ -440,6 +456,14 @@ fibonacci.push('8');
 ```js
 let arr: (string | number)[] = ['1', '2', '3', 5]
 ```
+#### 数组的 readonly
+
+```typescript
+const arr1: readonly number[] = [1, 2];
+```
+
+
+
 
 #### 注意
 
@@ -561,6 +585,16 @@ let cat = buildName(undefined, 'Cat');
 
 默认值的参数就相当于可选参数。
 
+### 函数参数只读
+
+```typescript
+const fn = function(a: string, b: readonly number[]) {
+    
+}
+```
+
+
+
 ### 重载
 
 重载允许一个函数接受不同数量或类型的参数时，作出不同的处理。
@@ -591,7 +625,7 @@ let cat = buildName(undefined, 'Cat');
 
 在 tsx 语法（React 的 jsx 语法的 ts 版）中必须用后一种。
 
-类型断言就是在联合类型的情况下，对其中的一个类型进行if的赛选。
+类型断言就是在==联合类型==的情况下，对其中的一个类型进行if的赛选。
 
 ```ts
 function getLength(something: string | number): number {
@@ -607,7 +641,7 @@ function getLength(something: string | number): number {
 
 断言只能断言联合类型中的一个类型，也可以使用一种全部包含联合类型的类型，包含一个或多个。
 
-==注意：在使用断言的时候，后续的具体使用都要<类型>值的形式来使用。==
+==注意：在使用断言的时候，后续的具体使用都要<类型>值的形式来使用。类型的断言使用的interface所以跟着的类型是大写的==
 
 ## 声明文件
 
@@ -728,6 +762,17 @@ npm install @types/node --save-dev
 ```ts
 type Name = string
 ```
+
+应用：
+
+```typescript
+type PlusType = (a: number, b: number) => number;
+const plues: PlusType = (a: number, b: number): number => {
+    return a + b
+}
+```
+
+
 
 ## 字符串字面量类型
 
@@ -956,6 +1001,16 @@ function plus(a: number, b: number): number {
   return a + b
 }
 const a: Iplus = plus
+```
+
+### 泛型中默认类型
+
+* 默认类型用等号来表示
+
+```typescript
+class A<T = {}> {
+    
+}
 ```
 
 

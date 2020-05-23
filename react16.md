@@ -1860,6 +1860,8 @@ export default () => {
 * 注意：在使用函数式组件，每次都会执行函数内部的语句。相当于生命周期的 render
 * 设置多个 state 直接在后面写即可。
 * 设置多个 state  并不会多次render组件，会集中一次render。
+* useState 在修改 state 的时候是替换，并不是合并，因此在设置对象类型的变量的时候，一定要把全部的key写出来。
+* 变量的使用，直接使用不用再使用 this.state 来调用
 
 ## 1.3 useEffect
 
@@ -1879,6 +1881,7 @@ export default () => {
   useEffect(() => {
       console.log('componentDidMount')
   }, [])
+  // 不依赖props 和state中的任意值
   ```
 
 * componentWillReceiveProps
