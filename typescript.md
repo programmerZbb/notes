@@ -369,6 +369,21 @@ let tom: Person = {
 
 上例中，任意属性的值允许是 `string`，但是可选属性 `age` 的值却是 `number`，`number` 不是 `string` 的子属性，所以报错了。`propName` 只是一个代称，可以使用其他的来代替，使用一个 p 也是可以的。
 
+#### 另一种任意类型
+
+* 在定义 interface 的时候，如果什么都没写，则这个对象的属性可以是任何值
+
+  ```typescript
+  interface IType = {}
+  
+  const types: IType = {
+    test1: '111',
+    test2: 222
+  }
+  ```
+
+  
+
 ### 只读属性
 
 有时候我们希望一个属性在创建的时候被赋值，其他任何情况不能再改变该值，那么可以使用到`readonly`定义只读属性。类似于`const`.
