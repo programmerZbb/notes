@@ -117,7 +117,6 @@ export default Hello
 
 ## 自定义 hook
 
-<<<<<<< HEAD
 * 自定义的 hook 没有一般没有ui，不需要做 view 的操作，抽离出一些公共的逻辑，一般情况连 props 都不需要传入
 * 自定义hook必须以 use 开头，比如 `useMousePosition`
 
@@ -137,13 +136,23 @@ export default Hello
   ```
 
   typing 配置是干什么的
-=======
 * 将组建逻辑提取到可复用的函数中
   * 为了增加和组件命名的区别，自定义 hook 也是一个函数，需要使用 use 开头的函数
   * 不通组件每次使用相同的 hook 不会共享同一个 state ，每次都是不同的
->>>>>>> 8ca4613022d9425c837b7ef7081b13ffc1aa2b03
 
+## useRef
 
+* 每次渲染数据都是独立的，怎样让每次的渲染产生联系呢
+* 使用 useRef 更改数据不会每次都更新组件
+
+```tsx
+const likeRef = useRef(0)
+
+// 获取到，永远能获取到最新的数据
+console.log(likeRef.current)
+```
+
+* 使用 useRef 能够获取真是的 DOM 节点
 
 
 
