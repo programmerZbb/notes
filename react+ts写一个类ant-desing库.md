@@ -150,9 +150,20 @@ const likeRef = useRef(0)
 
 // 获取到，永远能获取到最新的数据
 console.log(likeRef.current)
+// 设置也是一样的
+likeRef.current++
 ```
 
-* 使用 useRef 能够获取真是的 DOM 节点
+* 使用 useRef 能够获取真实的 DOM 节点
+
+```jsx
+<input type="text" ref={inputEle}/>
+// 不是用current来获取的
+// 但是能用 current 来设置
+inputEle.current.focus()
+```
+
+
 
 
 
@@ -164,4 +175,6 @@ console.log(likeRef.current)
 
    在接受鼠标事件的时候，传进的 e 的接口
 
-3. 
+3. HTMLInputElement 
+
+   这种的很多
