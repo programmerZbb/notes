@@ -1018,3 +1018,22 @@ class A<T = {}> {
 # 注意
 
 * 所有的类型都是在定义的时候规定的，在赋值的右边是不需要去定义类型的
+
+# tsconfig.json 文件
+
+* ts 项目中 `tsconfig.json`文件能配置 ts检查的规则
+
+## 1. null 和 undefined 问题
+
+* null 和 undefined 是所有类型的子类型，本来可以赋值给任何类型的变量，需要配置`strict`为 false
+
+  ```js
+  {
+      "compilerOptions": {
+          "strict": true,
+          //...
+      }
+  }
+  ```
+
+  

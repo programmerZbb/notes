@@ -146,6 +146,28 @@ export default Hello
 
 * useState 的数据每次渲染都是新的数据， 不会随着时间改变。比如说 onclick 绑定了一个常量，并不会随着 常量值在后期被设置而变化，会一直绑定的原来的值。每次渲染都是独立的。
 * 因此得到结论，在任意一次渲染中，props 和 state 都是独立的。使用到他们的任何值也是独立的。
+## useRef
+
+* 每次渲染数据都是独立的，怎样让每次的渲染产生联系呢
+* 使用 useRef 更改数据不会每次都更新组件
+
+```tsx
+const likeRef = useRef(0)
+
+// 获取到，永远能获取到最新的数据
+console.log(likeRef.current)
+// 设置也是一样的
+likeRef.current++
+```
+
+* 使用 useRef 能够获取真实的 DOM 节点
+
+```jsx
+<input type="text" ref={inputEle}/>
+// 不是用current来获取的
+// 但是能用 current 来设置
+inputEle.current.focus()
+```
 
 
 
@@ -159,4 +181,6 @@ export default Hello
 
    在接受鼠标事件的时候，传进的 e 的接口
 
-3. 
+3. HTMLInputElement 
+
+   这种的很多

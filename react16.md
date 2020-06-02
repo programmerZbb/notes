@@ -415,6 +415,41 @@ import svg from '.tet.png'
 * 说白了还是为了代码的复用拆分
 * 组件是将 props 转换为 UI，而高阶组件是将组件转换为另一个组件。
 
+## context 使用
+
+* 之前共享一些数据需要组件一层一层的传递，不是很方便，react提供了 context ，一个组件内的所有子组件都能够共享这些数据
+
+  例如当前认证的用户、主题或首选语言。
+
+  使用：
+
+```jsx
+// 公共部分，创建 context
+const ThemeContext = React.createContext('light')
+
+// 父组件
+<ThemeContext.Provider value="dark">
+   <TestContext></TestContext>
+</ThemeContext.Provider>
+    
+// 子组件
+ // 绑定context
+this.contextType = ThemeContext
+ 
+<div>
+    test
+    <div>{this.context}</div>
+</div>
+```
+
+### 思考
+
+* Context 主要应用场景在于*很多*不同层级的组件需要访问同样一些的数据。请谨慎使用，因为这会使得组件的复用性变差。
+
+* 如果传递的组件太深层，也可以使用子组件在父组件封装好，直接传递组件的方式（子组件的数据直接由父组件获取，中间组件并不需要知道传递了什么值）
+
+  参考：<https://react.docschina.org/docs/context.html>
+
 ## 关于高阶组件（hoc）、mixin、render prop 的思考
 
 * mixin 是 es5 中公共方法的提取，提供了完整的生命周期，和 vue 中的mixin 相似
@@ -516,7 +551,12 @@ export default Home
 
 ```
 
+## 合成事件
 
+* react 事件传递的 event 不是原生事件，是包装的， React 事件系统一部分的 `SyntheticEvent` 包装器。
+* `SyntheticEvent` 实例将被传递给你的事件处理函数，它是浏览器的原生事件的跨浏览器包装器。除==兼容==所有浏览器外，它还拥有和浏览器原生事件相同的接口，包括 `stopPropagation()` 和 `preventDefault()`。
+* 当需要使用浏览器底层事件的时候，只需要使用 `nativeEvent`属性来获取即可。
+* 如果你想异步访问事件属性，需要调用 `event.persist()`，此方法会从池中移除合成事件，允许用户代码保留对事件的引用。
 
 # 6. react 思考
 
