@@ -163,7 +163,31 @@ likeRef.current++
 inputEle.current.focus()
 ```
 
+## useContext
 
+* 在 hook 中使用 context
+
+  ```tsx
+  // 公共部分，创建 context
+  const ThemeContext = React.createContext('light')
+  
+  // 父组件
+  <ThemeContext.Provider value="dark">
+     <TestContext></TestContext>
+  </ThemeContext.Provider>
+  
+      // 子组件
+   // 绑定context
+  import { useContext } from 'react'
+  const theme = useContext(ThemeContext)
+   
+  <div>
+      test
+      <div>{this.context}</div>
+  </div>
+  ```
+
+  
 
 
 
