@@ -551,7 +551,12 @@ export default Home
 
 ```
 
+## 合成事件
 
+* react 事件传递的 event 不是原生事件，是包装的， React 事件系统一部分的 `SyntheticEvent` 包装器。
+* `SyntheticEvent` 实例将被传递给你的事件处理函数，它是浏览器的原生事件的跨浏览器包装器。除==兼容==所有浏览器外，它还拥有和浏览器原生事件相同的接口，包括 `stopPropagation()` 和 `preventDefault()`。
+* 当需要使用浏览器底层事件的时候，只需要使用 `nativeEvent`属性来获取即可。
+* 如果你想异步访问事件属性，需要调用 `event.persist()`，此方法会从池中移除合成事件，允许用户代码保留对事件的引用。
 
 # 6. react 思考
 
