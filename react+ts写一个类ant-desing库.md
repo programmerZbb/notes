@@ -193,7 +193,10 @@ inputEle.current.focus()
   </div>
   ```
 
-  
+
+## 注意
+
+1. 所有的 hook 都需要写到函数组件里面，不能写到函数外边
 
 
 
