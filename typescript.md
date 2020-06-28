@@ -18,6 +18,13 @@
 
 ...
 
+## 1.3 静态和动态类型语言
+
+* 静态类型语言：在编译阶段确定所有变量的类型
+* 动态类型语言：在执行阶段确定所有变量的类型
+
+![动态和静态](./picture/tsPic/动态和静态.jpg)
+
 # 2. 开始使用
 
 全局安装 ts 
@@ -66,6 +73,27 @@ tsc hello.ts
 当命令行上指定了输入文件时，`tsconfig.json`文件会被忽略。（直接使用 tsc index.ts 的形式）
 
 * 如果要在报错的时候终止 js 文件的生成，可以在 `tsconfig.json` 中配置 `noEmitOnError` 即可。
+
+## webpack中配置 ts
+
+* 在 rules 中配置
+* npm i ts-loader -D
+
+```js
+module: {
+  rules: [
+    {
+      test: /\.tsx?$/i,
+      use: [{
+        loader: 'ts-loader'
+      }],
+      exclude: /node_modules/
+    }
+  ]
+}
+```
+
+
 
 # 3. 基础
 
