@@ -76,6 +76,8 @@ tsc hello.ts
 
 ## webpack中配置 ts
 
+* `npm i webpack webpack-cli webpack-dev-server -D`
+
 * 在 rules 中配置
 * npm i ts-loader -D
 
@@ -93,7 +95,63 @@ module: {
 }
 ```
 
+### 测试环境配置
 
+```js
+module.exports = {
+    devtool: 'cheap-module-eval-source-map'
+}
+```
+
+* 开启 source map ，cheap 代表忽略文件的类信息，在调试的时候类信息是没有用的；module 代表定位 ts源码，不是 ts-loader 解析之后的js代码；eval-source-map 把 source map以dataurl 的方式把文件中，重编译速度非常快，不用担心性能问题
+
+### 生产环境配置
+
+```js
+const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+module.exports = {
+    plugins: [
+        new CleanWebpackPlugin()
+    ]
+}
+```
+
+* 安装 clean-webpack-plugin，每次成功构建之后帮助我们清楚 dist 目录，清空缓存，清除无用的文件。因为在每次构建的时候文件名都是 hash生成的，多次构建之后就会产生无用的文件。
+
+### 使用 webpack-merge 将两个文件合并
+
+```js
+const merge = require('webpack-merge')
+const baseConfig = require('./webpack.base.config')
+const devConfig = require('./webpack.dev.config')
+const proConfig = require('./webpack.pro.config')
+
+let config = process.env.NODE_ENV === 'development' ? devConfig : proConfig
+
+module.exports = merge(baseConfig, config)
+```
+
+### 启动命令配置
+
+```js
+"start": "cross-env NODE_ENV=development webpack-dev-server --hot --open --config ./build/webpack.config.js"
+```
+
+* 需要安装：
+
+  ```shell
+  npm i cross-env
+  ```
+
+  
+
+## 初始化一个 ts 项目
+
+```shell
+tsc --init
+```
+
+* 会生成一个 tsconfig 文件，里面就是 ts 的配置
 
 # 3. 基础
 
