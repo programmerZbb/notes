@@ -238,6 +238,8 @@ function fn(): void {
 let unusable: void = undefined
 ```
 
+* 在js 中使用 void 跟一个变量来定义 undefined ，因为 js 中没有 undefined 这个保留字，能够自定义一个 undefined 来覆盖全局的 undefined，因此用 void 0 这种方式来产生真正的 undefined。
+
 ### null 和 undefined
 
 在 TypeScript 中，可以使用 `null` 和 `undefined` 来定义这两个原始数据类型：
@@ -322,6 +324,25 @@ something = 7;
 something.setName('Tom');
 ```
 
+#### never 类型
+
+* never 类型代表无返回，联 undefined 也不会返回，永远不会返回
+
+  ```js
+  // never
+  let a: () => never = () => {
+      throw new Error('111')
+  }
+  
+  let b = () => {
+    white (true) {
+      
+    }
+  }
+  ```
+
+  
+
 ### ts 类型推论
 
 在定义的时候如果没有赋值，则 ts 会把该变量的类型推断成 any 类型；如果在定义的时候已经赋值了，则会把变量的类型推断为等号后面的类型，在之后的赋值中不能再改变该变量的类型。
@@ -405,6 +426,29 @@ let tom: Person = {
 定义的变量采用了接口的类型，不能比接口少一些属性，也不能多出一些属性。因此，赋值额时候变量的形状必须和接口的形状保持一致。
 
 接口的类型也可以定义为 any 类型，在赋值的时候能够赋值为任意的类型。
+
+#### 鸭子类型
+
+* 在前后端定义的接口中，获取到后端的字段是定义的接口的必要条件
+
+```typescript
+// interface
+interface Iprops {
+    name: string;
+    age: number;
+}
+const fn = (arg: Iprops) => {
+    console.log(arg)
+}
+const result = {
+    name: 'zzz',
+    age: 11,
+    gender: 'female'
+}
+fn(result)
+```
+
+* 多了一个 gender 属性并没有报错
 
 ### 可选属性
 
@@ -639,6 +683,9 @@ let sum: (x: number, y: number) => number = function (x: number, y: number): num
 
 ts 中冒号的右边是类型和实际的代码逻辑没有什么关系。
 
+* 一个变量定义了函数类型之后，给它赋值的函数就不必要再定义类型了。
+* 函数类型的定义使用的是 冒号，函数类型的赋值使用的等号，分清楚
+
 ### 函数参数的可选
 
 可选参数的写法与接口的可可选属性的写法是一样的
@@ -679,6 +726,29 @@ const fn = function(a: string, b: readonly number[]) {
 }
 ```
 
+### 定义函数的三种方式
+
+1. 直接定义类型
+
+```js
+let add: (x: number, y: number) => number
+```
+
+2. 接口定义
+
+```typescript
+interface Add {
+  (x: number, y: number): number
+}
+// 接口定义函数返回值用 冒号 和其他的都一样
+```
+
+3. 类型别名
+
+```typescript
+type Add = (x: number, y: number) => number
+```
+
 
 
 ### 重载
@@ -695,7 +765,7 @@ const fn = function(a: string, b: readonly number[]) {
 
 ## 类型断言
 
-类型断言（type assertion）可以用来手动指定一个值的类型。
+类型断言（type assertion）可以用来手动指定一个值的类型。就是我们告诉编辑器我们知道这个类型就是指定的类型
 
 #### 语法
 
@@ -886,8 +956,8 @@ let xcatliu: [string, number] = ['Xcat Liu', 25];
 
 ### 注意
 
-* 元祖是特俗的数组，在定义的时候长度不能变，要和左侧的类型对齐。
-* 元祖可以使用数组的方法来添加元素，比如说使用 push 方法。
+* 元祖是特殊的数组，在定义的时候长度不能变，要和左侧的类型对齐。
+* 元祖可以使用数组的方法来添加元素，比如说使用 push 方法。但是不能进行越界访问，实际开发的过程中不建议这样使用
 
 ## 枚举
 
@@ -925,9 +995,88 @@ enum Days {sun = 7, mon =1, tue, wed, thu}
 
 * 枚举的手动赋值也可以不为数字，需要使用断言来避免ts检测出错，ts枚举的实质就是后面的值等于前面的值＋1，当前面一个元素手动赋值成字符串类型的话，后面也需要手动赋值成为字符串类型的值。
 
+### 计算值
+
+* 枚举中的计算值会被保留在执行阶段才会执行，就是不会立即执行
+
 ### 常亮枚举
 
 * 不能存在计算值，比如 `arr.length`
+* 当我们不需要一个对象，只需要一个对象的值的话就会使用到常量枚举
+
+```typescript
+const enum Month {
+    Jan = 1,
+    Feb,
+    Jun
+}
+let test2 = [Month.Feb, Month.Jun]
+console.log(test2)
+```
+
+
+
+### 字符串枚举
+
+```typescript
+enum Message {
+  Success: '成功',
+  Fail: '失败'
+}
+```
+
+* 注意字符串枚举不能够反向映射
+
+### 异构枚举
+
+* 就是数字 + 字符串枚举
+
+```typescript
+enum Answer {
+  N,
+  Y = 'yes'
+}
+```
+
+### 枚举类型
+
+* 枚举也可以作为一种类型来使用
+
+```typescript
+// 枚举类型
+enum E {
+    a,
+    b
+}
+enum F {
+    a = 1,
+    b = 2
+}
+enum G {
+    a = 'test1',
+    b = 'test2'
+}
+
+let e1: E = 5
+let e2: F = 5
+let e3: G = G.a
+let e4: G.a = G.a
+```
+
+* 数字类型只要是数字就可以，字符串枚举类型只能取固定的值
+
+### 枚举思考
+
+* 在 js 中能够使用如下的方式去赋值
+
+```js
+var obj = {}
+var a
+obj[a = 1] = 'test'
+// obj[1] === 'test'
+```
+
+
 
 ## 类
 
@@ -1111,12 +1260,12 @@ class A<T = {}> {
 
 ## 1. null 和 undefined 问题
 
-* null 和 undefined 是所有类型的子类型，本来可以赋值给任何类型的变量，需要配置`strict`为 false
+* null 和 undefined 是所有类型的子类型，本来可以赋值给任何类型的变量，需要配置`strictNullChecks`为 false
 
   ```js
   {
       "compilerOptions": {
-          "strict": true,
+          "strictNullChecks": true,
           //...
       }
   }
