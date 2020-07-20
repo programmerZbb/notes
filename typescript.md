@@ -1250,6 +1250,72 @@ class A<T = {}> {
 }
 ```
 
+### 泛型的约束
+
+* interface 也可以对泛型进行约束，因为泛型是一种类型，所以该约束是采用继承的方式
+
+  ```typescript
+  interface ILength {
+      length: number;
+  }
+  class Log<T extends ILength> {
+      
+  }
+  function fn<T extends ILength> (value: T) {
+      console.log(value.length)
+  }
+  // 这样使用 T 就有了length 属性
+  ```
+
+### 泛型的好处
+
+1. 函数和类可以轻松的支持多种类型，增强程序的可扩展性
+2. 不必写多条函数重载，冗长的联合类型生命，增强代码可读性
+3. 灵活控制类型之间的约束
+
+# ts 的类型检查机制
+
+## 1. 类型推断
+
+* 第一种情况看上班
+
+* 第二种情况发生在函数定义默认参数的时候
+
+  ```typescript
+  let c = (x = 1) => x + 1
+  // 全部推断成 number
+  ```
+
+  * 最佳通用类型推断
+
+  ```typescript
+  let a = [1, '2']
+  // number 和 string 的联合类型 	
+  ```
+
+### 从左向右的类型推断
+
+* 通常发生在事件处理中
+
+  ```typescript
+  window.onkeydown = (event) => {
+      
+  }
+  // event 就被推断为 内部的类型
+  ```
+
+### 覆盖类型推断
+
+* 有时候 ts 不逼你更了解你的代码，你可以使用类型断言来覆盖类型推断（不推荐使用），改变上下文
+
+```typescript
+interface IFn {
+    bar: number;
+}
+let fn = {} as IFn
+fn.bar // 不报错
+```
+
 
 
 # 注意
