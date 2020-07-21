@@ -767,7 +767,8 @@ type Add = (x: number, y: number) => number
 
 ```
 
-
+1. 写几个函数不同参数的定义
+2. 在一个宽泛的函数中写出它的具体实现（any 参数）
 
 ## 类型断言
 
@@ -1096,19 +1097,48 @@ typescript 类的使用规则：https://ts.xcatliu.com/advanced/class.html
 
 * publicre
 
-* private 子类也不能访问
+* private 子类也不能访问，甚至连实例对象也不能直接访问，只能在 class 构造类中内部使用
 
-* Protected 外界不能访问，子类可以s
+  如果 private 作用在 constructor 上，则这个类既不能被实例，也不能被继承
+
+* Protected 外界不能访问，子类可以访问。不能在实例中访问。
+
+  如果 constructor 定义为 protected ，则这么类能被继承但是不能被实例，能作为一个基类。
 
 * readonly 只读的，不能修改
 
 * 静态的 
 
   static + 上面的修饰符
+  
+  静态的属性可以被继承，不需要写多余的继承代码
 
 ### 面向对象
 
 封装、继承、多态
+
+### ==重要==
+
+1. es6 和 typescript 中的非函数类型的属性都绑定在实例对象上边，不是绑定在实例对象的原型上面。
+
+2. 于 es 不同的是属性需要有初始值或者在构造函数中被初始化。（es 中直接在class中写一个name属性，不需要被赋值默认值或者constructor中被赋值）
+
+3. Es 中的属性不需要在外边定义，直接在 constructor 中定义也是可以的，但是ts 中的属性必须要在class 中定义。
+
+4. constructor 的参数也可以使用修饰符，使用了修饰符就不用再在 class 中定义了，会自动定义为实例属性
+
+5. 类的继承除了new 的时候初始化的实例属性需要写额外的代码（super()），其他的都能直接使用。
+
+6. ts 中方法的定义必须使用省略的书写，因为适应变量定义方法哪种会识别成变量，一个变量就必须要赋值
+
+   ```typescript
+   abstract eat(food: string): void
+   // 正确
+   public test: () => void
+   // 错误，提示 test 没有赋值
+   ```
+
+7. 所有方法都应该写到 constructor 后面，不然就识别不了
 
 ### 类使用 interface
 
@@ -1146,9 +1176,63 @@ interface RadioWithBattery extends Battery {
 }
 ```
 
+1. 接口只能约束类的公有成员，不能约束 构造函数
+
+2. 接口也可以继承类，这个类中的成员就会添加到这个约束中
+
+   ```typescript
+   class A {
+     name = 1
+   }
+   interface Ia extends A {
+   	
+   }
+   class B implements Ia {
+     name = 2
+   }
+   
+   ```
+
+3. 接口能够抽离出类的公有、私有、保护的成员，接口继承类的私有成员但是不能被实现，实现会提示私有成员保护。同理保护的成员也一样。
+
+   ![class & interface](./picture/tsPic/class & interface.jpg)
+
+   因此，接口在继承class时要考虑是否继承类的私有成员和保护成员。
+
+### 抽象类
+
+1. 抽象类 不能被实例，只能被继承
+2. 抽象类中的抽象方法相当于指定了一个方法名，知道子类中有不同的实践，所有抽象类中的抽象方法不需要具体的方法实现，只有一个方法名
+
+```typescript
+abstract class Animal {
+    constructor (name: string) {
+        this.name = name
+    }
+    public name: string
+    abstract eat(food: string): void
+    // public test: () => void
+}
+console.log(Animal)
+class Cat extends Animal {
+    constructor (name: string) {
+        super(name)
+    }
+    public eat(food: string) {
+
+    }
+}
+```
+
+### 小技巧（ts 的特殊类型 this）
+
+1. 可以使用方法返回 this ，实现链式调用
+
 ## 泛型（牛的）（generics）
 
 泛型（Generics）是指在定义函数、接口或类的时候，不预先指定具体的类型，而在使用的时候再指定类型的一种特性。
+
+==可以把泛型想象成一个函数的参数，形参并不需要具体的值。泛型也可以叫做类型参数==
 
 ```js
 function show<T>(arg: T): T {
@@ -1213,6 +1297,11 @@ class Queue<T> {
 const queue = new Queue<number>()
 ```
 
+==注意==
+
+1. 泛型不能作用于类的静态成员
+2. 类中的泛型如果没有指定类型，会当成一个任意值来执行（多个任意值？函数能不能是任意类型）
+
 ### interface 中使用泛型
 
 ```typescript
@@ -1242,6 +1331,10 @@ function plus(a: number, b: number): number {
   return a + b
 }
 const a: Iplus = plus
+// 函数描述中使用泛型
+interface Log<T> {
+  (value: T): T
+}
 ```
 
 ### 泛型中默认类型
@@ -1252,9 +1345,13 @@ const a: Iplus = plus
 class A<T = {}> {
     
 }
+interface Log<T = string> {
+  (value: T): T
+}
+
 ```
 
-
+* 使用默认类型之后，在实际使用过程中的泛型就不需要指定具体的类型
 
 # 注意
 
