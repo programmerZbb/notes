@@ -755,6 +755,8 @@ type Add = (x: number, y: number) => number
 
 重载允许一个函数接受不同数量或类型的参数时，作出不同的处理。
 
+好处就是不需要为了相似的功能选用不同的函数名称，增强了函数的可读性
+
 就是接受number的参数的时候，return 一个number类型的数据。接受 string的参数，返回string类型的数据。
 
 可以从上到下重复定义函数，函数的调用的时候从上到下匹配类型，从而表述清楚函数的返回类型。
@@ -1350,8 +1352,84 @@ interface Log<T = string> {
 }
 
 ```
+### 泛型的约束
+
+* interface 也可以对泛型进行约束，因为泛型是一种类型，所以该约束是采用继承的方式
+
+  ```typescript
+  interface ILength {
+      length: number;
+  }
+  class Log<T extends ILength> {
+      
+  }
+  function fn<T extends ILength> (value: T) {
+      console.log(value.length)
+  }
+  // 这样使用 T 就有了length 属性
+  ```
+
+### 泛型的好处
+
+1. 函数和类可以轻松的支持多种类型，增强程序的可扩展性
+2. 不必写多条函数重载，冗长的联合类型生命，增强代码可读性
+3. 灵活控制类型之间的约束
+
+# ts 的类型检查机制
+
+## 1. 类型推断
+
+* 第一种情况看上班
+
+* 第二种情况发生在函数定义默认参数的时候
+
+  ```typescript
+  let c = (x = 1) => x + 1
+  // 全部推断成 number
+  ```
+
+  * 最佳通用类型推断
+
+  ```typescript
+  let a = [1, '2']
+  // number 和 string 的联合类型 	
+  ```
+
+### 从左向右的类型推断
+
+* 通常发生在事件处理中
+
+  ```typescript
+  window.onkeydown = (event) => {
+      
+  }
+  // event 就被推断为 内部的类型
+  ```
+
+### 覆盖类型推断
+
+* 有时候 ts 不逼你更了解你的代码，你可以使用类型断言来覆盖类型推断（不推荐使用），改变上下文
+
+```typescript
+interface IFn {
+    bar: number;
+}
+let fn = {} as IFn
+fn.bar // 不报错
+```
+
 
 * 使用默认类型之后，在实际使用过程中的泛型就不需要指定具体的类型
+
+## 2. 类型的兼容性
+
+* 当一个类型 Y 可以被赋值给另一个类型 X 时，我们就可以说类型 X 兼容类型 Y。说白了 还是 duck typeing
+
+  口诀：
+
+  结构之间兼容：成员少的兼容成员多的
+
+  函数之间兼容：参数多的兼容参数少的
 
 # 注意
 
