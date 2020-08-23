@@ -727,6 +727,11 @@ redis-cli.exe -h 127.0.0.1 -p 6379
 
 ![redis 启动](..\picture\node-practice\redis 启动.png)
 
+Mac:
+
+1. redis-server
+2. redis-cli
+
 ### 3. 基本操作
 
 * redis 是 key value 的形式，存放的字符串的形式，如果需要保存对象，需要转换成字符串。

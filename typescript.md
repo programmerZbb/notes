@@ -383,7 +383,7 @@ myFavoriteNumber = true;
 
 #### 访问联合类型的属性和方法
 
-> 当typescript 不确定一个联合类型的变量到底是哪个类型的时候，我们只能访问次联合类型的所有类型里共有的属性或方法。
+> 当typescript 不确定一个联合类型的变量到底是哪个类型的时候（该类型还未被赋值具体的值），我们只能访问次联合类型的所有类型里共有的属性或方法。
 
 联合类型的变量在被赋值的时候，会根据类型推论的规则推断出一个类型：（这个推出的类型是暂时的，在下一个赋值之前都可以用这个类型的属性，一旦有下一个赋值，就只能调用下一个赋值的属性）
 
@@ -749,6 +749,35 @@ interface Add {
 type Add = (x: number, y: number) => number
 ```
 
+* 注意：上面三种方式的函数参数都不是强制限制的，他们只是定义了函数的形状，但是函数具体使用的时候到底长什么样，还是要具体的函数实现的时候来定义的，类似于下边的 fn4 才会强制限定函数使用规范。
+* 说白了函数的上述三种定义只是函数的重载，下面函数真正张什么样，只要包含上边的函数就行了
+
+```typescript
+interface IFn {
+    (name: string): string;
+    // [property: string]: string;
+}
+
+const fn1: IFn = () => {
+    return ''
+}
+
+type IFn1 = (name: string) => string
+
+const fn2: IFn1 = () => {
+    return '111'
+}
+
+const fn3: (name: string) => string = () => {
+    return ''
+}
+
+function fn4(name: string): string {
+    return '11'
+}
+fn4('1')
+```
+
 
 
 ### 重载
@@ -770,7 +799,7 @@ type Add = (x: number, y: number) => number
 ```
 
 1. 写几个函数不同参数的定义
-2. 在一个宽泛的函数中写出它的具体实现（any 参数）
+2. ==在一个宽泛的函数中写出它的具体实现==（any 参数）
 
 ## 类型断言
 
@@ -1423,13 +1452,15 @@ fn.bar // 不报错
 
 ## 2. 类型的兼容性
 
-* 当一个类型 Y 可以被赋值给另一个类型 X 时，我们就可以说类型 X 兼容类型 Y。说白了 还是 duck typeing
+* 当一个类型 Y 可以被赋值给另一个类型 X 时，我们就可以说类型 X 兼容类型 Y。说白了 还是 duck typeing，就是说一个变量被规定了类型并且被赋值了，还是能被赋值为其他的类型.==兼容的一定是变量之间的兼容，直接用function定义的函数变量不能兼容，函数也必须用三种定义方式定义的才能兼容==
 
   口诀：
 
   结构之间兼容：成员少的兼容成员多的
 
   函数之间兼容：参数多的兼容参数少的
+  
+  普通类型（联合类型和普通类型）：多的兼容少的
   
   * 固定参数能够兼容可选参数和剩余参数
   * 可选参数不能兼容其他的参数
@@ -1441,6 +1472,18 @@ fn.bar // 不报错
   返回值得类型兼容符合鸭子类型的特性
 
 * ==函数重载就是一个关于参数和返回值的很好的例子==
+
+```typescript
+let fn11 = function(name: string): string {
+    return name
+}
+let fn22 = function(name: string, age: number): string {
+    return name
+}
+fn22 = fn11
+```
+
+
 
 ### 函数兼容
 
@@ -1472,6 +1515,14 @@ fn.bar // 不报错
 
 * 判断实例是否属于某个类
 
+```typescript
+ if (lang instanceof Java) {
+        lang.helloJava()
+    }
+```
+
+
+
 ## 2. in 关键字
 
 * 判断某个属性是否在这个对象中
@@ -1482,15 +1533,284 @@ fn.bar // 不报错
   }
   ```
 
+
+## 3. typeof
+
+* 只是能做到，但是只能一些Java中存在的基本类型
+
+## 4. 创建类型保护的函数
+
+* 返回类型谓词
+
+```typescript
+enum Type { Strong, Week }
+
+let aa: Type.Strong = 1
+let bb: Type.Week = 2
+// aa = bb
+
+class Java {
+    helloJava() {
+        console.log('is java')
+    }
+}
+
+class JavaScript {
+    helloJavaScript() {
+        console.log('is javascript')
+    }
+}
+
+function isJava(lang: Java | JavaScript): lang is Java {
+    return (lang as Java).helloJava !== undefined
+}
+// 上面函数返回类型谓词，参数+is+类型
+
+function getLanguage(type: Type) {
+    let lang = type === Type.Strong ? new Java() : new JavaScript()
+    // if (lang as Java) {
+    //     (lang as Java).helloJava()
+    // }
+    if (isJava(lang)) {
+        lang.helloJava()
+    }
+}
+
+```
+
+# 高级类型
+
+## 1. 交叉类型
+
+* 两个 interface 可以结合成一个类型，和联合类型不一样的是这两个类型的并集，改变量拥有了两个类型所有的属性。
+* 联合类型是改变量在赋值的时候只能取其中的一种类型，交叉类型是取所有的类型的属性。但是交叉类型在使用的时候要注意，两种类型不能存在共同的属性，要不然会交叉出 never 类型。
+* 交叉类型的两个类型必须没有共同的属性
+
+```typescript
+interface Test1 {
+  name: string;
+}
+interface Test2 {
+  age: number;
+}
+
+let obj: Test1 & Test2 = {
+  name: '111',
+  age: 111
+}
+```
+
+* 交叉类型规则：共同的属性是两者的并集，交叉类型，如果没有公共的类型，则是never
+
+```typescript
+interface IName2 {
+    name: string;
+    age: string | number;
+}
+interface IAge {
+    age: number | boolean;
+}
+
+let a2: IName2 & IAge = {
+    name: '111',
+    age: 111
+}
+```
+
+
+
+## 2. 联合类型
+
+* 联合类型可以是具体的字符串和数字
+
+  ```typescript
+  let a: '1' | '2' = '1'
+  let b: 1 | 2 = 1
+  ```
+
+*  联合类型规则：interface 的公共属性会是两个的联合类型，非公共的则是具体的类型
+
+### 使用联合类型的某些共同属性创建类型保护区域
+
+* 存在的问题，让匹配不到的类型报错，undefined 的在ts 中最好能报错。在"漏斗"中，没有匹配到的类型，会一直到最后，每次脱去一个类型
+
+  ```typescript
+  interface Square {
+      kind: 'square';
+      length: number;
+  }
+  interface Rectangle {
+      kind: 'rectangle';
+      width: number;
+      height: number;
+  }
+  interface Circle {
+      kind: 'circle';
+      radius: number;
+  }
   
+  let sha: Square | Rectangle = {
+      kind: 'square',
+      length: 1,
+      // width: 1
+  }
+  
+  type Shape = Square | Rectangle | Circle
+  function area(s: Shape) {
+      switch (s.kind) {
+          case 'square':
+              return s.length * s.length
+          case 'rectangle':
+              return s.width * s.height
+          case 'circle':
+              return s.radius * s.radius
+          default:
+          // 此时类型已经拖完，就是never类型
+              return ((e: never) => {throw new Error(e)})(s)
+      }
+  }
+  ```
+
+* 为什么要这样做，ts 中最好让没考虑到的情况直接在编译阶段就报错。也是为了类型约束
+
+## 3. 索引类型
+
+### 索引类型的查询操作符
+
+* `keyof T`
+
+```typescript
+interface Obj {
+  name: string;
+  age: number;
+}
+let a: keyof Obj
+// a 就是所有属性的联合类型
+```
+
+### 索引访问操作符
+
+* `T[k]`
+
+```typescript
+interface IObject {
+    name: number;
+    age: number;
+}
+
+type Test1 = keyof IObject
+type Test2 = IObject['age']
+```
+
+* 最强应用
+
+```typescript
+function getValues<T ,K extends keyof T>(obj: T, keys: K[]): T[K][] {
+    return keys.map(key => obj[key])
+}
+
+let obj1 = {
+    name: '111',
+    age: 111
+}
+getValues(obj1, ['name', 'age'])
+```
+
+
+
+## 4. 映射类型
+
+* 把一个旧的类型映射成一个新的类型
+
+1. 把一个接口所有属性变成一个只读的类型
+
+   ```typescript
+   interface Obj {}
+   type ReadonlyObj = Readonly<Obj>
+   ```
+
+2. 变成可选属性
+
+   ```typescript
+   type PartialObj = Partial<Obj>
+   ```
+
+3. 抽取一些子集
+
+   ```typescript
+   type PickObj = Pick<Obj, 'a' | 'b'>
+   // 第二个参数就是要抽取的 key
+   ```
+
+* 以上三种是 同态，不会创建新的类型
+
+4. 加一些新的类型
+
+   非同态
+
+   ```typescript
+   type RecordObj = Record<'x' | 'y', Obj>
+   // 左侧是key，右侧是 value
+   ```
+
+## 5. 条件类型
+
+`T extends U ? X : Y`
+
+```typescript
+// (A | B) extends U ? X : Y
+// A extends U ? X : Y | B extends U ? X : Y
+```
+
+
+
+T 如果可以赋值给 U 类型，就返回 X 类型
+
+### 官方实现的条件类型
+
+* `Exclude<T, U>` 排除后边的类型
+* NonNullable<T> 不是 undefined 和null
+* Extract<T, U> 从 T 中抽取出可以赋值给 U 的类型
+* `RecturnType<T>` 获取函数返回值的类型
+
+```typescript
+type Diff<T, U> = T extends U ? never : T
+
+let diffType: Diff<'a' | 'b', 'a' | 'c' | 'e'> = 'b'
+
+type NotNull<T> = Diff<T, null | undefined>
+
+let type2: NotNull<string | undefined | number> = 1
+
+let type3: Exclude<'a' | 'b', 'a' | 'e' | 'f'>
+
+let test4: Extract<'a' | 'b', 'a' | 'c' | 'e'>
+
+let test5: NonNullable<'t' | null | 'a'>
+
+let test6: ReturnType<() => number> = 1
+```
+
+
 
 # 注意
 
 * 所有的类型都是在定义的时候规定的，在赋值的右边是不需要去定义类型的
+* 类型只能继承类型
+* 所有类型和 never 的联合类型，类型不变
+
+## 字面量和变量
+
+* js 中常规的类型就是字面量，比如 object
+
+# 工程篇
+
+
 
 # tsconfig.json 文件
 
 * ts 项目中 `tsconfig.json`文件能配置 ts检查的规则
+* 在项目中只要配置了 ts-loader 规则，就会自动读取 tsconfig 文件的配置
 
 ## 1. null 和 undefined 问题
 
@@ -1510,3 +1830,452 @@ fn.bar // 不报错
 ## 2. strictFunctionTypes
 
 可以修改tsconfig 中`strictFunctionTypes: false`
+
+## 3. 基本配置
+
+```js
+{
+  "target": "es5",  // 配置编译成的js 版本
+  "module": "commonjs", //编译成的模块系统
+}
+```
+
+* tsc 命令行指定编译版本
+
+  ```shell
+  tsc ./test.ts -t es3
+  # -t 代表 target
+  ```
+
+## 4. 模块化
+
+* es6 和 commonjs 的区别，commonjs 没有顶级导出，module.exports 会覆盖所有，es6 则可以喝 default 和普通的导出共存
+
+* ts 做了处理，统一采用commonjs 导出
+
+  default 导出使用 `exports['default'] `的方式
+
+  所有的模块都会加上 default 属性，因此在 node 模块中使用 es6 导出的数据的时候，可以使用 `obj.default`来获取
+
+### es module 和 commonjs 兼容
+
+* 尽量避免 es6 和 commonjs  模块混用，如果要混用 ts 提供了混用的方案
+
+导出：
+
+```typescript
+export = {
+  name: 111
+}
+// 所有的都要合并成一个导出，类似于 commonjs
+```
+
+引入：
+
+```typescript
+import test = require('./test.ts')
+```
+
+如果在 tsconfig 中配置了
+
+```js
+{
+  esModuleInterop: true
+}
+```
+
+就可以使用 es6 的方式导入
+
+```js
+import test from './test.js'
+```
+
+
+
+## 5.命名空间
+
+* ts 命名空间使用 `namespace` 来写
+
+```typescript
+namespace Shape {
+  const pi = Math.PI
+  export function circle(r: number) {
+    return pi*r**2
+  }
+  // 导出的数据全局可见
+}
+  
+// 使用
+  Shape.circle(1)
+```
+
+*  **不同文件使用相同的命名空间，能共享数据? **
+* 不要在模块中使用命名空间，直接在全局中使用
+* 命名空间的使用，直接编译成 js 文件在html中用script 引入（推荐）
+
+不同文件对命名空间的调用
+
+```typescript
+/// <reference path="a.ts" />
+```
+
+## 6. 声明合并
+
+接口表示函数
+
+接口声明合并顺序
+
+命名空间 + 命名空间 不能实现相同的属性
+
+命名空间 + 函数
+
+命名空间 + 类 相当于给类添加了一些静态的属性
+
+命名空间 + 枚举   
+
+命名空间 一定要放后边
+
+1. 接口声明合并规则
+
+   非函数成员，要求唯一性，要不就一模一样
+
+   函数成员：每一个函数相当于函数重载，实现的时候需要一个更宽泛的类型
+
+   顺序：接口内部从上到下，接口外部从下到上。如果函数的参数是一个字符串字面量（具体的值），就会被提升到最上边
+
+## 如何编写声明文件
+
+### 1. 声明文件编写
+
+* 类库分为三类：全局类库、模块类库、umd 类库
+
+* 在使用js 编写的类库的时候，一定要编写一个声明文件，为这个类库暴露api，比如说 jQuery
+
+* 一般的类库声明文件都被写好了
+
+  安装：
+
+  ```shell
+  npm i @types/jquery -D
+  ```
+
+#### 声明文件起作用
+
+* 单独的模块，在同级目录下编写 d.ts 声明文件
+* 工程化，配置declarationDir属性
+* 一般情况下，自己写的模块用namespace来写声明文件（全局类库）；外部的模块用 module来写声明文件（模块类库）
+
+### 2. 声明模块插件(添加约束)
+
+1. 给引入的第三方模块添加方法
+
+   ```typescript
+   import m from 'moment'
+   declare module 'moment' {
+     export function myFn(): void
+   }
+   m.myFn = () => {}
+   ```
+
+2. 给全局定义插件(不推荐使用，避免全局污染)
+
+   ```typescript
+   declare global {
+     export globalLib {
+       function doSomething(): viod
+     }
+   } 
+     // 调用
+     globalLib.doSomething = () => {
+       
+     }
+   ```
+
+### 类库的声明文件
+
+* 在 @types 中找到响应的类库的声明文件，下边的 package.json 文件中的 types 字段指定声明文件，一般都是 d.ts 文件
+
+### 声明文件使用到的命名空间
+
+* 在声明文件中`declare`的命名空间是约束的类型(而且需要在 .d.ts 文件中)，定义的命名空间必须使用 export 字段。
+
+## tsconfig.json 文件
+
+* 编辑器会编译 ts、tsx、d.ts 文件
+
+```typescript
+{
+  "files": [
+    "src/a.ts"
+  ],
+    // 需要编译的单个文件列表
+   "include": [
+     "src/*"
+     // src 一级目录下的文件 
+   ],
+     // 编辑器需要编辑的目录
+   "exclude": [
+     "src/libs"
+   ],
+     // 需要排除的文件，默认会排除 node_moudles 文件 
+   "compileOnSave": true
+  // 保存自动编译，vscode不支持
+}
+```
+
+* 配置文件是可以继承的，我们可以抽离出一些公共的配置 ，也可以在继承之后覆盖配置
+
+比如：txconfig.base.json
+
+```typescript
+{
+  extends: "./tsconfig.base.json"
+}
+```
+
+```typescript
+{
+  "compilerOptions": {
+      // "incremental": true,                // 增量编译，第一次编译生成一个编译信息的文件，在第二次编译的时候做增量编译，提高编译速度
+      // "tsBuildInfoFile": "./buildFile",   // 增量编译文件的存储位置
+      // "diagnostics": true,                // 打印诊断信息
+
+      // "target": "es5",           // 目标语言的版本
+      // "module": "commonjs",      // 生成代码的模块标准
+      // "outFile": "./app.js",     // 将多个相互依赖的文件生成一个文件，可以用在 AMD 模块中
+
+      // "lib": [],                 // TS 需要引用的库，即声明文件，es5 默认 "dom", "es5", "scripthost"，比如引入es的新特性，"ES2019.Array"，会有提示
+
+      // "allowJs": true,           // 允许编译 JS 文件（js、jsx）
+      // "checkJs": true,           // 允许在 JS 文件中报错，通常与 allowJS 一起使用
+      // "outDir": "./out",         // 指定输出目录
+      // "rootDir": "./",           // 指定输入文件目录（用于输出），一般情况下可以设置成 ./src，要不然会吧src同级的也输出
+
+      // "declaration": true,         // 生成声明文件
+      // "declarationDir": "./d",     // 声明文件的路径
+      // "emitDeclarationOnly": true, // 只生成声明文件，不生成js文件
+      // "sourceMap": true,           // 生成目标文件的 sourceMap
+      // "inlineSourceMap": true,     // 生成目标文件的 inline sourceMap
+      // "declarationMap": true,      // 生成声明文件的 sourceMap
+      // "typeRoots": [],             // 声明文件目录，默认 node_modules/@types
+      // "types": [],                 // 声明文件包
+
+      // "removeComments": true,    // 删除注释
+
+      // "noEmit": true,            // 不输出文件，只做类型检查
+      // "noEmitOnError": true,     // 发生错误时不输出文件
+
+      // "noEmitHelpers": true,     // 不生成 helper 函数，需额外安装 ts-helpers，下边这个打开就不需要安装这个插件了，生成helper函数会造成代码体积变大。
+      // "importHelpers": true,     // 通过 tslib 引入 helper 函数，文件必须是模块
+
+      // "downlevelIteration": true,    // 降级遍历器的实现（es3/5）
+
+      // "strict": true,                        // 开启所有严格的类型检查，下边的属性都会变成 true 
+      // "alwaysStrict": false,                 // 在代码中注入 "use strict";
+      // "noImplicitAny": false,                // 不允许隐式的 any 类型
+      // "strictNullChecks": false,             // 不允许把 null、undefined 赋值给其他类型变量
+      // "strictFunctionTypes": false           // 不允许函数参数双向协变
+      // "strictPropertyInitialization": false, // 类的实例属性必须初始化
+      // "strictBindCallApply": false,          // 严格的 bind/call/apply 检查
+      // "noImplicitThis": false,               // 不允许 this 有隐式的 any 类型
+
+      // "noUnusedLocals": true,                // 检查只声明，未使用的局部变量
+      // "noUnusedParameters": true,            // 检查未使用的函数参数
+      // "noFallthroughCasesInSwitch": true,    // 防止 switch 语句贯穿
+      // "noImplicitReturns": true,             // 每个分支都要有返回值, if else 都要有返回值
+
+      // "esModuleInterop": true,               // 允许 export = 导出，由import from 导入
+      // "allowUmdGlobalAccess": true,          // 允许在模块中访问 UMD 全局变量
+      // "moduleResolution": "node",            // 模块解析策略
+      // "baseUrl": "./",                       // 解析非相对模块的基地址，也就是node_modules文件
+      // "paths": {                             // 路径映射，相对于 baseUrl，比如像要min版本文件
+      //   "jquery": ["node_modules/jquery/dist/jquery.slim.min.js"]
+      // },
+      // "rootDirs": ["src", "out"],            // 将多个目录放在一个虚拟目录下，用于运行时。比如说有一个类库在 out 目录下，但是在src引用他，最后两个目录应该是同级的，而不是两个目录
+
+      // "listEmittedFiles": true,        // 打印输出的文件
+      // "listFiles": true,               // 打印编译的文件（包括引用的声明文件）
+  }
+}
+```
+
+* sourceMap 就是为了方便查找文件
+
+### 工程引用
+
+* 比如说前后端在一个项目中，不同的文件夹，每个项目配置自己的配置文件，三个项目文件夹，common，client、server
+* 外层基础配置
+
+```typescript
+{
+  "compilerOptions": {
+    "target": "es5",
+    "module": "commonjs",
+    "strict": true,
+    "composite": true, // 工程能被引用，增量编译
+    "declaretion": true //工程引用必备
+  }
+}
+```
+
+* 前端项目
+
+```typescript
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../dist/client",
+    },
+    "references": [
+        { "path": "../common" }
+    ]
+}
+```
+
+* 公共模块
+
+```typescript
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../dist/common",
+    }
+}
+```
+
+* server端
+
+```typescript
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "outDir": "../../dist/server",
+    },
+    "references": [
+        { "path": "../common" }
+    ]
+}
+```
+
+* `references`配置了引用的工程
+
+新增编译命令
+
+```shell
+tsc -d 
+# 编译  并且有声明文件
+tsc -b src/server --verbose --clean
+# 编译 build，多个工程依赖，编译其中一个依赖项目自动编译，verbose编译信息，clean 清空构建文件
+```
+
+#### 全局配置声明文件（实战）
+
+* 在 react中推荐 import 引入样式，但是ts中不识别引入，需要在 d.ts 中声明
+
+```typescript
+declare module '*.css'
+```
+
+在最外层定义一个 声明文件`declaration.d.ts`
+
+然后在 tsconfig 文件中配置加载声明文件
+
+```typescript
+{
+  "include": [
+    "./src/",
+    "./declaration.d.ts"
+  ],
+}
+```
+
+## 编译工具
+
+### 从ts-loader到babel
+
+* ts-loader滴啊用了 tsc 命令，共享了外层的 tsconfig 文件，ts-loader 还有一些自己的配置
+
+```typescript
+{
+  use: [{
+    loader: 'ts-loader',
+    options: {
+      transpileOnly: false, //开启之后只做编译，不做类型检查，加快编译速度
+    }
+  }]
+}
+```
+
+* 需要一个插件，会把类型检查放在一个独立进程中去进行
+
+```shell
+npm i fork-ts-checker-webpack-plugin -D
+```
+
+使用：
+
+```js
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
+// .....
+
+{
+  plugins: [
+    new ForkTsCheckerWebpackPlugin()
+  ]
+}
+```
+
+#### awesome-typescript-loader
+
+* 与 ts-loader 相比：
+
+  * 更适合 babel 继承，使用 babel的转义和缓存
+  * 不需要安装额外的插件，类型检查在独立的进程中进行
+
+* 安装：
+
+  `npm i awesome-typescript-loader -D `
+
+* 使用，如果设置只做编译，需要打开自带的插件做类型检查(类型检查有却选，不建议使用)
+
+```js
+const { CheckerPlugin } = require('awesome-typescript-loader')
+
+{
+  use: [{
+    loader: 'awesome-typescript-loader',
+    options: {
+      transpileOnly: false //开启之后只做编译，加快编译速度
+    }
+  }]
+}
+
+// ....
+
+{
+  plugins: [
+    new CheckerPlugin()
+  ]
+}
+```
+
+### babel 处理
+
+* babel7 之前不能处理 ts，新版本之后 使用babel的生态去做编译，typescript 只做类型检查，利用 babel的生态去做编译的事。构建系统的统一，可维护性
+
+* 需要执行  tsc --init 生成配置文件，然后打开配置中的 `"noEmit": true, `只做编译，不产出编译文件
+
+  需要单独一个命令 `tsc --watch`
+
+注意事项
+
+1. 命名空间在编译的时候会出错，不要使用
+2. 类型断言用 as
+3. 常量枚举会报错
+4. export = s 也会报错
+
+### 单元测试
+
+* 单元测试也分为 babel 系和非babel
+  * ts-jest
+  * babel-jest
