@@ -272,6 +272,10 @@ let num: number = u;
 // index.ts(2,5): error TS2322: Type 'void' is not assignable to type 'number'.
 ```
 
+### unknown
+
+* unknown 类型只能被赋值给 any 类型和 unknown 类型本身。
+
 ### 任意值
 
 任意值（Any）用来表示允许赋值为任意类型。
@@ -1298,6 +1302,9 @@ function echoWithArr<T>(arr: T[]): T[] {
 }
 ```
 
+* 注意
+  1. 函数的泛型只能在用函数定义的时候定义，不能在定义函数的引用的时候使用
+
 ### 泛型的继承
 
 * 如果一个泛型有一些公共的属性，可以抽象成一个 interface
@@ -1849,7 +1856,7 @@ let test6: ReturnType<() => number> = 1
 
 ## 4. 模块化
 
-* es6 和 commonjs 的区别，commonjs 没有顶级导出，module.exports 会覆盖所有，es6 则可以喝 default 和普通的导出共存
+* es6 和 commonjs 的区别，commonjs 没有顶级导出，module.exports 会覆盖所有，es6 则可以将 default 和普通的导出共存
 
 * ts 做了处理，统一采用commonjs 导出
 
@@ -1918,6 +1925,10 @@ namespace Shape {
 ```typescript
 /// <reference path="a.ts" />
 ```
+
+### 5.1 命名空间和模块补充
+
+“内部模块”现在称做“命名空间”。 “外部模块”现在则简称为“模块”
 
 ## 6. 声明合并
 
@@ -2267,6 +2278,72 @@ const { CheckerPlugin } = require('awesome-typescript-loader')
 
   需要单独一个命令 `tsc --watch`
 
+#### babel 配置工程过程
+
+* 首先 npm init 一个项目
+
+1. 安装包
+
+   `yarn add @babel/cli @babel/core @babel/plugin-proposal-class-properties @babel/plugin-proposal-object-rest-spread @babel/preset-env @babel/preset-typescript -D`
+
+   ```js
+   "devDependencies": {
+       "@babel/cli": "^7.10.5", // babel 必须
+       "@babel/core": "^7.11.4", // babel 必须
+       "@babel/plugin-proposal-class-properties": "^7.10.4",
+       "@babel/plugin-proposal-object-rest-spread": "^7.11.0", // 支持剩余扩展标识符 
+       "@babel/preset-env": "^7.11.0", // babel 必须
+       "@babel/preset-typescript": "^7.10.4" // 编译ts文件
+     }
+   ```
+
+2. 新建`.babelrc`文件，一个json文件，里面的配置就是包名称
+
+   ```js
+   {
+       "presets": [
+           "@babel/env",
+           "@babel/preset-typescript"
+       ],
+       "plugins": [
+           "@babel/proposal-class-properties",
+           "@babel/proposal-object-rest-spread"
+       ]
+   }
+   ```
+
+3. 新建 src 文件测试
+
+4. 编译脚本
+
+   ```js
+   {
+     "scripts": {
+       "build": "babel src --out-dir dist --extensions \".ts,.tsx\"" // 指定扩展名
+     },
+   }
+   ```
+
+   * 配置完成，但是没有类型检查
+
+5. 安装 ts 
+
+   ```shell
+   npm i typescript -D
+   ```
+
+   新建配置文件
+
+   `tsc --init `
+
+   开启 ts 配置
+
+   `"noEmit": true` 只做类型检查，不做编译
+
+6. 编写类型检查脚本
+
+   `"type-check": "tsc --watch"`，开启类型检查，需要重新打开一个终端
+
 注意事项
 
 1. 命名空间在编译的时候会出错，不要使用
@@ -2274,8 +2351,181 @@ const { CheckerPlugin } = require('awesome-typescript-loader')
 3. 常量枚举会报错
 4. export = s 也会报错
 
+### 代码检查
+
+* tslint 会向 eslint 迁移 （以下的不建议在 babel 项目中使用，babel项目中建议使用 babel-eslint）
+
+![31d4a73a683061578a346943a9e75dad](./picture/tsPic/31d4a73a683061578a346943a9e75dad.png)
+
+* 官方提供了 typescript-eslint 工具来讲 ts 树转换成 es 生成的树
+
+1. 安装：
+
+   `yarn add eslint @typescript-eslint/eslint-plugin  @typescript-eslint/parser -D`
+
+   package.json:
+
+   ```js
+   {
+     	"@typescript-eslint/eslint-plugin": "^3.9.1",
+       "@typescript-eslint/parser": "^3.9.1",
+       "eslint": "^7.7.0",
+   }
+   ```
+
+2. 新建 eslint 配置
+
+   新建文件 `.eslintrc.json`
+
+   ```js
+     
+   {
+     "parser": "@typescript-eslint/parser",
+     "plugins": ["@typescript-eslint"],
+     "parserOptions": {
+         "project": "./tsconfig.json" //需要使用的类型信息
+     },
+     "extends": [
+       "plugin:@typescript-eslint/recommended" // 官方默认指定的规则，可以不用，设置成 off 即可
+     ],
+     "rules": {
+       "@typescript-eslint/no-inferrable-types": "off" // 关闭的规则
+     }
+   }
+   ```
+
+3. 脚本
+
+   `"lint": "eslint src --ext .js,.ts"`
+
 ### 单元测试
 
 * 单元测试也分为 babel 系和非babel
   * ts-jest
   * babel-jest
+  
+* babel-jest
+
+  1. 安装
+
+     `yarn add jest babel-jest @types/jest -D`
+
+  2. 脚本
+
+     ` "test": "jest"`
+
+  3. 别忘了安装 node 声明文件，要不然不能使用 require 等语法
+
+     `yarn add @types/node -D`
+
+# 创建一个 react 项目
+
+## 1. 环境
+
+1. 安装
+
+   `yarn add react react-dom`
+
+   `yarn add @types/react @types/react-dom`
+
+2. ts 配置
+
+   ```json
+   {
+     "jsx": "react", //'preserve'(jsx文件，保留jsx 语法), 'react-native'（.js 文件 jsx 语法）, or 'react'（js 文件 js 语法）.
+   }
+   ```
+
+3. 打包优化
+
+   库文件和业务文件拆分成两个文件，这样就能充分利用浏览器的缓存，webpack4提供了一个新的拆包方式，能快速解决这个问题
+
+   webpack配置：就可以吧 npm 下载的包，打包成一个 vendors 文件，业务代码打包成 app 文件 ，在修改业务代码后，app的hash值改变了，venders的hash没有改变
+
+   ```js
+   {
+     optimization: {
+       splitChunks: {
+         chunks: "all"
+       }
+     }
+   }
+   ```
+
+   
+
+## 2. 脚手架安装
+
+* 使用 npx 避免全局安装
+
+* `npx create-react-app ts-react-app --typescript`
+
+* Webpack  都被封装到了 react-scripts 里面，如果想自定义，暴露了一个脚本
+
+  ```js
+  {
+    "scripts": {
+      "start": "react-scripts start",
+      "build": "react-scripts build",
+      "test": "react-scripts test",
+      "eject": "react-scripts eject"
+    },
+  }
+  ```
+
+* 安装依赖
+
+  ```json
+  {
+    "devDependencies": {
+      "@types/react-router-dom": "^5.1.5",
+      "babel-plugin-import": "^1.13.0", // 实现antd的按需加载
+      "customize-cra": "^1.0.0", // 实现脚手架自定义
+      "http-proxy-middleware": "^1.0.5",  // 实现脚手架自定义
+      "http-server": "^0.12.3",  // 搭建mock server
+      "react-app-rewired": "^2.1.6" // 同上
+    }
+  }
+  ```
+
+  
+
+## 3. react 组件约束
+
+![react-component](./picture/tsPic/react-component.png)
+
+### hoc 约束
+
+hoc 函数
+
+```tsx
+import React, { Component } from 'react'
+
+interface ILoading {
+    loading: boolean;
+}
+function HocFn<P> (ReactCom: React.ComponentType<P>) {
+    // const { isLoading } = props
+    return class extends Component<ILoading & P> {
+        render() {
+            const { loading, ...props } = this.props
+            return loading
+            ?
+            <div>loading 中</div>
+            :
+            <ReactCom {...props as P} />
+        }
+    }
+}
+
+export default HocFn
+```
+
+使用：
+
+```tsx
+const CompNew = HocFn<{name: string}>(Hello) // 在此约束的要传递的类型
+
+<CompNew loading={false} name={'我是生产的组件'}></CompNew>
+```
+

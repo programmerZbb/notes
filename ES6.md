@@ -759,7 +759,59 @@ es6 属性名能使用 ["a"+"b"] 方括号的形式。
   }
   ```
 
-  
+
+##### getter & setter
+
+* ==get 和 set 都是关键字，不是具体的方法名==
+
+  get 后面的方法一般都是只读的，不能传递参数；set 后面的方法名称不能和要设置的变量名一样，要不就会陷入死循环。
+
+```js
+class A {
+    constructor (name, age) {
+        // this.name = name
+        // this.age = age
+    }
+    get name() {
+        console.log('getter')
+        return 'test'
+    }
+  // 死循环
+    set name(name) {
+        console.log('setter')
+        this.name = name
+    }
+}
+
+
+let aaa = new A('1', 1)
+
+console.log(aaa.name = '11')
+```
+
+```js
+class A {
+    constructor (name, age) {
+        this.name = name
+        this.age = age
+    }
+    get name() {
+        console.log('getter')
+        return this._name
+    }
+    set name(name) {
+        console.log('setter')
+        this._name = name
+    }
+}
+
+
+let aaa = new A('1', 1)
+
+console.log(aaa.name = '11')
+```
+
+
 
 #### 解决异步编程的问题
 
@@ -1218,10 +1270,18 @@ class 趋于 Java
   export m;
   ```
 
-  上述两种情况会报错。函数和 class 也一样
+  上述两种情况会报错。函数和 class 也一样。即使是定义了之后的变量，也不能直接导出
 
+  ```js
+let a = 1
+  export a
+  // 报错
+  ```
+  
+  
+  
   上面两种写法都会报错，因为没有提供对外的接口。第一种写法直接输出 1，第二种写法通过变量`m`，还是直接输出 1。`1`只是一个值，不是接口。正确的写法是下面这样。
-
+  
   ==导出的变量不仅需要值，还需要key name，就算是导出一个function也需要定义name==
 
 ### default
@@ -1235,9 +1295,14 @@ export default a
 
 * Default 导出的接口是能够随便起名字的，其他的形式需要用指定的名称接收。
 
+* 同时导出 default 和 普通的变量，default会覆盖所有的变量，只会导出 default。
+
+  如果用 * （需要重新命名变量）来接收，则可以全部接收所有的导出，default 属性就是默认导出。说白了，只要导出的变量不带有 default ，导出的就是一个对象；如果加了 default，默认导出就是 default 的值（啥类型都有可能）；如果两种想结合着用，在 import 的时候就要引入 * 所有的导出，default 反而成了其中的一个属性。（==default 和 导出的变量名都是导出模块的一个属性==）
+
 ## ==重要==
 
 * export 导出的是一个接口，因此所有导出的值都必须要规定类型，不能直接导出一个变量。
+
 * `import`和`export`命令只能在模块的顶层，不能在代码块之中（比如，在`if`代码块之中，或在函数之中）。
 
   * `export`语句输出的接口，与其对应的值是动态绑定关系，即通过该接口，可以取到模块内部实时的值。
@@ -1249,7 +1314,7 @@ export default a
 
     上面代码输出变量`foo`，值为`bar`，500 毫秒之后变成`baz`。
 
-    这一点与 CommonJS 规范完全不同。CommonJS 模块输出的是值的缓存，不存在动态更新。
+    这一点与 CommonJS 规范完全不同。==CommonJS 模块输出的是值的缓存，不存在动态更新。==
 
     export 命令必须出现在全局中，不能再代码块中。
 
@@ -1263,6 +1328,8 @@ export default a
   ```
 
   输出的多个变量使用对象的形式。
+
+  ==这个不是导出对象，导出对象要使用 default 或者变量引用的形式，这个导出的是一个代码块，是多个变量的集合==
 
 * 引入使用 import 
 
@@ -1315,7 +1382,9 @@ export default a
   
 * import 在导入模块的时候，需要先导入 default 的，才能导如其他类型的数据。
 
-* ==export 在导出普通类型的时候需要加类型，在导出对象的时候加不加都可以，导数函数的时候，匿名函数必须加 default 才不出错。说白了就是要知道你导出的是什么东西，类型。==
+* ==export 在导出普通类型的时候需要加类型，导数函数的时候，匿名函数必须加 default 才不出错。说白了就是要知道你导出的是什么东西，类型。==
+
+* 
 
 ### 加载规则
 
@@ -1382,7 +1451,7 @@ import 'lodash';
 
   使用 default 
 
-  export default let a = 'zbb';
+  export default a = 'zbb';
 
   引入模块时，就可以随便定义名字。
 
@@ -1595,3 +1664,165 @@ proxy.fn()
 // 对象方法的调用会调用 get 方法
 ```
 
+# 新增数据结构
+
+## Set
+
+* ES6 提供了新的数据结构 Set。它类似于数组，但是成员的值都是唯一的，没有重复的值。可以用来去重数组或者能转换成数组的数据。
+* 添加数据，
+  * 实例化的时候，可以传递一个数组或者具有 iterable 接口的其他数据结构
+  * 实例使用 add() 方法一个一个进行添加
+* 注意：
+  * set 实例在添加值的时候，不会进行类型转换，相当于全等。唯一不同的是，在添加 NaN 时，会判断 NaN 与 NaN 相等。
+
+### api
+
+* add
+* has
+* zise 总数
+* delete 删除某个值，返回 Boolean
+
+> 增删改查的角度，改：需要先删除需要修改的数据，然后添加数据。这个存储结构是一个堆，没有顺序。但是能够转换成数组，然后进行修改操作。
+
+### 遍历
+
+#### 1. `keys()`，`values()`，`entries()`
+
+* `keys`方法、`values`方法、`entries`方法返回的都是遍历器对象（详见《Iterator 对象》一章）。由于==Set 结构没有键名==(就是没有索引)，只有键值（或者说键名和键值是同一个值），所以`keys`方法和`values`方法的行为完全一致。
+* `entries`方法返回的遍历器，同时包括键名和键值，所以每次输出一个数组，它的两个成员完全相等。
+
+注意：
+
+1. 扩展运算符（`...`）内部使用`for...of`循环。==是不是代表所有实现 iterator 接口的对象，都可以使用？是滴==
+
+   数组的扩展运算符也可以使用在 set 实例上。能够方便数组和 set 对象的随意转换。
+
+2. 数组的方法能够在 set 实例使用，比如说 map 和 filter。需要先转换成数组，然后从数组转换成 map。
+
+   利用 Set 实现两个数组的并集，交集，差集
+
+### add
+
+## WeakSet
+
+其次，WeakSet 中的对象都是弱引用，即垃圾回收机制不考虑 WeakSet 对该对象的引用，也就是说，如果其他对象都不再引用该对象，那么垃圾回收机制会自动回收该对象所占用的内存，不考虑该对象还存在于 WeakSet 之中。
+
+这是因为==垃圾回收机制==依赖引用计数，如果一个值的引用次数不为`0`，垃圾回收机制就不会释放这块内存。结束使用该值之后，有时会忘记取消引用，导致内存无法释放，进而可能会引发内存泄漏。WeakSet 里面的引用，都不计入垃圾回收机制，所以就不存在这个问题。因此，WeakSet 适合临时存放一组对象，以及存放跟对象绑定的信息。只要这些对象在外部消失，它在 WeakSet 里面的引用就会自动消失。
+
+由于上面这个特点，WeakSet 的成员是不适合引用的，因为它会随时消失。另外，由于 WeakSet 内部有多少个成员，取决于垃圾回收机制有没有运行，运行前后很可能成员个数是不一样的，而垃圾回收机制何时运行是不可预测的，因此 ES6 规定 WeakSet 不可遍历。
+
+* Webakset 元素必须是对象
+
+### 1. 实例化
+
+* 可以接受一个具有 iterator 接口的数据作为参数，该数据内部的元素会变为weakset 实例内部的元素，因此，该数据的成员必须是对象。
+
+```js
+let set = new WeakSet([{}, {}])
+```
+
+### 2. 作用
+
+* WeakSet 的一个用处，是储存 DOM 节点，而不用担心这些节点从文档移除时，会引发内存泄漏。
+
+## Map
+
+JavaScript 的对象（Object），本质上是键值对的集合（Hash 结构），但是传统上只能用字符串当作键。这给它的使用带来了很大的限制。
+
+* 不能将其他类型作为键值
+
+### 操作
+
+* 增 set
+* 删 delete
+* 改 set
+* 查 get、has
+
+### 实例
+
+* 作为构造函数，Map 也可以接受一个数组作为参数。该数组的成员是一个个表示键值对的数组。
+
+```js
+const map = new Map([
+  ['name', '张三'],
+  ['title', 'Author']
+]);
+```
+
+​	map.entries 方法产生的遍历器和上边结构是一模一样的。
+
+map 结构默认遍历器接口 (Symbol.iterator 属性)，就是 entries 方法。
+
+```javascript
+map[Symbol.iterator] === map.entries
+```
+
+# 总结：
+
+## 1. 数组扩展运算符&Array.from方法的区别
+
+* Array.from 转换数组，看的是==参数的 length 属性==，包括字符串，然后按长度截取。另外 Array.from 还能过滤数组。说白了就是根据 length 方法做循环。[^1]
+* 扩展运算符，能够转换实现 iterator 接口的对象。
+
+```js
+Array.from({0:1,length:1})
+// [0]
+[...{0:1,length:1}]
+// 报错
+```
+
+> 扩展运算符背后调用的是遍历器接口（`Symbol.iterator`），如果一个对象没有部署这个接口，就无法转换。`Array.from`方法还支持类似数组的对象。所谓类似数组的对象，本质特征只有一点，即必须有`length`属性。因此，任何有`length`属性的对象，都可以通过`Array.from`方法转为数组，而此时扩展运算符就无法转换。
+
+* Array.from 方法第二个参数是一个函数，类似于 map 方法，第三个参数是指定函数的this
+
+```js
+let obj1 = {};Array.from([1,2], function (item) { this[item] = 'test'; return item + 2 }, obj1)
+// 三个用处，转换数组，处理数组，每一项数据对对象进行赋值
+```
+
+[^1]: 甚至可以使用长度去做循环代替for循环
+
+```javascript
+Array.from({length:3}, (item, index) => index + 1)
+// [1, 2, 3]
+// 处理字符串
+Array.from('123', () => {})
+```
+
+
+
+## 2. Array.of
+
+* 也可以使用 `[].slice.call来实现`
+
+```js
+function ArrayOf() {
+  return [].slice.call(arguments)
+}
+```
+
+## Array.prototype.copyWithin
+
+* 拷贝数组==里==的元素。不会改变数组的长度
+* 甚至可以操作有length的对象。不会改变长度，也就是说索引不能超过`length - 1`
+
+```js
+[].copyWithin.call({length: 5, 4: 2}, 0, 3)
+// {1: 2, 4: 2, length: 5}。把 3 当做开始，赋值给0，4 => 1
+```
+
+## 3. Array.prototype.find
+
+* 改方法比 indexOf 好的就是能够自定义比较条件
+
+  比如：方法都可以发现`NaN`，弥补了数组的`indexOf`方法的不足。
+
+  ```javascript
+  [NaN].indexOf(NaN)
+  // -1
+  
+  [NaN].findIndex(y => Object.is(NaN, y))
+  // 0
+  ```
+
+* 小技巧，用 `Object.is` 能够找出 `NaN`

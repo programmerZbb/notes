@@ -270,6 +270,36 @@ server.listen(3000, () => {
 
 ## 2. 操作
 
+### 0. 基本操作
+
+mac
+
+* 启动
+
+  `mysql.server start`
+
+* 停止
+
+  `mysql.server stop`
+
+* 重启
+
+  `mysql.server restart`
+
+* 登录
+
+  `mysql -u root -p`
+
+* 查看端口
+
+  `show variables like 'port';`
+
+* 退出
+
+  `quit;`
+
+* 切换库和切换表都是用 `use`
+
 ### 1. 基本语句
 
 ![基本语句](..\picture\node-practice\基本语句.png)

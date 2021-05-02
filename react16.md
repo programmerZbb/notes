@@ -465,7 +465,9 @@ this.contextType = ThemeContext
 
 传值是一样的
 
-组件内部：需要使用 `ReactDOM.createPortal()` 方法将 children 对象渲染出来，并且用第二个参数（一个DOM对象）将该组件挂载到页面上。（第二个参数DOM 对象需要挂载到页面上，这个方法只是挂载到了这个DOM对象上了）
+组件内部：需要使用 `ReactDOM.createPortal()` 方法将 children 对象渲染出来，并且用第二个参数（一个DOM对象）将该组件挂载到页面上。（第二个参数DOM 对象需要挂载到页面上，这个方法只是挂载到了这个DOM对象上了）。
+
+第二个参数节点只是挂载的节点，不需要特别的把生产出来的
 
 ```jsx
 import React, { Component } from 'react'
@@ -708,11 +710,6 @@ react 真实实现：（3和4 反过来）
         <span>hello world</span>
     </div>
    ```
-  ```
-
-  ```
-
-  ```
   
 5. state 发生变化
 
@@ -728,9 +725,7 @@ react 真实实现：（3和4 反过来）
             "新的内容"
         ]
     ]
-  ```
-  ```
-
+    ```
 
 
 7.  比较新的虚拟DOM和原始的区别，找到是内容发生了变化
@@ -740,13 +735,11 @@ react 真实实现：（3和4 反过来）
 
 JSX -> JS 对象 -> 真实的 DOM：
 
-JSX:
-
-​```jsx
+```jsx
 render() {
     return <div>我是内容</div>
 }
-  ```
+```
 
 JS 对象 -> 真实的 DOM：
 
@@ -823,7 +816,7 @@ diff 规则：
 
   不推荐使用 ref 尽量别直接操作 DOM，使用数据驱动的方式。
   
-  也可以像 vue 一样简写
+  也可以像 vue 一样简写(不推荐使用)
   
   ```jsx
   <input ref='inout'></input>
@@ -836,6 +829,27 @@ diff 规则：
 注意：
 
 1. ref 是在页面渲染之后执行的，因此不能直接在页面渲染的时候去使用 ref 的DOM。
+
+# react 一些深入的思考
+
+## 1. children
+
+* react 组件中的 children 挂载在 props 上，在react 组件下有子元素的时候才会出现
+
+react children 在组件中出现的形式
+
+![react-children](./react 16/img/react-children.png)
+
+* 从上图看出主要属性是：type（节点类型），props，key，ref。这些就是一个节点的描述。可以使用 api createPortal() 来把描述渲染到组件中。
+* children 可以直接写在组件中，能够直接展示
+
+### Children 方法
+
+* react 提供了一个 Children 方法，能够直接操作 this.props.children，类似于数组的操作。但是 this.props.children 很多情况不是真正的数据，如果是数组在 ts 中用数组的方法直接操作会报错，因此推荐使用 Children 方法直接操作 children
+
+### 新的 ref
+
+
 
 # react 的生命周期
 
@@ -1908,6 +1922,7 @@ export default () => {
 * 副作用函数，（会改变外界的值）
 * 第一个参数函数，写业务逻辑
 * 第二个参数 依赖，用来规定函数执行的依赖。
+* 如果第二项依赖为空，则不依赖任何变量，只有在第一次 render 执行
 
 ### 和生命周期的对应（useEffect 能执行多次）
 
@@ -1944,10 +1959,45 @@ export default () => {
           console.log('componentWillUnmount')
       }
   }, [])
-  // 后面的依赖加不加都行
+  // 后面的依赖加不加都行，必须有[]
   ```
 
 ## 3. useContext
+
+
+
+## 4. useMemo
+
+`const memoizedValue = useMemo(() => computeExpensiveValue(a, b), [a, b]);`
+
+* 把“创建”函数和依赖项数组作为参数传入 `useMemo`，它仅会在某个依赖项改变时才重新计算 memoized 值。这种优化有助于避免在每次渲染时都进行高开销的计算。
+* 可以计算某个值，或者重新渲染某个组件（或者dom区域）。根据 return 的值，能够渲染组件。如果依赖的数组为空，只有在第一次渲染 的时候会执行，props 更新的时候不会再执行了。
+* 记住，传入 `useMemo` 的函数会在渲染期间执行。请不要在这个函数内部执行与渲染无关的操作，诸如==副作用这类的操作属于 `useEffect` 的适用范畴==，而不是 `useMemo`。
+
+## 5. useCallback
+
+```js
+const memoizedCallback = useCallback(
+  () => {
+    doSomething(a, b);
+  },
+  [a, b],
+);
+```
+
+返回一个 [memoized](https://en.wikipedia.org/wiki/Memoization) 回调函数。
+
+把内联回调函数及依赖项数组作为参数传入 `useCallback`，它将返回该回调函数的 memoized 版本，该回调函数仅在某个依赖项改变时才会更新。当你把回调函数传递给经过优化的并使用引用相等性去避免非必要渲染（例如 `shouldComponentUpdate`）的子组件时，它将非常有用。
+
+`useCallback(fn, deps)` 相当于 `useMemo(() => fn, deps)`，因此 `useCallback `能够用 `useMemo`代替
+
+* 在需要子组件给父组件传值时，经常需要父组件传递一个函数给子组件，子组件执行这个函数，父组件因为状态变化就更新组件，子组件也会跟着更新（这一次更新是没有必要的）。
+
+  callback 就是为了解决这个问题，传递的函数是经过 `useCallback` 处理过的，传递的函数就被缓存下来了，只有后边的依赖发生变化的时候，才会更新传递的函数。因此，子组件也需要设置 props 更新拦截，只有需要的 props 更新的时候才能更新子组件。
+
+## 6. React.memo
+
+* 一个高阶函数，参数是需要监控的组件，适合监控所有的 props 属性更新。放到组件最外层，代替 `pureComponent`
 
 
 
@@ -1956,6 +2006,7 @@ export default () => {
 ## 1. setState 不能设置到render里面
 
 * 这样会造成死循环，直接报错
+* 只能在执行一次的生命周期钩子里设置
 
 ## 2. setState 是同步的还是异步的
 
