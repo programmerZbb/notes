@@ -262,14 +262,16 @@ runoob@runoob:~$ docker run -t -i ubuntu:15.10 /bin/bash
 root@d77ccb2e5cca:/#
 ```
 
-### 创建镜像
+### ==创建镜像==
 
 当我们从 docker 镜像仓库中下载的镜像不能满足我们的需求时，我们可以通过以下两种方式对镜像进行更改。
 
 - 1、从已经创建的容器中更新镜像，并且提交这个镜像。以已有的镜像为基础，更新一个镜像。
 - 2、使用 Dockerfile 指令来创建一个新的镜像。自己构建一个镜像。
 
-#### 更新镜像
+==基础思路就是：1. 用 dockerfile 创建一个镜像 2.用commit去更新镜像。==
+
+#### 1. 更新镜像
 
 更新镜像之前，我们需要使用镜像来创建一个容器。更新镜像并不是创建一个新的镜像，只是更新了使用的镜像源。
 
@@ -291,7 +293,26 @@ root@e218edb10161:/#
 - **e218edb10161：**容器 ID
 - **runoob/ubuntu:v2:** 指定要创建的目标镜像名
 
-#### 构建镜像
+注：
+
+* 采用挂载的容器不能提交有问题，不会把数据卷的内容带过来
+
+##### 压缩镜像
+
+创建完镜像不方便传输，可以使用 压缩 再传输的方式
+
+* 压缩
+
+  ```bash
+  docker save -o 压缩文件名称 镜像名称:版本号
+  
+  # 解压 还原
+  docker load -i 压缩文件名称
+  ```
+
+  
+
+#### 2. 构建镜像
 
 我们使用命令 **docker build** ， ==从零开始来==创建一个新的镜像。为此，我们需要创建一个 Dockerfile 文件，其中==包含一组指令==来告诉 Docker 如何构建我们的镜像。==在前端项目中就需要使用这个命令，构建一个打好包的镜像==
 
@@ -339,6 +360,10 @@ Step 4 : RUN useradd runoob
 - **-t** ：指定要创建的目标镜像名
 - **.** ：Dockerfile 文件所在目录，可以指定Dockerfile 的绝对路径
 
+[具体查看](##Dockerfile)
+
+
+
 ### 容器操作
 
 * 容器的所有状态
@@ -382,11 +407,17 @@ Step 4 : RUN useradd runoob
 
    - **-t**: 终端。
 
+   - **--rm** : 关闭时自动删除容器
+
    - **ubuntu**: ubuntu 镜像。
 
    - **/bin/bash**：放在镜像名后的是命令，这里我们希望有个交互式 Shell，因此用的是 /bin/bash。
 
    - **-P:**将容器内部使用的网络端口随机映射到我们使用的主机上。
+
+   - -p 绑定指定的端口
+
+     `-p 5000:5000`
 
    - 启动 ==不进入容器==，加参数 -d
 
@@ -396,11 +427,27 @@ Step 4 : RUN useradd runoob
 
    - **-e username="ritchie":** 设置环境变量；
 
+     比如：MySQL docker 官方就要求设置超级管理员密码
+
    - ***-v***: 将本地的目录挂载到容器中的目录
 
      ```bash
-     -v /usr/local/test:usr/tmp/test
+     -v /usr/local/test:/usr/tmp/test
      ```
+     
+     注意： 
+     
+     1. 右边的目录是绝对目录，不能使用根目录符号 `~`
+     2. 必须是目录拷贝，不能是单纯的文件
+     
+   - 如果后边再跟命令，就是要在容器中执行的命令
+
+     只是运行容器，并且执行后边的命令，然后会退出容器，输出执行的结果。
+
+   - 总结
+
+     * 一个 `-` 后面跟 `key=value`
+     * 两个 `-` 后面跟 `value`
 
    退出终端（容器父进程）
 
@@ -449,9 +496,23 @@ Step 4 : RUN useradd runoob
 
 10. 查看容器底层信息
 
-    使用 **docker inspect** 来查看 Docker 的底层信息。它会返回一个 JSON 文件记录着 Docker 容器的配置和状态信息。
+    使用 **docker inspect** 来查看 Docker 的底层信息。它会返回一个 JSON 文件记录着 Docker 容器的配置和状态信息(包括网络配置、环境变量、宿主路径)。
 
-    
+### 其他 docker 操作
+
+1. 查看版本
+
+   `docker version`
+
+2. 查看docker使用情况
+
+   `docker info`
+
+   查看具体容器使用情况
+
+   `docker inspect id`
+
+
 
 #### 导出和导入容器
 
@@ -595,6 +656,14 @@ $ docker logout
 
   你可以通过 docker search 命令来==查找官方仓库中==的镜像，并利用 docker pull 命令来将它下载到本地。
 
+* docker pull
+
+  默认拉取最新的，如果需要拉取指定的版本需要加 `:`
+
+  例： `docker pull centos:8`
+
+  * 如果设置成私有的，需要在本地登录
+
 * 推送镜像
 
   推送的镜像是基于当前登录账号的仓库，只会推送到当前登录的仓库中。
@@ -604,6 +673,28 @@ $ docker logout
   `docker push programmerzbb/centos`
 
 ## Dockerfile
+
+一般 dockerfile 共包括四部分：
+
+* 基础镜像信息
+
+* 维护者信息
+
+* 镜像操作指令
+
+  对应分片文件系统
+
+* 容器启动执行指令
+
+
+
+### 解决什么问题
+
+* 对于开发人员：可以为开发团队提供一个完全一致的开发环境
+* 对于测试人员，只需要一个 文件就能运行一个一模一样的环境
+* 对于运维：在部署时，可以实现应用的无缝移植
+
+
 
 ### 什么是 Dockerfile？
 
@@ -680,6 +771,10 @@ $ docker build -t nginx:v3 .
 
 ## 指令详解
 
+### MAINTAINER 
+
+MAINTAINER      Fisher "fisher@sudops.com"
+
 ### COPY
 
 复制指令，从上下文目录中复制文件或者目录到容器里指定路径。
@@ -702,12 +797,16 @@ COPY hom?.txt /mydir/
 
 **<目标路径>**：容器内的指定路径，该路径不用事先建好，路径不存在的话，会自动创建。
 
+* 可以是相对路径，取决于 build 时候的 dockerfile 规定根目录
+
 ### ADD
 
 ADD 指令和 COPY 的使用格式一致（同样需求下，官方推荐使用 COPY）。功能也类似，不同之处如下：
 
 - ADD 的优点：在执行 <源文件> 为 tar 压缩文件的话，压缩格式为 gzip, bzip2 以及 xz 的情况下，会自动复制并解压到 <目标路径>。
-- ADD 的缺点：在不解压的前提下，无法复制 tar 压缩文件。会令镜像构建缓存失效，从而可能会令镜像构建变得比较缓慢。具体是否使用，可以根据是否需要自动解压来决定。
+- ADD 的缺点：在不解压的前提下，==无法复制 tar 压缩文件（自动压缩）==。会令镜像构建缓存失效，从而可能会令镜像构建变得比较缓慢。具体是否使用，可以根据是否需要自动解压来决定。
+
+可以使用远程服务，解压。COPY 一般是本地文件。
 
 ### CMD
 
@@ -718,7 +817,7 @@ ADD 指令和 COPY 的使用格式一致（同样需求下，官方推荐使用 
 
 **作用**：为启动的容器指定==默认要运行==的程序，程序运行结束，容器也就结束。CMD 指令指定的程序可被 docker run 命令行参数中指定要运行的程序所覆盖。
 
-**注意**：如果 Dockerfile 中如果存在多个 CMD 指令，仅最后一个生效。nginx 运行命令也要使用 CMD
+**注意**：==如果 Dockerfile 中如果存在多个 CMD 指令，仅最后一个生效。nginx 运行命令也要使用 CMD==
 
 格式：
 
@@ -731,6 +830,8 @@ CMD ["<param1>","<param2>",...]  # 该写法是为 ENTRYPOINT 指令指定的程
 推荐使用第二种格式，执行过程比较明确。第一种格式实际上在运行的过程中也会自动转换成第二种格式运行，并且默认可执行文件是 sh。
 
 ### ENTRYPOINT
+
+入口，一般在制作一些执行就关闭的容器中会使用。
 
 类似于 CMD 指令，但其不会被 docker run 的命令行参数指定的指令所覆盖，而且这些命令行参数会被当作参数送给 ENTRYPOINT 指令指定的程序。启动的时候传参，比如说配置文件不采用默认的，需要自定义。
 
@@ -774,7 +875,7 @@ ARG <参数名>[=<默认值>]
 
 ### WORKDIR
 
-指定工作目录。用 WORKDIR 指定的工作目录，会在构建镜像的每一层中都存在。（WORKDIR 指定的工作目录，必须是提前创建好的）。
+指定工作目录。用 WORKDIR 指定的工作目录，会在构建镜像的每一层中都存在。（WORKDIR 指定的工作目录，必须是提前创建好的）。容器内的工作目录，绝对路径。
 
 docker build 构建镜像过程中的，每一个 RUN 命令都是新建的一层。只有通过 WORKDIR 创建的目录才会一直存在。
 
@@ -794,6 +895,143 @@ WORKDIR <工作目录路径>
 USER <用户名>[:<用户组>]
 ```
 
+### VOLUME
+
+定义匿名数据卷。在启动容器时忘记挂载数据卷，会自动挂载到匿名卷。
+
+作用：
+
+- 避免重要的数据，因容器重启而丢失，这是非常致命的。
+- 避免容器不断变大。
+
+格式：
+
+```
+VOLUME ["<路径1>", "<路径2>"...]
+VOLUME <路径>
+```
+
+在启动容器 docker run 的时候，我们可以通过 -v 参数修改挂载点。
+
+### EXPOSE
+
+仅仅只是声明端口。
+
+作用：
+
+- 帮助镜像使用者理解这个镜像服务的守护端口，以方便配置映射。
+- 在运行时使用随机端口映射时，也就是 docker run -P 时，会自动随机映射 EXPOSE 的端口。
+
+格式：
+
+```
+EXPOSE <端口1> [<端口2>...]
+```
+
+
+
+## ==使用 dockerfile 的一个例子==
+
+制作一个前端 koa 启动的一个服务
+
+
+
+### Dockerfile 示例:
+
+```dockerfile
+# 基于哪个镜像
+FROM node:10
+
+# LABEL <key>=<value> <key>=<value> <key>=<value> ...
+LABEL version="1.0"
+
+# 创建 app 目录
+WORKDIR /app
+
+# 把 package.json, package-lock.json 或 yarn.lock 复制到工作目录（相对路径）
+COPY ["package.json","*.lock","./"]
+
+# 打包 app 源码
+# 特别注意：要指定工作目录中的文件名
+COPY src ./src
+
+# 使用.dockerignore 文件，上面两个 COPY 合并成一个
+# COPY ..
+
+# 使用 yarn 安装 app 依赖
+# 如果你需要构建生产环境下的代码，请使用：
+# --prod 参数
+RUN yarn --prod --registry=https://registry.npm.taobao.org
+
+# 对外暴露端口 -p 4000:3000
+EXPOSE 3000
+
+CMD [ "node", "src/index.js" ]
+```
+
+* `COPY .` : 拷贝当前目录下所有文件
+* docker 容器需要持续运行，即控制台任务不能终止。所以运行 docker 容器的命令（CMD），需要占据主线程防止控制台关闭。就是 pid 为 1 的进程不能关闭。
+
+### 总结
+
+* RUN、RUN 多次命令需要合并
+
+  RUN：构建镜像时，一般用于做一些系统配置，安装必备的软件。可有多个
+
+* COPY  可以多次执行
+
+* CMD：启动容器时，只能有一个CMD
+
+* ENV: `ENV K1=v1` 类似于 node 中的 process.env
+
+* 设置时区：一般情况下，需要为docker设置时区，防止打印的日志日期不太对
+
+  ```dockerfile
+  RUN ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && echo 'Asia/Shanghai' >/etc/timezone
+  ```
+
+* 任何服务都可以使用 `-g "daemon off;"` 让服务卡到前台运行，阻止docker容器的结束。
+
+### ==重要==
+
+* 为了使得 dockerfile 中的 CMD 命令起作用，在执行docker run 命令的时候，不能在镜像后添加任何命令，包括 `/bin/bash`
+
+  ```dockerfile
+  docker run -itd --name cicd -p 8082:80 zbb/testcicd:v1 && echo '上线完成'
+  ```
+
+  
+
+### 打包
+
+docker build 打包。（生产镜像）
+
+`docker build -t ${name}/${iamge_name}:${tag} .`
+
+`.`默认采用当前目录下的dockerfile，`tag` 是给镜像打的标签，用于版本控制
+
+* -f 指定文件 ， `-f ./dockerfile`
+* -t 指定镜像名称
+* . 寻址路径，即如果有相对路径的出发点
+
+## 运行
+
+* 采用run 命令
+
+
+
+## .dockerignore
+
+* 能够过滤掉不需要dockerfile 处理的文件。比如 copy . 的情况。
+
+
+
+## dockerfile 总结
+
+* 每一行一层，相当于一个步骤
+
+
+
 ## docker 其他操作
 
 ### 1. 查看元信息
@@ -808,9 +1046,158 @@ docker inspect  查看容器/镜像元数据（就是一些创建时候的基础
 
 对开发和运维（DevOps） 人员来说，最希望的就是一次创建或配置，可以在任何地方正常运行。
 
-使用 Docker 可以通过定制应用镜像来实现持续集成、持续交付、部署。开发人员可以通过 Dockerfile 来进行镜像构建，并结合 [持续集成（continuous Integration）](http://www.ruanyifeng.com/blog/2015/09/continuous-integration.html) 系统进行集成测试，而运维人员则可以直接在生产环境中快速部署该镜像，甚至结合持续部署(Continuous Delivery/Deployment) 系统进行自动部署。
+使用 Docker 可以通过定制应用镜像来实现[持续集成](# 持续集成和持续发布)、持续交付、部署。开发人员可以通过 Dockerfile 来进行镜像构建，并结合 [持续集成（continuous Integration）](http://www.ruanyifeng.com/blog/2015/09/continuous-integration.html) 系统进行集成测试，而运维人员则可以直接在生产环境中快速部署该镜像，甚至结合持续部署(Continuous Delivery/Deployment) 系统进行自动部署。
 
 而且使用 Dockerfile 使镜像构建透明化，不仅仅开发团队可以理解应用运行环 境，也方便运维团队理解应用运行所需条件，帮助更好的生产环境中部署该镜像。
+
+
+
+## docker-compose 介绍
+
+通过 docker-compose 用户可以容易用一个配置文件定义一个多容器应用（要不然需要运行多次次 docker run命令），然后使用一条指令安装这个应用的所有依赖，完成构建。docker-compose 解决了容器与容器之间如何管理编排的问题。
+
+![docker-compose](./imgs/docker-compose.png)
+
+docker-compose 有两个重要的概念：
+
+* 服务（service）：一个应用的容器，实际上可以包括若干个运行相同镜像的容器实例
+* 项目（project）：由一组关联的应用容器组成的一个完整业务单元，在 docker-compose.yml 文件中定义。
+
+docker compose 是docker的独立产品，需要安装 docker compose
+
+
+
+# docker 容器的数据卷
+
+## 数据卷概念
+
+问题：
+
+* docker 容器删除后，在容器中产生的数据也会随之销毁
+* docker 容器和外部机器可以直接交换文件吗
+* 容器之间想要进行数据交互
+
+数据卷
+
+* 数据卷是宿主机中的一个目录或文件
+
+  容器能和数据卷进行数据同步
+
+* 一个数据卷可以被多个容器同时挂载
+
+* 一个容器可以被挂载多个数据卷
+
+## 配置数据卷
+
+* 创建启动容器时，使用 -v 参数 设置数据卷
+
+  ```bash
+  docker run ... -v 宿主机目录(文件): 容器内目录(文件)...
+  ```
+
+* 注意事项
+
+  1. 目录必须是绝对路径
+
+     宿主机可以使用 `~/root` ，容器不行
+
+  2. 如果目录不存在，会自动创建
+
+  3. 可以挂载多个数据卷
+
+     ```bash
+     docker run -it --name=c2 \
+     -v ~/data2:/root/data2 \
+     -v ~/data3:/root/data3 \
+     centos:7 
+     ```
+
+### 数据卷容器
+
+多个容器进行数据交换：方法
+
+1. 多个容器挂载同一个数据卷
+2. 数据卷容器
+
+![data-container](./imgs/data-contanier.png)
+
+​	就是使用一个容器去当桥梁，操作数据卷
+
+
+
+#### 配置
+
+1. 创建c3数据卷容器，使用 -v 参数设置数据卷
+
+   ```bash
+   docker run -it --name=c3 -v /volume cnetos:7 /bin/bash
+   ```
+
+   * docker 会自动创建在宿主机创建一个目录
+
+2. 创建启动 c1 c2 容器，使用 --volumes-from 参数设置数据卷
+
+   ```bash
+   docker run -it --name=c1 --volumes-from c3 centos:7 /bin/bash
+   docker run -it --name=c2 --volumes-from c3 centos:7 /bin/bash
+   ```
+
+   * 这样 c1 和 c2 中也会存在 /volume 目录
+
+
+
+# docker 服务编排
+
+* 微服务架构的应用系统中一般包含若干个微服务，每个微服务一般都会部署多个实例，如果每个微服务都要手动启停，维护的工作量会很大。
+
+服务编排：
+
+* 按照一定的业务规则批量管理容器。
+
+## docker compose
+
+* docker compose 是一个编排多容器分布式部署的工具，提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。使用步骤：
+  1. 使用 dockerfile 定义运行环境镜像
+  2. 使用 docker-compose.yml 定义组成应用的各服务
+  3. 运行 docker-compose up 启动应用
+
+https://www.runoob.com/docker/docker-compose.html
+
+
+
+使用：
+
+1. 创建目录
+2. 编写 docker-compose.yml 文件
+
+```yaml
+version: '3'
+services:
+	nginx:
+		image: nginx
+		ports:
+		- 80:80
+		links:
+		- app
+		volumes:
+		- ./nginx/conf.d:/etc/nginx/conf.d
+	app:
+		image: app
+		expose:
+		- '8080'
+```
+
+* 并行的一个关系，每个容器之间
+
+3. 在 `/nginx/conf.d` 目录下编写 nginx 配置文件
+
+4. 在 ~/docker-compose 目录下使用 docker-compose 启动容器
+
+   `docker-compose up`
+
+5. 测试访问
+
+   
 
 
 
@@ -822,9 +1209,9 @@ docker inspect  查看容器/镜像元数据（就是一些创建时候的基础
 
 ## 2. nginx 容器
 
-* 官方规定启动 nginx 要使用命令 `nginx -g 'daemon off;'`。给 docker 启动命令传递参数
+* 官方规定启动 nginx 要使用命令 `nginx -g 'daemon off;'`。给 docker 启动命令传递参数(dockerfile 的方式)
 
-> Docker 容器启动时，默认会把容器内部第一个进程，也就是`pid=1`的程序，作为docker容器是否正在运行的依据，如果 docker 容器pid=1的进程挂了，那么docker容器便会直接退出。
+> Docker 容器启动时，默认会把容器内部第一个进程，也就是`pid=1`的程序（也就是dockerfile 中的CMD命令后执行的程序），作为docker容器是否正在运行的依据，如果 docker 容器pid=1的进程挂了，那么docker容器便会直接退出。
 >
 > Docker未执行自定义的CMD之前，nginx的pid是1，执行到CMD之后，nginx就在后台运行，bash或sh脚本的pid变成了1。
 >
@@ -839,6 +1226,21 @@ docker inspect  查看容器/镜像元数据（就是一些创建时候的基础
   # 安装
   apt-get install vim
   ```
+
+* 安装的Nginx会在 目录 ` /usr/share/nginx` 下
+
+### 3. 手动运行一个 Nginx 容器
+
+```bash
+docker run -itd --name=nginx_test \
+-p 8081:80 \
+-v $PWD/conf/nginx.conf:/etc/nginx/nginx.conf \
+-v $PWD/logs:/var/log/nginx \
+-v $PWD/html:/usr/share/nginx/html \
+nginx
+```
+
+* 使用变量 `$PWD` 获取当前目录
 
 
 
@@ -864,4 +1266,433 @@ docker inspect  查看容器/镜像元数据（就是一些创建时候的基础
 
 * 镜像是只读的文件系统，基于一个镜像创建的容器，不能够保存容器的数据，如果想要复用上一个容器的数据，可以在启动时指定目录。
 * commit 只是把基础的配置保存到镜像中去了，没有保存数据
+
+
+
+# 持续集成和持续发布
+
+http://www.ruanyifeng.com/blog/2015/09/continuous-integration.html
+
+* 持续集成不用每次一下集成一大堆功能，出现错误不好发现。可以按功能集成，测试。
+
+> **（1）快速发现错误。**每完成一点更新，就集成到主干，可以快速发现错误，定位错误也比较容易。
+>
+> **（2）防止分支大幅偏离主干。**如果不是经常集成，主干又在不断更新，会导致以后集成的难度变大，甚至难以集成。
+
+![ci-cd-pipeline](./imgs/ci-cd-pipeline.png)
+
+## 1. 持续集成
+
+### 1.1 核心概念
+
+==集成，就是一些孤立的事物或元素通过某种方式集中在一起，产生联系，从而构成一个有机整体的过程。==
+
+### 1.2 持续集成
+
+持续集成（continuous integration，简称 CI）
+
+在软件工程中，持续集成是指将所有开发者工作副本每天多次合并到主干的做法。
+
+持续集成强调开发人员提交新代码之后，立即进行构建、（单元）测试。根据测试结果，我们可以确定新代码和原有代码能否正确地集成在一起。
+
+### 1.3 持续交付
+
+持续交付 （ continuous Delivery，简称 CD ）
+
+完成 CI 中构建及单元测试和集成测试的自动化流程后，持续交付可自动将已验证的代码发布到存储库。为了实现高效的持续交付流程，务必要确保 CI 已内置于开发管道。持续交付的目标是拥有一个可随时部署到生产环境的代码库。
+
+![continuous-deploy](./imgs/continuous-deploy.png)
+
+* 只有 production 是手动的
+
+### 1.4 持续部署
+
+continuous deployment ，简称 CD。 = 持续集成 + 自动化
+
+对于一个成熟的 CI/CD 管道来说，最后的阶段是持续部署。作为持续交付一一自动将生产就绪型构建版本发布到代码存储库一一延伸，持续部署可以自动将应用发布到生产环境。就是上一步的 manual 手动部分可以变成自动的。
+
+
+
+### 1.5 持续集成组成要素
+
+全面的自动化测试。这是实践持续集成&持续部署的基础，同时，选择合适的自动化测试工具也极其重要；
+
+灵活的基础设施。容器，虚拟机的存在让开发人员和 QA 人员不必再大费周折；
+
+版本控制工具。如 Git，CVS，SVN 等；
+
+自动化的构建和软件发布流程的工具，如 Bamboo， Jenkins；
+
+反馈机制。如构建/测试的失败，可以快速地反馈到相关负责人，以尽快解决达到一个更稳定的版本。
+
+
+
+#### 1.5.1 常见工作流
+
+![devops-work-flowing.png](./imgs/devops-work-flowing.png)
+
+### 1.6 解决问题
+
+* 高效率
+* 高质量
+* 高产出
+
+
+
+### 1.7 工具
+
+![tools](./imgs/ci-cd-tools.png)
+
+* ci
+
+  你所熟知的CI/CD工具都是有哪些？ - 极客时间的回答 - 知乎 https://www.zhihu.com/question/296006908/answer/562263043
+
+#### 1. Jenkins
+
+优点：
+
+* 价格（免费）
+* 定制
+* 插件系统
+* 完全控制系统
+
+缺点
+
+* 需要专用服务器（或多个服务器）。导致额外的费用，对于服务器本身，devops 等
+* 配置/定制所需时间
+
+#### 2. Travis CI 的特点
+
+http://www.ruanyifeng.com/blog/2017/12/travis_ci_tutorial.html
+
+特点：
+
+* 基于云：不需要专门的服务器，您无需管理它
+* 支持 docker 运行测试
+* 使用 YAML 文件进行配置
+* 构建矩阵
+
+
+
+#### 3. Circle  CI
+
+小项目快速验证
+
+
+
+#### 4. compare
+
+![tools-compare](./imgs/tools-compare.png)
+
+## 2. Jenkins
+
+https://www.jenkins.io/zh/doc/
+
+相关概念：
+
+1. 流水线：Jenkins pipeline 是一套插件，将持续交付的实现和实施集成到 Jenkins 中。
+2. 节点：节点就是一个机器，主要用于执行 Jenkins 任务
+3. 阶段：定义不同的执行任务，比如 构建、测试、发布（部署）
+4. 步骤：相当于告诉 Jenkins 现在要做什么，比如 shell 命令
+
+
+
+* 需要宿主机
+
+### 2.1 安装环境
+
+* 安装 JDK
+
+  https://www.linuxprobe.com/centos-yum-jdk.html
+
+  使用 `find / -name 'java'` 来查找安装目录
+
+* 安装 Jenkins
+
+  下载 Jenkins 
+
+  https://www.cnblogs.com/wangzhichao/p/12692185.html
+
+
+
+### docker 启动 Jenkins
+
+```bash
+docker run \
+  -u root \
+  --rm \
+  -d \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -v jenkins-data:/var/jenkins_home \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  jenkinsci/blueocean
+```
+
+* 查看日志能够查看启动的默认密码
+
+  `docker logs e50a3e9be5df `
+
+* Jenkins 加速
+
+  在 插件管理（manage plugins） -> 高级（advanced）-> 升级站点中填入
+
+  `https://mirrors.tuna.tsinghua.edu.cn/jenkins/updates/current/update-center.json`
+
+
+
+* ==实例==。我自己的实例
+
+  ```shell
+  docker run -itd   --rm   -u root   -p 9090:8080   -v /root/workSpace/Jenkins:/var/jenkins_home   -v /var/run/docker.sock:/var/run/docker.sock -v $(which docker):/usr/bin/docker   -v "$HOME":/home   --name jenkins-vue  jenkins/jenkins
+  ```
+
+  * 如果 报错 docker 未发现
+
+    `-v $(which docker):/usr/bin/docker`
+
+#### ==jenkins 容器化配置安装==
+
+1. jsk 安装
+
+   全局工具配置 -> jdk -> 起名（JDK8 , 选择 8u212）-> 选择登陆 Oracle
+
+#### 常见配置中有安全组
+
+* 安全组和登陆配置
+
+### 全局配置介绍
+
+* 在 manage Jenkins 里有一些系统的初始化配置，点后边问号能够查看如何填写。
+
+1. 配置 -> 环境配置
+
+   能够配置宿主机上安装额软件路径（Java、docker）
+
+2. GitHub
+
+   能够配置 github 服务
+
+#### 常用插件
+
+* ***\*Blue Ocean\****
+
+* docker 相关的
+
+  tag 允许检查tag
+
+* github 相关的 凭据
+
+* git 相关的
+
+
+
+### 常用全局工具配置
+
+global tool configuration 全局工具配置
+
+* git 
+* Docker 配置目录 & 自动安装
+
+
+
+### 用户管理
+
+* 凭据管理
+
+* 全局安全配置
+
+  如果配置安全矩阵一定要给 root 用户所有的权限
+
+### Jenkins 配置 gitlab & 配置 github
+
+* 网上搜索
+
+
+
+### pipeline 配置
+
+* pipeline 的方式配置 ci/cd
+
+https://www.jenkins.io/zh/doc/book/pipeline/
+
+* Jenkinsfile 编写，语法：key value （多个 value 用 {}）
+
+* git 链接使用的是浏览器中的链接，不是 .git 那个
+
+#### 使用
+
+blueocean -> 流水线 -> 创建流水线 -> 选 git / github
+
+Git 的方式需要自己编写 Jenkinsfile  文件。
+
+小技巧：使用 pipeline 能够快速生成 Jenkinsfile 文件内容。
+
+
+
+```
+Jenkinsfile (Declarative Pipeline)
+pipeline { 
+    agent {
+        docker {
+            iamge 'node:10'
+            args '-p 9000:8080'
+        }
+    } 
+    stages {
+        stage('Build') { 
+            steps { 
+                // sh 'make' 
+                sh 'node -v'
+                sh 'echo "hello world!!"'
+            }
+        }
+        // stage('Test'){
+        //     steps {
+        //         sh 'make check'
+        //         junit 'reports/**/*.xml' 
+        //     }
+        // }
+        // stage('Deploy') {
+        //     steps {
+        //         sh 'make publish'
+        //     }
+        // }
+    }
+}
+```
+
+#### 自定义pipeline
+
+
+
+![image-20210525095056090](./imgs/pipeline.png)
+
+#### 多分支轮询
+
+配置 -> 多分支流水线 触发器 -> 勾选 -> 1min 轮询一次
+
+
+
+#### build 之后的文件夹
+
+* docker + Jenkins build 之后的文件夹存放在 挂载到宿主机上的Jenkins -> workspace -> 对应名称下
+
+
+
+#### 注意
+
+1. 清理工作区
+
+   https://www.cnblogs.com/sharef/p/13677185.html
+
+2. git 拉取失败
+
+   在流水线设置中，选择clean before
+
+
+
+# TravisCI
+
+## 1. 使用简介
+
+TravisCI 只支持 GitHub，不支持其他代码托管服务。
+
+* 拥有 GitHub 账号
+* 该账号下面有一个项目
+* 该项目里面有可运行的代码
+* 该项目还可包含构建或者测试脚本
+
+简单步骤：
+
+1. github 授权面板
+2. 获取GitHub的tokens
+3. 配置项目 .travis.yml 
+   * node 项目
+   * script 脚本
+   * 部署到github pages
+   * 钩子用法
+4. 其他
+
+
+
+http://www.ruanyifeng.com/blog/2017/12/travis_ci_tutorial.html
+
+
+
+## 2. 运行流程
+
+Travis 的运行流程很简单，任何项目都会经过两个阶段。
+
+> - install 阶段：安装依赖
+> - script 阶段：运行脚本
+
+### 2.1 install 字段
+
+`install`字段用来指定安装脚本。
+
+> ```javascript
+> install: ./install-dependencies.sh
+> ```
+
+如果有多个脚本，可以写成下面的形式。
+
+> ```javascript
+> install:
+>   - command1
+>   - command2
+> ```
+
+上面代码中，如果`command1`失败了，整个构建就会停下来，不再往下进行。
+
+如果不需要安装，即跳过安装阶段，就直接设为`true`。
+
+> ```javascript
+> install: true
+> ```
+
+
+
+### 2.2 script 字段
+
+`script`字段用来指定构建或测试脚本。
+
+> ```javascript
+> script: bundle exec thor build
+> ```
+
+如果有多个脚本，可以写成下面的形式。
+
+> ```javascript
+> script:
+>   - command1
+>   - command2
+> ```
+
+注意，`script`与`install`不一样，如果`command1`失败，`command2`会继续执行。但是，整个构建阶段的状态是失败。
+
+如果`command2`只有在`command1`成功后才能执行，就要写成下面这样。
+
+> ```javascript
+> script: command1 && command2
+> ```
+
+### 2.3 node项目
+
+### 实例：Node 项目
+
+Node 项目的环境需要写成下面这样。
+
+> ```javascript
+> language: node_js
+> node_js:
+>   - "8"
+> ```
+
+上面代码中，`node_js`字段用来指定 Node 版本。
+
+Node 项目的`install`和`script`阶段都有默认脚本，可以省略。
+
+> - `install`默认值：npm install
+> - `script`默认值：npm test
 

@@ -343,7 +343,6 @@ import svg from '.tet.png'
       console.log(111)
   })
   ```
-  
 
 ### PureComponent
 
@@ -559,6 +558,111 @@ export default Home
 * `SyntheticEvent` 实例将被传递给你的事件处理函数，它是浏览器的原生事件的跨浏览器包装器。除==兼容==所有浏览器外，它还拥有和浏览器原生事件相同的接口，包括 `stopPropagation()` 和 `preventDefault()`。
 * 当需要使用浏览器底层事件的时候，只需要使用 `nativeEvent`属性来获取即可。
 * 如果你想异步访问事件属性，需要调用 `event.persist()`，此方法会从池中移除合成事件，允许用户代码保留对事件的引用。
+
+
+
+## 代码分割
+
+* 打包是个非常棒的技术，但随着你的应用增长，你的代码包也将随之增长。尤其是在整合了体积巨大的第三方库的情况下。你需要关注你代码包中所包含的代码，以避免因体积过大而导致加载时间过长。
+
+  为了避免搞出大体积的代码包，在前期就思考该问题并对代码包进行分割是个不错的选择。 代码分割是由诸如 [Webpack](https://webpack.docschina.org/guides/code-splitting/)，[Rollup](https://rollupjs.org/guide/en/#code-splitting) 和 Browserify（[factor-bundle](https://github.com/browserify/factor-bundle)）这类打包器支持的一项技术，能够创建多个包并在运行时动态加载。
+
+  对你的应用进行代码分割能够帮助你“懒加载”当前用户所需要的内容，能够显著地提高你的应用性能。尽管并没有减少应用整体的代码体积，但你可以避免加载用户永远不需要的代码，并在初始加载的时候减少所需加载的代码量。
+
+* 代码分割之后，按需加载的组件会再次进行请求。
+
+### `React.lazy`
+
+https://zh-hans.reactjs.org/docs/code-splitting.html#reactlazy
+
+`React.lazy` 函数能让你像渲染常规组件一样处理动态引入（的组件）。
+
+```jsx
+const OtherComponent = React.lazy(() => import('./OtherComponent'));
+```
+
+此代码将会在组件首次渲染时，自动导入包含 `OtherComponent` 组件的包。(能够使用导入的属性，并不是真正的导入)
+
+`React.lazy` 接受一个函数，这个函数需要动态调用 `import()`。它必须返回一个 `Promise`，该 Promise 需要 resolve 一个==`default` export== 的 React 组件。
+
+==然后应在 `Suspense` 组件中渲染 lazy 组件，如此使得我们可以使用在等待加载 lazy 组件时做优雅降级（如 loading 指示器等）。==包括进行其他的定制。
+
+总结：
+
+1. 真正在使用的时候才会执行这个模块内的代码
+
+应用：
+
+1. 基于路由的代码分割
+
+   https://zh-hans.reactjs.org/docs/code-splitting.html#route-based-code-splitting
+
+#### 命名导出问题
+
+`React.lazy` 目前只支持默认导出（default exports）。如果你想被引入的模块使用命名导出（named exports）（就是之前别人写好的组件或者模块），你可以创建一个中间模块，来重新导出为默认模块。这能保证 [tree shaking](https://zhuanlan.zhihu.com/p/127804516) 不会出错，并且不必引入不需要的组件。
+
+
+
+## 异常捕获
+
+如果模块加载失败（如网络问题），它会触发一个错误。你可以通过[异常捕获边界（Error boundaries）](https://zh-hans.reactjs.org/docs/error-boundaries.html)技术来处理这些情况，以显示良好的用户体验并管理恢复事宜。
+
+https://zh-hans.reactjs.org/docs/error-boundaries.html
+
+> 注意
+>
+> 错误边界**无法**捕获以下场景中产生的错误：
+>
+> - 事件处理（[了解更多](https://zh-hans.reactjs.org/docs/error-boundaries.html#how-about-event-handlers)）
+> - 异步代码（例如 `setTimeout` 或 `requestAnimationFrame` 回调函数）
+> - 服务端渲染
+> - 它自身抛出来的错误（并非它的子组件）
+
+如果一个 class 组件中定义了 [`static getDerivedStateFromError()`](https://zh-hans.reactjs.org/docs/react-component.html#static-getderivedstatefromerror)周期方法中的任意一个（或两个）时，那么它就变成一个错误边界。当抛出错误后，请使用 `static getDerivedStateFromError()` 渲染备用 UI ，使用 `componentDidCatch()` 打印错误信息。
+
+使用：
+
+像一个组件一样使用，在最外层进行嵌套。
+
+```jsx
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error) {
+    // 更新 state 使下一次渲染能够显示降级后的 UI
+    return { hasError: true };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    // 你同样可以将错误日志上报给服务器
+    logErrorToMyService(error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // 你可以自定义降级后的 UI 并渲染
+      return <h1>Something went wrong.</h1>;
+    }
+
+    return this.props.children; 
+  }
+}
+```
+
+```jsx
+<ErrorBoundary>
+  <MyWidget />
+</ErrorBoundary>
+```
+
+
+
+
+
+
 
 # 6. react 思考
 
@@ -824,7 +928,16 @@ diff 规则：
   this.ref.inout
   ```
   
-  
+
+
+
+三种传值：
+
+1. 字符串
+2. 函数
+3. 对象 ： { current: ref }
+
+
 
 注意：
 
@@ -1730,13 +1843,12 @@ class App extends React.Components{
   // 提供 fromJS 能够将对象转化为 immutable 对象
   fromJS({
     list: []
-})
+  })
   
   ```
 
   
   获取 immutable 对象的属性，需要使用 get 方法来获取，不能直接 `.`的形式获取
-  
 
 ```js
   obj.get('key')
@@ -1772,7 +1884,6 @@ state.set('focused', true)
   ```js
   immuJs.toJS()
   ```
-  
 ### 能使用数组的方法  
 
 * immutable 对象能够使用数组的 map 方法
@@ -1916,6 +2027,13 @@ export default () => {
 * 设置多个 state  并不会多次render组件，会集中一次render。
 * useState 在修改 state 的时候是替换，并不是合并，因此在设置对象类型的变量的时候，一定要把全部的key写出来。
 * 变量的使用，直接使用不用再使用 this.state 来调用
+* useState 可以跟一个函数
+
+### 注意
+
+* 多个 useState 赋值，不会合并，会一个一个计算
+* 也是异步执行的，因为要收集嘛
+*  
 
 ## 1.3 useEffect
 
@@ -1961,6 +2079,14 @@ export default () => {
   }, [])
   // 后面的依赖加不加都行，必须有[]
   ```
+
+### 注意：
+
+* useEffect 也存在重复调用的问题，需要做限制！！
+
+* useEffect 的销毁函数每次都是先执行的，不过是异步的
+
+  useLayoutEffect 也是每次先执行销毁函数，同步的
 
 ## 3. useContext
 
@@ -2011,7 +2137,23 @@ const memoizedCallback = useCallback(
 ## 2. setState 是同步的还是异步的
 
 1. 生命周期函数中的 setState、react 事件监听回调中的 setState 都是异步的
+
 2. 定时器、原生事件回调、promise回调，setState 是同步执行的
+
+   ```js
+   document.querySelectorAll('.test')[0].addEventListener('click', () => {
+     this.setState({
+       count1: this.state.count1 + 3
+     })
+     console.log(this.state.count1)
+   })
+   ```
+
+3. 如果一个函数执行多个 setState
+
+   实际效果就是：如果修改的相同的 state 就会进行合并，以最后一次为准。
+
+
 
 ### 使用
 
@@ -2044,10 +2186,29 @@ setState((state, props) => {}, callback)
 
 * 继承 Component 的组件
   1. 父组件的 render 一定会触发子组件的 render 
-  2. 档期组件 调用了 setState ，就会触发当前组件的 render，即使啥也没干
+  2. 当前组件 调用了 setState ，就会触发当前组件的 render，即使啥也没干
 
 ### 4.2 PureComponent 的使用
 
 * 使用 PureComponent 能够实现组件数据没更新，不去执行 render 更新组件
 
   实现了 `shouldComponentUpdate`的拦截，使用的浅层拷贝对比。只能识别到对象属性的属性的变化。
+
+
+
+
+
+# react 官方文档阅读
+
+## 1. 问题汇总
+
+1. 当使用 HOC 来扩展组件时，我们建议使用 React 的 `forwardRef` 函数来向被包裹的组件[转发 ref](https://zh-hans.reactjs.org/docs/forwarding-refs.html)。？
+
+   https://zh-hans.reactjs.org/docs/accessibility.html#programmatically-managing-focus
+
+2. 无障碍，react 第一章
+
+   https://developer.mozilla.org/zh-CN/docs/Web/Accessibility/Keyboard-navigable_JavaScript_widgets
+
+   主要是不能设置 outline: 0 ，为了体验和桌面一模一样，要设置 tabindex 行内值。
+

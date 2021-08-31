@@ -16,7 +16,7 @@
   * 构建于chrome的v8引擎之上
     * 代码只是具有特定格式的字符串
     * 引擎可以帮你去解析和执行
-    * chrome的V8引擎是目前工人的解析执行js代码最快的
+    * chrome的V8引擎是目前公认的解析执行js代码最快的
     * node.js作者把Google Chrome中的V8引擎移植了出来，开发了一个独立的js运行环境
 * 浏览器中的JavaScript
   * ECMAscript
@@ -1885,7 +1885,7 @@ Promise 容器：
   module.exports = function (req, res) {
       req.body = {}
   }
-
+  
   //在调用的模块中使用下列函数
   query(req) //把req 对象传递到执行函数中
   ```

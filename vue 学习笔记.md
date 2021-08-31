@@ -935,6 +935,22 @@ props: {
 * 能够验证类型、是否必须、默认值
 * 注意：如果不使用数组的形式接收传值，也可以使用验证的形式来实现值的定义接收
 
+### props 扩展运算符
+
+* 如果需要传递一个对象给 子组件，不需要拆分，直接使用扩展运算符
+
+```vue
+<Child v-bind="{
+               ...{
+               test: 1
+               }
+               }" />
+```
+
+
+
+
+
 ## model 选项
 
 * 该选项与 `v-model`配合使用，规定了 v-model 绑定的事件和绑定的变量
@@ -2832,3 +2848,20 @@ Object.defineProperty(obj, 'a', {
   2. 当属性发生变化的时候，就用 setter 通知更新，遍历依赖收集器中的页面，逐个通知 watcher去更新视图
 
   3. 当触发了 setter 的时候就要进行更新。
+
+## 9. 报错
+
+`You are using the runtime-only build of Vue where the template compiler is n`
+
+* 需要在 vue.config.js 文件中，添加 
+
+```js
+module.exports = {
+  runtimeCompiler: true
+}
+```
+
+* 或者使用
+
+  `import Vue from 'vue/dist/vue.esm.js`
+

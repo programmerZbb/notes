@@ -1263,6 +1263,16 @@ class Cat extends Animal {
 
 1. 可以使用方法返回 this ，实现链式调用
 
+### 接口表示类
+
+```tsx
+interface IConstruc {
+    new(...args: any[]): {};
+}
+```
+
+
+
 ## 泛型（牛的）（generics）
 
 泛型（Generics）是指在定义函数、接口或类的时候，不预先指定具体的类型，而在使用的时候再指定类型的一种特性。
@@ -2009,6 +2019,48 @@ namespace Shape {
 ### 声明文件使用到的命名空间
 
 * 在声明文件中`declare`的命名空间是约束的类型(而且需要在 .d.ts 文件中)，定义的命名空间必须使用 export 字段。
+
+
+
+## 装饰器
+
+总结
+
+1. 属性是 readonly 不能直接修改
+
+2. 先执行装饰器函数，后执行赋值操作。
+
+   不能直接进行劫持工作，需要使用 defineProperty 来进行
+
+### 类装饰器
+
+* 能能够修改构造函数，重新返回 class 对原类进行改造。
+
+  只能往下继承，意味着不能直接使用 target 去继承，但是可以返回一个 继承 target 的类，实现对target类的扩展。
+
+```tsx
+function classDecorator<T extends {new(...args:any[]):{}}>(constructor:T) {
+    return class extends constructor {
+        newProperty = "new property";
+        hello = "override";
+    }
+}
+
+@classDecorator
+class Greeter {
+    property = "property";
+    hello: string;
+    constructor(m: string) {
+        this.hello = m;
+    }
+}
+
+console.log(new Greeter("world"));
+```
+
+
+
+
 
 ## tsconfig.json 文件
 
