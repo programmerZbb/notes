@@ -453,7 +453,8 @@ this.contextType = ThemeContext
 
 * mixin 是 es5 中公共方法的提取，提供了完整的生命周期，和 vue 中的mixin 相似
 * hoc 则是把公共的方法提取为外层父组件，把公共的方法通过 props 传给需要使用的组件，然后返回这个外层组件。有一些缺点，命名来源（多个hoc 是谁传入的 props 数据，命名冲突）
-* render prop 是把公共的部分当成子组件，父组件来传递一个 render 命名的函数，来控制子组件（公共方法的执行），但是会直接呈现在页面上（因为子组件的调用就是直接在页面上），因此类似于 vue 中的插槽，不能纯使用公共的方法，必须要返回 ui 。
+* render prop 是==把公共的部分当成子组件(不一定，主要看相对位置吧)==，父组件来传递一个 render 命名的函数，来控制子组件（公共方法的执行），但是会直接呈现在页面上（因为子组件的调用就是直接在页面上），因此类似于 vue 中的插槽，不能纯使用公共的方法，必须要返回 ui 。
+* HOC 和 render props 都需要借助 props ，父子组件的生命周期。
 
 ## 插槽与子节点
 
@@ -927,7 +928,6 @@ diff 规则：
   
   this.ref.inout
   ```
-  
 
 
 
@@ -942,6 +942,113 @@ diff 规则：
 注意：
 
 1. ref 是在页面渲染之后执行的，因此不能直接在页面渲染的时候去使用 ref 的DOM。
+
+
+
+# `React.lazy`
+
+https://zh-hans.reactjs.org/docs/code-splitting.html#reactlazy
+
+**使用之前：**
+
+```
+import OtherComponent from './OtherComponent';
+```
+
+**使用之后：**
+
+```jsx
+const OtherComponent = React.lazy(() => import('./OtherComponent'));
+```
+
+`React.lazy` 接受一个函数，这个函数需要动态调用 `import()`。它必须返回一个 `Promise`，该 Promise 需要 resolve 一个 `default` export 的 React 组件。
+
+## 优雅降级
+
+然后应在 `Suspense` 组件中渲染 lazy 组件，如此使得我们可以使用在等待加载 lazy 组件时做==优雅降级==（如 loading 指示器等）。
+
+```jsx
+import React, { Suspense } from 'react';
+
+const OtherComponent = React.lazy(() => import('./OtherComponent'));
+
+function MyComponent() {
+  return (
+    <div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <OtherComponent />
+      </Suspense>
+    </div>
+  );
+}
+```
+
+`fallback` 属性接受任何在组件加载过程中你想展示的 React 元素。你可以将 `Suspense` 组件置于懒加载组件之上的任何位置。你甚至可以用一个 `Suspense` 组件包裹多个懒加载组件。
+
+```jsx
+import React, { Suspense } from 'react';
+
+const OtherComponent = React.lazy(() => import('./OtherComponent'));
+const AnotherComponent = React.lazy(() => import('./AnotherComponent'));
+
+function MyComponent() {
+  return (
+    <div>
+      <Suspense fallback={<div>Loading...</div>}>
+        <section>
+          <OtherComponent />
+          <AnotherComponent />
+        </section>
+      </Suspense>
+    </div>
+  );
+}
+```
+
+### 
+
+
+
+# react 的其他 api
+
+## 1. `React.memo`
+
+* 一个高阶函数，能够作为 pureComponent 的代替
+* 此方法仅作为**[性能优化](https://zh-hans.reactjs.org/docs/optimizing-performance.html)**的方式而存在。但请不要依赖它来“阻止”渲染，因为这会产生 bug。
+
+## 2. `createElement()`
+
+* 就是 JSX 的代替，不需要了解
+
+
+
+## 3.==cloneElement()==
+
+* antd 中的 formItem 就是利用这个进行 children 劫持的。能给子组件默认传一些值。
+
+  ```js
+  function cloneElement(element) {
+    return React.cloneElement(element, {
+      value: 222,
+      onClick(e) {
+        console.log('测试', element)
+        element.props.onClick && element.props.onClick(e)
+      }
+    })
+  }
+  ```
+
+## 4. `React.createRef`
+
+https://zh-hans.reactjs.org/docs/react-api.html#reactcreateref
+
+## `React.Suspense`
+
+`React.Suspense` 可以指定加载指示器（loading indicator），以防其组件树中的某些子组件尚未具备渲染条件。目前，懒加载组件是 `<React.Suspense>` 支持的**唯一**用例：
+
+
+
+
 
 # react 一些深入的思考
 
@@ -964,7 +1071,11 @@ react children 在组件中出现的形式
 
 
 
+
+
 # react 的生命周期
+
+https://projects.wojtekmaj.pl/react-lifecycle-methods-diagram/
 
 * 在某一时刻会自动执行的函数
 
@@ -998,11 +1109,77 @@ react children 在组件中出现的形式
 
 8. componentWillUnmount 组件将要去除的时候执行
 
+9. ### `getSnapshotBeforeUpdate`
+
+   ```js
+   getSnapshotBeforeUpdate(prevProps, prevState)
+   ```
+
+   `getSnapshotBeforeUpdate()` 在==最近一次渲染输出==（提交到 DOM 节点）之前调用。它使得组件能在发生更改之前从 DOM 中捕获一些信息（例如，滚动位置）。此生命周期方法的任何返回值将作为参数传递给 `componentDidUpdate()`。
+
+   能够在 挂载到页面之前对 真实的DOM 进行一些操作。返回一个值给 componentDidUpdate 使用，此时已经脱离了 虚拟DOM 了。
+
+   ```jsx
+   class ScrollingList extends React.Component {
+     constructor(props) {
+       super(props);
+       this.listRef = React.createRef();
+     }
+   
+     getSnapshotBeforeUpdate(prevProps, prevState) {
+       // 我们是否在 list 中添加新的 items ？
+       // 捕获滚动位置以便我们稍后调整滚动位置。
+       if (prevProps.list.length < this.props.list.length) {
+         const list = this.listRef.current;
+         return list.scrollHeight - list.scrollTop;
+       }
+       return null;
+     }
+   
+     componentDidUpdate(prevProps, prevState, snapshot) {
+       // 如果我们 snapshot 有值，说明我们刚刚添加了新的 items，
+       // 调整滚动位置使得这些新 items 不会将旧的 items 推出视图。
+       //（这里的 snapshot 是 getSnapshotBeforeUpdate 的返回值）
+       if (snapshot !== null) {
+         const list = this.listRef.current;
+         list.scrollTop = list.scrollHeight - snapshot;
+       }
+     }
+   
+     render() {
+       return (
+         <div ref={this.listRef}>{/* ...contents... */}</div>
+       );
+     }
+   }
+   ```
+
+
+
+
+
 * 所有的生命周期函数中只有render 函数必须手写，因为react内置了所有的生命周期函数，唯独没有内置render函数。
 
 注意：
 
 * 在初次渲染的时候，子组件的生命周期函数都不会执行
+* render 阶段一定是最新的数据。
+
+
+
+## 父子组件的声明周期执行顺序
+
+* 从 render 开始分叉，深度优先遍历。
+
+  render之前父组件先执行，render之后子组件先执行。因为是 render 驱动子组件执行的，render之前可以想象子组件不存在。（vue是以 beforeMount 作为分界的）
+
+  父组件 componentWillMount -> 父组件 render -> 子组件componentWillMount -> 子组件render -> 子组件 ComponentDidMOunt -> 父组件 componentDidMount
+
+  
+
+
+
+
 
 # 使用 charles 模拟请求数据（mock 数据）
 
@@ -2033,7 +2210,47 @@ export default () => {
 
 * 多个 useState 赋值，不会合并，会一个一个计算
 * 也是异步执行的，因为要收集嘛
-*  
+
+### 函数式更新（需要依赖上一次state的情况可使用）
+
+如果新的 state 需要通过使用先前的 state 计算得出，那么可以将函数传递给 `setState`。该函数将接收先前的 state，并返回一个更新后的值。下面的计数器组件示例展示了 `setState` 的两种用法：
+
+```
+function Counter({initialCount}) {
+  const [count, setCount] = useState(initialCount);
+  return (
+    <>
+      Count: {count}
+      <button onClick={() => setCount(initialCount)}>Reset</button>
+      <button onClick={() => setCount(prevCount => prevCount - 1)}>-</button>
+      <button onClick={() => setCount(prevCount => prevCount + 1)}>+</button>
+    </>
+  );
+}
+```
+
+“+” 和 “-” 按钮采用函数式形式，因为被更新的 state 需要基于之前的 state。但是“重置”按钮则采用普通形式，因为它总是把 count 设置回初始值。
+
+如果你的更新函数返回值与当前 state 完全相同，则随后的重渲染会被完全跳过。
+
+### 获取惰性初始 state
+
+`initialState` 参数只会在组件的初始渲染中起作用，后续渲染时会被忽略。如果初始 state 需要通过复杂计算获得，则可以传入一个函数，在函数中计算并返回初始的 state，此函数只在初始渲染时被调用：
+
+```
+const [state, setState] = useState(() => {
+  const initialState = someExpensiveComputation(props);
+  return initialState;
+});
+```
+
+* 写到后边的函数中，只有在初始化时才会调用该函数
+
+
+
+
+
+
 
 ## 1.3 useEffect
 
@@ -2078,6 +2295,7 @@ export default () => {
       }
   }, [])
   // 后面的依赖加不加都行，必须有[]
+  // 必须用 []，在源码中会优先 flush effect 执行销毁函数，防止闭包泄露
   ```
 
 ### 注意：
@@ -2088,7 +2306,46 @@ export default () => {
 
   useLayoutEffect 也是每次先执行销毁函数，同步的
 
+* 如果有依赖，会先执行销毁函数，然后执行回调函数。==两个函数的执行顺序==
+
+  为防止内存泄漏，清除函数会在组件卸载前执行。另外，如果组件多次渲染（通常如此），则**在执行下一个 effect 之前，上一个 effect 就已被清除**。在上述示例中，意味着组件的每一次更新都会创建新的订阅。若想避免每次更新都触发 effect 的执行，请参阅下一小节。
+
+  ==销毁函数中的 state 是上一个 state。==
+
+  说白了就是执行这次 callback 之前一定要清楚上一个 callback。
+
+* ==为什么要异步执行？==
+
+  与 `componentDidMount`、`componentDidUpdate` 不同的是，传给 `useEffect` 的函数会在浏览器完成布局与绘制**之后**，在一个延迟事件中被调用。这使得它适用于许多常见的副作用场景，比如设置订阅和事件处理等情况，==因为绝大多数操作不应阻塞浏览器对屏幕的更新。==
+
+#### 不能使用
+
+* 在函数组件主体内（这里指在 React 渲染阶段）改变 DOM、添加订阅、设置定时器、记录日志以及执行其他包含副作用的操作都是不被允许的，因为这可能会产生莫名其妙的 bug 并破坏 UI 的一致性。
+* 使用 `useEffect` 完成副作用操作。赋值给 `useEffect` 的函数会==在组件渲染到屏幕之后执行（mutation后的layout阶段执行）==。你可以把 effect 看作从 React 的纯函数式世界通往命令式世界的逃生通道。
+
+#### 调用时机&概念
+
+> #### effect 的执行时机
+>
+> 与 `componentDidMount`、`componentDidUpdate` 不同的是，传给 `useEffect` 的函数会在浏览器完成布局与绘制**之后**，在一个延迟事件中被调用。这使得它适用于许多常见的副作用场景，比如设置订阅和事件处理等情况，因为绝大多数操作==不应阻塞浏览器对屏幕的更新==。
+>
+> 然而，并非所有 effect 都可以被延迟执行。例如，一个对用户可见的 DOM 变更就必须在浏览器执行下一次绘制前被同步执行，这样用户才不会感觉到视觉上的不一致。（概念上类似于被动监听事件和主动监听事件的区别。）React 为此提供了一个额外的 [`useLayoutEffect`](https://zh-hans.reactjs.org/docs/hooks-reference.html#uselayouteffect) Hook 来处理这类 effect。它和 `useEffect` 的结构相同，区别只是调用时机不同。
+>
+> 虽然 `useEffect` 会在浏览器绘制后延迟执行，但会保证在任何新的渲染前执行。在开始新的更新前，React 总==会先清除上一轮渲染的 effect。==
+
+
+
+#### effect 执行条件
+
+默认情况下，effect 会在==每轮组件渲染完成后执行==。这样的话，一旦 effect 的依赖发生变化，它就会被重新创建。
+
+
+
 ## 3. useContext
+
+* 更新的优先级 > React.memo & shouldComponentUpdate
+
+
 
 
 
@@ -2120,10 +2377,405 @@ const memoizedCallback = useCallback(
 * 在需要子组件给父组件传值时，经常需要父组件传递一个函数给子组件，子组件执行这个函数，父组件因为状态变化就更新组件，子组件也会跟着更新（这一次更新是没有必要的）。
 
   callback 就是为了解决这个问题，传递的函数是经过 `useCallback` 处理过的，传递的函数就被缓存下来了，只有后边的依赖发生变化的时候，才会更新传递的函数。因此，子组件也需要设置 props 更新拦截，只有需要的 props 更新的时候才能更新子组件。
+  
+* 目的：
+
+  如果定义的函数是变化的，页面就会重新渲染绑定，如果一个函数体不需要变化，只是函数中的数据发生了变化，建议使用 useCallback 来缓存。==绑定的函数总是更新的==
+
+  ```js
+  function Form() {
+    const [text, updateText] = useState('');
+    const textRef = useRef();
+  
+    useEffect(() => {
+      textRef.current = text; // 把它写入 ref
+    });
+  
+    const handleSubmit = useCallback(() => {
+      const currentText = textRef.current; // 从 ref 读取它
+      alert(currentText);
+    }, [textRef]); // 不要像 [text] 那样重新创建 handleSubmit。不让它更新，数据去 ref 中取
+  
+    return (
+      <>
+        <input value={text} onChange={e => updateText(e.target.value)} />
+        <ExpensiveTree onSubmit={handleSubmit} />
+      </>
+    );
+  }
+  ```
+
+  
 
 ## 6. React.memo
 
 * 一个高阶函数，参数是需要监控的组件，适合监控所有的 props 属性更新。放到组件最外层，代替 `pureComponent`
+
+## 7. useReducer
+
+* 在某些场景下，`useReducer` 会比 `useState` 更适用，例如 state 逻辑较复杂且包含多个子值，或者下一个 state 依赖于之前的 state 等。并且，使用 `useReducer` 还能给那些会触发深更新的组件做性能优化，因为[你可以向子组件传递 `dispatch` 而不是回调函数](https://zh-hans.reactjs.org/docs/hooks-faq.html#how-to-avoid-passing-callbacks-down)
+* 提示：`dispatch` 不会在重新渲染之间变化
+
+### 深层次传递
+
+* 如果需要深层次传递，建议使用 context + dispatch 的方式，dispatch 永远不会发生改变，如果子组件只是想修改父组件，推荐使用。
+* 如果子组件需要拿到父组件的 state，需要向下传递 context 的时候，建议和 dispatch 分开，因为 state 是会改变的。
+* 如果 Reducer Hook 的返回值与当前 state 相同，React 将跳过子组件的渲染及副作用的执行。（React 使用 [`Object.is` 比较算法](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is#Description)
+
+
+
+## 8. context
+
+Context 提供了一个无需为每层组件手动添加 props，就能在组件树间进行数据传递的方法。
+
+* Context 设计目的是为了共享那些对于一个组件树而言是“全局”的数据，例如当前认证的用户、主题或首选语言
+
+### 问题
+
+* Context 主要应用场景在于*很多*不同层级的组件需要访问同样一些的数据。请谨慎使用，因为这会使得组件的复用性变差。
+
+* **如果你只是想避免层层传递一些属性，[组件组合（component composition）](https://zh-hans.reactjs.org/docs/composition-vs-inheritance.html)有时候是一个比 context 更好的解决方案。**
+
+* 当 Provider 的 `value` 值发生变化时，它内部的所有消费组件都会重新渲染。Provider 及其内部 consumer 组件都不受制于 `shouldComponentUpdate` 函数，因此当 consumer 组件在其祖先组件退出更新的情况下也能更新。
+
+  通过新旧值检测来确定变化，使用了与 [`Object.is`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is#Description)
+
+### api
+
+* 第三方文件：
+
+  创建 context
+
+  ```js
+  const MyContext = React.createContext(defaultValue)
+  ```
+
+* 提供消费
+
+  ```js
+  <MyContext.Provider value={/* 某个值 */}>
+  ```
+
+  * 建议使用一个 state 值，避免重新渲染
+
+* 消费数据
+
+  ```jsx
+  <ThemeContext.Consumer>
+    {({theme, toggleTheme}) => (
+      <button
+        onClick={toggleTheme}
+        style={{backgroundColor: theme.background}}>
+        Toggle Theme
+      </button>
+    )}
+  </ThemeContext.Consumer>
+  ```
+
+  
+
+
+
+## 9. 组合组件(插槽)
+
+* 一个例子
+
+  ```js
+  function SplitPane(props) {
+    return (
+      <div className="SplitPane">
+        <div className="SplitPane-left">
+          {props.left}
+        </div>
+        <div className="SplitPane-right">
+          {props.right}
+        </div>
+      </div>
+    );
+  }
+  
+  function App() {
+    return (
+      <SplitPane
+        left={
+          <Contacts />
+        }
+        right={
+          <Chat />
+        } />
+    );
+  }
+  ```
+
+  `<Contacts />` 和 `<Chat />` 之类的 React 元素本质就是对象（object），所以你可以把它们当作 props，像其他数据一样传递。这种方法可能使你想起别的库中“槽”（slot）的概念，但在 React 中没有“槽”这一概念的限制，你可以将任何东西作为 props 进行传递。
+
+* 插槽的两个位置，子元素位置（只能占据一块位置），props 位置（能够自定义预留位置）。
+
+### 特例关系
+
+有些时候，我们会把一些组件看作是其他组件的特殊实例，比如 `WelcomeDialog` 可以说是 `Dialog` 的特殊实例。
+
+在 React 中，我们也可以通过组合来实现这一点。“特殊”组件可以通过 props 定制并渲染“一般”组件：
+
+```js
+function Dialog(props) {
+  return (
+    <FancyBorder color="blue">
+      <h1 className="Dialog-title">
+        {props.title}      </h1>
+      <p className="Dialog-message">
+        {props.message}      </p>
+    </FancyBorder>
+  );
+}
+
+function WelcomeDialog() {
+  return (
+    <Dialog      title="Welcome"      message="Thank you for visiting our spacecraft!" />  );
+}
+```
+
+### 重要
+
+在 Facebook，我们在成百上千个组件中使用 React。我们并没有发现需要使用继承来构建组件层次的情况。
+
+==Props 和组合为你提供了清晰而安全地定制组件外观和行为的灵活方式。注意：组件可以接受任意 props，包括基本数据类型，React 元素以及函数。==
+
+如果你想要在组件间复用非 UI 的功能，我们建议将其提取为一个单独的 JavaScript 模块，如函数、对象或者类。组件可以直接引入（import）而无需通过 extend 继承它们。
+
+* 不推荐使用继承，推荐使用组合，props 能够传递一切类型。如果是非 UI 的能力，推荐使用 import JavaScript 模块的方式。
+
+
+
+## 10. useRef
+
+* 可以用来保存DOM 元素、class实例、以及任何数据，保存到 current 对应的值中，永远是最新的数据，更改数据更直观。
+* 不会更新页面
+* 每次渲染数据都是独立的，怎样让每次的渲染产生联系呢？可以保存在 useRef 中，可以永远保持。
+* 从概念上讲，你可以认为 refs 就像是==一个 class 的实例变量（同一个实例，单例）==。除非你正在做 [懒加载](https://zh-hans.reactjs.org/docs/hooks-faq.html#how-to-create-expensive-objects-lazily)，否则避免在渲染期间设置 refs —— 这可能会导致意外的行为。相反的，通常你应该在事件处理器和 effects 中修改 refs。
+
+
+
+## 11. HOC
+
+* 请注意，HOC 不会修改传入的组件，也不会使用继承来复制其行为。相反，HOC 通过将组件*包装*在容器组件中来*组成*新组件。HOC 是纯函数，没有副作用。
+* 被包装组件接收来自容器组件的所有 prop，同时也接收一个新的用于 render 的 `data` prop。HOC 不需要关心数据的使用方式或原因，而被包装组件也不需要关心数据是怎么来的。
+* 驱动更新：父组件的 render 能够驱动更新
+* 修改传入组件的 HOC 是一种糟糕的抽象方式。调用者必须知道他们是如何实现的，以避免与其他 HOC 发生冲突。
+
+### 不要在 render 方法中使用 HOC
+
+React 的 diff 算法（称为[协调](https://zh-hans.reactjs.org/docs/reconciliation.html)）使用组件标识来确定它是应该更新现有子树还是将其丢弃并挂载新子树。 如果从 `render` 返回的组件与前一个渲染中的组件相同（`===`），则 React 通过将子树与新子树进行区分来递归更新子树。 如果它们不相等，则完全卸载前一个子树。
+
+> 如果在组件之外创建 HOC，这样一来组件只会创建一次。因此，每次 render 时都会是同一个组件。一般来说，这跟你的预期表现是一致的。
+>
+> 在极少数情况下，你需要动态调用 HOC。你可以在组件的生命周期方法或其构造函数中进行调用。
+>
+> 不要动态使用 HOC，防止每次重新渲染。
+
+### 务必复制静态方法
+
+* 如果传入的子组件有静态的方法，返回之前一定要进行复制。
+
+### 传递 ref
+
+* ref 的传递不能直接写 ref key，要不然会被 react 进行处理，可以在 传递的 props 自定义一个 key 进行保存。`test={ref}`
+
+
+
+## 12. 自定义 hooks
+
+* 自定义的 hook 没有一般没有ui，不需要做 view 的操作，抽离出一些公共的逻辑，一般情况连 props 都不需要传入
+
+* 自定义hook必须以 use 开头，比如 `useMousePosition`
+
+* 与 React 组件不同的是，自定义 Hook 不需要具有特殊的标识。我们可以自由的决定它的参数是什么，以及它应该返回什么（如果需要的话）。换句话说，它就像一个正常的函数。但是它的名字应该始终以 `use` 开头，这样可以一眼看出其符合 [Hook 的规则](https://zh-hans.reactjs.org/docs/hooks-rules.html)。
+
+* 自定义 hooks 一般都是逻辑片段，如果包含任何UI结构，那就是自定义组件了，生命周期发生了变化，自带的 hooks 也会发生变化。
+
+  比如说 react 官方写好的 hooks 哪个是有 UI 的
+
+### 总结
+
+* 自定义hooks 有点像mixin
+
+
+
+## HOOKS 规则
+
+### 只在最顶层使用 Hook
+
+**不要在循环，条件或嵌套函数中调用 Hook，** 确保总是在你的 React 函数的最顶层以及任何 return 之前调用他们。遵守这条规则，你就能确保 Hook 在每一次渲染中都按照同样的顺序被调用。这让 React 能够在多次的 `useState` 和 `useEffect` 调用之间保持 hook 状态的正确。(如果你对此感到好奇，我们在[下面](https://zh-hans.reactjs.org/docs/hooks-rules.html#explanation)会有更深入的解释。)
+
+### 只在 React 函数中调用 Hook
+
+**不要在普通的 JavaScript 函数中调用 Hook。**你可以：
+
+- ✅ 在 React 的函数组件中调用 Hook
+- ✅ 在自定义 Hook 中调用其他 Hook (我们将会在[下一页](https://zh-hans.reactjs.org/docs/hooks-custom.html) 中学习这个。)
+
+遵循此规则，确保组件的状态逻辑在代码中清晰可见。
+
+
+
+## portals
+
+* 如何拿到 react 的 reactElement 节点，一般情况下使用插槽子元素能拿到，在 this.props.children 中拿到
+* 拿到 children 就能通过 createProtals 绑定在任何真实的 DOM 节点下
+  * 最后页面上展示的就是按顺序的DOM 节点
+  * 事件冒泡的顺序也是按照react 元素的顺序，并不是按照真实的DOM顺序。这就是react 的合成事件的优势。
+
+```jsx
+import { useEffect } from 'react'
+import ReactDOM from 'react-dom';
+
+function Child() {
+    return <div onClick={() => { console.log('child 执行') }}>
+        我是子组件
+    </div>
+}
+
+const tempNode = document.createElement('div')
+export function Father(props) {
+    // 防止 DOM 不存在，因此先挂到一个DOM对象下，页面加载完成之后，再挂载
+    useEffect(() => {
+        document.querySelectorAll('.testNode')[0].appendChild(tempNode)
+    }, [])
+    
+
+    return ReactDOM.createPortal(
+        props.children,
+        tempNode
+    )
+}
+
+
+export function Container() {
+    return <div>
+        <div className="testNode" onClick={() => { console.log('兄弟节点执行') }}>
+            我是兄弟节点
+        </div>
+        <div onClick={() => { console.log('父节点执行') }}>
+            <Father>
+                <Child />
+            </Father>
+        </div>
+    </div>
+}
+
+```
+
+
+
+
+
+
+
+# hooks 问题
+
+## 为什么我会在我的函数中看到陈旧的 props 和 state ？
+
+* 组件内部的任何函数，包括事件处理函数和 effect，都是从它被创建的那次渲染中被「看到」的。例如，考虑这样的代码：
+
+  也就是执行时的 state ，不会像普通的闭包一样，会拿到最新的
+
+  ```jsx
+  function Example() {
+    const [count, setCount] = useState(0);
+  
+    function handleAlertClick() {
+      setTimeout(() => {
+        alert('You clicked on: ' + count);
+      }, 3000);
+    }
+  
+    return (
+      <div>
+        <p>You clicked {count} times</p>
+        <button onClick={() => setCount(count + 1)}>
+          Click me
+        </button>
+        <button onClick={handleAlertClick}>
+          Show alert
+        </button>
+      </div>
+    );
+  }
+  ```
+
+  如果你先点击「Show alert」然后增加计数器的计数，那这个 alert 会显示**在你点击『Show alert』按钮时**的 `count` 变量。这避免了那些因为假设 props 和 state 没有改变的代码引起问题。
+
+  如果你刻意地想要从某些异步回调中读取 *最新的* state，你可以用 [一个 ref](https://zh-hans.reactjs.org/docs/hooks-faq.html#is-there-something-like-instance-variables) 来保存它，修改它，并从中读取。
+
+* 第二种情况可能是 useEffect 的依赖项没有设置好。
+
+## 如何记忆计算结果？
+
+* useMemo 可以保存上次的值
+
+
+
+## 闭包陷阱
+
+https://juejin.cn/post/6844904193044512782
+
+```js
+function App(){
+    const [count, setCount] = useState(1);
+    useEffect(()=>{
+        setInterval(()=>{
+            console.log(count)
+        }, 1000)
+    }, [])
+}
+// 这种情况，打印的 count 永远是初始值，不会是最新的值，使用 useRef 能够解决这个问题.
+// 和正常的闭包情况不太一样
+```
+
+
+
+### 使用 useRef 能解决闭包问题？
+
+* useRef 说白了就是一个全局对象，修改的是它的 current 的值。不会涉及闭包问题
+
+* state 闭包问题，是因为实现方式，他所在的闭包永远没有消失。
+
+  baseState = 当时的 state，以后使用的都是这个 baseState 
+
+
+
+## 使用位置
+
+* 不能写到 判断条件中，因为要按照顺序去链表中拿到当前的 hooks 对象
+* useEffect 本身就是一个 闭包，[] 永远不更新 state
+
+
+
+* ==只在最顶层使用 hook，不在循环体内，或者判断中使用、嵌套函数，为了 hook按顺序执行==
+* ==只在 react 函数中调用 hook，或者自定义函数中，不能再 js 的函数中调用==
+
+
+
+## Hook 会因为在渲染时创建函数而变慢吗？
+
+除此之外，可以认为 Hook 的设计在某些方面更加高效：
+
+- Hook 避免了 class 需要的额外开支，像是创建类实例和在构造函数中绑定事件处理器的成本。
+
+  不需要使用 this
+
+- **符合语言习惯的代码在使用 Hook 时不需要很深的组件树嵌套**。这个现象在使用高阶组件、render props、和 context 的代码库中非常普遍。组件树小了，React 的工作量也随之减少。
+
+  拍平， 不需要多层嵌套。
+
+
+
+## hooks 的记忆功能
+
+* useMemo
+* useRef
+
+
 
 
 
@@ -2212,3 +2864,28 @@ setState((state, props) => {}, callback)
 
    主要是不能设置 outline: 0 ，为了体验和桌面一模一样，要设置 tabindex 行内值。
 
+
+
+## 死循环问题
+
+* 所有能促使 react 组件更新的方法，都不应该互相调用（比如写在 render 中）。否则会造成死循环。
+
+
+
+## 解决横切关注点
+
+* 可以使用 render props 、HOC、自定义 hook 来解决横切关注点的问题
+
+### 使用 Render Props 来解决横切关注点（Cross-Cutting Concerns）
+
+
+
+# react 组件设计
+
+1. 官网
+
+   https://zh-hans.reactjs.org/docs/faq-structure.html
+
+2. atomic 设计
+
+   https://zhuanlan.zhihu.com/p/48282122

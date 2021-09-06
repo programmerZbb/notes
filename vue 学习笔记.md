@@ -1054,6 +1054,12 @@ props: {
 
 **deactivated：组件被停用(离开路由)时调用**
 
+## 父子之间声明周期
+
+* 子组件声明周期在 beforeMount 之前进入
+
+
+
 # 使用 vue-resource 
 
 * 安装 npm i vue-resource

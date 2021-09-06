@@ -908,3 +908,196 @@ https://segmentfault.com/a/1190000006143086
 
 unicode是信源编码，对字符集数字化;
 utf8是信道编码，为更好的存储和传输。
+
+
+
+# 原型链
+
+* 主要是区分函数的原型链
+  * 一个函数的 `__proto__`  指向 Function.prototype
+  
+  * Function.prototype 的 `__proto__`  指向 Object.prototype
+  
+  * 一个新建的函数，会初始化一个 prototype 对象，这个对象和 Function 没有一点关系
+  
+    ```js
+    function Fn() {}
+    Function.prototype.a = 1
+    
+    const f = new Fn()
+    f.a // 不存在
+    ```
+  
+  * ==函数的实例对象和 Function 对象没有一点关系，只和定义 function 时候绑定的prototype有关系，和Object.prototype有关系==
+
+## 题目
+
+```js
+function F() {}
+F.prototype.a = 1;
+var f1 = new F()
+F.prototype = {
+    a: 2
+}
+var f2 = new F()
+console.log(f1.a) // 1
+console.log(f2.a) // 2
+
+```
+
+
+
+# 继承
+
+## 单词
+
+* sup 超级，上层的
+* sup 附属的，下层的
+* sibling 兄弟的
+
+
+
+## new - 继承
+
+* 使用 new 实例出来的对象对于构造函数中的引用类型，不会引用同一个，而是创建一个新的
+
+  ```js
+  function Fn() { this.test = [1] }
+  
+  let fn1 = new Fn()
+  
+  let fn2 = new Fn()
+  
+  fn1.test.push(2)
+  
+  fn1.test
+  // (2) [1, 2]
+  fn2.test
+  // [1]
+  ```
+
+  
+
+### 继承实现——寄生组合
+
+```js
+function SuperType(name) {
+    this.name = name
+}
+
+SuperType.prototype = {
+    fn() {
+        console.log('测试')
+    }
+}
+
+
+function SubType() {
+    SuperType.call(this)
+}
+
+SubType.prototype = Object.create(SuperType.prototype)
+
+SubType.prototype.constructor = SubType
+
+```
+
+* ES6 的类中的方法都挂载到 原型上了，是不可枚举的。
+
+
+
+# 连续赋值
+
+* 连续赋值的情况，一定要拆分开看，而不是从右到左
+
+```js
+var foo = {n: 1};
+var bar = foo;
+foo.x = foo = {n: 2};
+
+bar = ？
+foo = ？
+```
+
+
+
+# 关于作用域的问题
+
+* 变量提升是 函数提升到最前边，如果函数前边有赋值操作，会进行覆盖的情况
+
+  ```js
+  a = 2
+  function a() {}
+  // a = 2
+  ```
+
+  
+
+
+
+# 相等（==）
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Equality
+
+等于运算符（`==`）检查其两个操作数是否相等，并返回`Boolean`结果。与[严格相等](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality)运算符（`===`）不同，它会尝试==强制类型转换==并且比较不同类型的操作数。
+
+相等运算符（`==`和`!=`）使用[抽象相等比较算法](https://www.ecma-international.org/ecma-262/5.1/#sec-11.9.3)比较两个操作数。可以大致概括如下：
+
+- 如果两个操作数都是对象，则仅当两个操作数都引用同一个对象时才返回`true`。
+
+- ==如果一个操作数是`null`，另一个操作数是`undefined`，则返回`true`。==
+
+  但是不等于 0。这个是相等运算的特例，要记住。
+
+- ==如果两个操作数是不同类型的，就会尝试在比较之前将它们转换为相同类型：==
+
+  - 当数字与字符串进行比较时，会尝试将字符串转换为数字值。(这个转换使用的是 Number() 方法)
+
+  - 如果操作数之一是
+
+    ```
+    Boolean
+    ```
+
+    ，则将布尔操作数转换为1或0。
+
+    - 如果是`true`，则转换为`1`。
+    - 如果是 `false`，则转换为`0`。
+
+  - 如果操作数之一是对象，另一个是数字或字符串，会尝试使用对象的`valueOf()`和`toString()`方法将对象转换为原始值。
+
+- 如果操作数具有相同的类型，则将它们进行如下比较：
+
+  - `String`：`true`仅当两个操作数具有相同顺序的相同字符时才返回。
+  - `Number`：`true`仅当两个操作数具有相同的值时才返回。`+0`并被`-0`视为相同的值。如果任一操作数为`NaN`，则返回`false`。
+  - `Boolean`：`true`仅当操作数为两个`true`或两个`false`时才返回`true`。
+
+此运算符与[严格等于](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Strict_equality)（`===`）运算符之间最显着的区别在于，严格等于运算符不尝试类型转换。相反，严格相等运算符始终将不同类型的操作数视为不同。
+
+
+
+## 总结
+
+异类：
+
+1. 对象比对象
+2. unll undefined
+
+普遍
+
+1. 不同类型
+2. 相同类型
+
+
+
+### 重要（+、-、==）
+
+* 除了两边都是引用类型
+
+* 如果有一个是基本类型，就会用基本类型的方法进行计算。有以方是数字就用 Number 转换，Boolean 类型必须用 Number 转换。(除了字符串的加法，直接往上堆)
+
+  引用类型的计算，最后是基本类型的计算。
+
+## valueOf 与 toString
+
+* 对象做计算的时候，先调用 valueOf 方法，如果 valueOf 方法没有重写或者返回一个引用类型，就会去调用 toString 方法

@@ -81,3 +81,17 @@ CSS 通用属性值： [`initial`](https://developer.mozilla.org/zh-CN/docs/Web/
 # width
 
 * 百分比：永远相对于的是父元素的 content-width。不论哪种盒模型。
+
+
+
+# 动画
+
+* animation 是逐帧执行的，能够修改每一帧的样式
+
+
+
+# Element.getBoundingClientRect()
+
+`**Element.getBoundingClientRect()**` 方法返回元素的大小及其相对于视口的位置。
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Element/getBoundingClientRect
