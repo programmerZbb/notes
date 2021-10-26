@@ -88,6 +88,11 @@ CSS 通用属性值： [`initial`](https://developer.mozilla.org/zh-CN/docs/Web/
 
 * animation 是逐帧执行的，能够修改每一帧的样式
 
+## 动画和文档流
+
+* 动画不会脱离文档流：比如 `translateX` ，它本身的浮动不会影响其他的元素，但是修改它的宽高还是会影响文档流中给它留下的位置。因此，并没有脱离文档流。
+* 动画相当于提升了图层，能够使用 GPU 进行加速
+
 
 
 # Element.getBoundingClientRect()
@@ -95,3 +100,93 @@ CSS 通用属性值： [`initial`](https://developer.mozilla.org/zh-CN/docs/Web/
 `**Element.getBoundingClientRect()**` 方法返回元素的大小及其相对于视口的位置。
 
 https://developer.mozilla.org/zh-CN/docs/Web/API/Element/getBoundingClientRect
+
+
+
+# 类型选择器(后期需要总结)
+
+https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Selectors
+
+* 计算角度一定是从内到外出发，采用 id > class > 标签
+
+  这个不一定，主要是首先考虑选择器的类型，采用  id > class > 标签，最后再比较距离。
+
+* 如果选择器类型相同的话，谁越近权重越高
+
+  同样如果选择器相同，谁的路径越长越高
+
+* 权重 > 距离
+
+
+
+1. 先看类型 id > class > 标签，从外到里
+2. 类型相同看距离，越近越高
+3. 距离不相同，则路径越长越好;(越长越精确)
+
+
+
+## 属性选择器
+
+* 写法：全部在中括号内完成，类似于正则，需要写规则的写到等号的前边、属性的后边，需要写匹配规则的需要写到第二个参数。
+
+  匹配规则和正则一样，需要采用 i(不区分小写) s(区分大小写，默认)的写法。
+
+```css
+a {
+  color: blue;
+}
+
+/* 以 "#" 开头的页面本地链接 */
+a[href^="#"] {
+  background-color: gold;
+}
+
+/* 包含 "example" 的链接 */
+a[href*="example"] {
+  background-color: silver;
+}
+
+/* 包含 "insensitive" 的链接,不区分大小写 */
+a[href*="insensitive" i] {
+  color: cyan;
+}
+
+/* 包含 "cAsE" 的链接，区分大小写 */
+a[href*="cAsE" s] {
+  color: pink;
+}
+
+/* 以 ".org" 结尾的链接 */
+a[href$=".org"] {
+  color: red;
+}
+```
+
+
+
+## 选择器列表
+
+https://developer.mozilla.org/zh-CN/docs/Learn/CSS/Building_blocks/Selectors
+
+* 需要注意：兄弟选择器
+
+  | [相邻兄弟选择器](https://developer.mozilla.org/zh-CN/docs/Web/CSS/Adjacent_sibling_combinator) | `h1 + p` | [相邻兄弟](https://developer.mozilla.org/zh-CN/docs/User:chrisdavidmills/CSS_Learn/CSS_Selectors/Combinators#Adjacent_sibling) |
+  | ------------------------------------------------------------ | -------- | ------------------------------------------------------------ |
+  | [通用兄弟选择器](https://developer.mozilla.org/zh-CN/docs/Web/CSS/General_sibling_combinator) | `h1 ~ p` | [通用兄弟](https://developer.mozilla.org/zh-CN/docs/User:chrisdavidmills/CSS_Learn/CSS_Selectors/Combinators#General_sibling) |
+
+
+
+# z-index 和 float
+
+* float 是脱离文档流，是布局层面的修改
+* z-index 是渲染层面的修改，是图层的提升。
+
+
+
+# css 属性
+
+## 1. clip-path
+
+https://developer.mozilla.org/zh-CN/docs/Web/CSS/clip-path
+
+* 用来裁剪方式创建元素的显示区域。对元素的显示区域进行裁剪。

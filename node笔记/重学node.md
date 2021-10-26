@@ -174,3 +174,42 @@ callback
 * 中间件执行可以是异步，能够中断执行
 * 简单粗暴的直接赋值，而不是调用函数赋值
 
+
+
+# koa 洋葱模型实现
+
+* 一个 middleware 队列保存 use 的中间件
+
+* 执行顺序的实现（洋葱模型）
+
+  核心逻辑：
+
+  ```js
+  function fn(ctx) {
+      return dispatch(0)
+      function dispatch(i) {
+          const mw = middleware[i]
+          if (!mw) {
+              return
+          }
+          return mw(ctx, dispatch.bind(null, i + 1))
+      }
+  }
+  
+  fn()
+  ```
+
+  https://zhuanlan.zhihu.com/p/279391637
+
+  * 思路：
+    1. 中间件队列中所有的 mw 都会得到执行
+    2. 执行的时候注意 next 加入异步队列
+
+
+
+# 数组 reduce 
+
+* 如果没有初始值，则会从第一项 第二项开始执行
+
+
+

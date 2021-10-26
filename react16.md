@@ -559,6 +559,7 @@ export default Home
 * `SyntheticEvent` 实例将被传递给你的事件处理函数，它是浏览器的原生事件的跨浏览器包装器。除==兼容==所有浏览器外，它还拥有和浏览器原生事件相同的接口，包括 `stopPropagation()` 和 `preventDefault()`。
 * 当需要使用浏览器底层事件的时候，只需要使用 `nativeEvent`属性来获取即可。
 * 如果你想异步访问事件属性，需要调用 `event.persist()`，此方法会从池中移除合成事件，允许用户代码保留对事件的引用。
+* 原生事件是优先于合成事件执行的
 
 
 
@@ -2255,8 +2256,13 @@ const [state, setState] = useState(() => {
 ## 1.3 useEffect
 
 * 副作用函数，（会改变外界的值）
+
 * 第一个参数函数，写业务逻辑
+
 * 第二个参数 依赖，用来规定函数执行的依赖。
+
+  是浅对比
+
 * 如果第二项依赖为空，则不依赖任何变量，只有在第一次 render 执行
 
 ### 和生命周期的对应（useEffect 能执行多次）
@@ -2372,16 +2378,22 @@ const memoizedCallback = useCallback(
 
 把内联回调函数及依赖项数组作为参数传入 `useCallback`，它将返回该回调函数的 memoized 版本，该回调函数仅在某个依赖项改变时才会更新。当你把回调函数传递给经过优化的并使用引用相等性去避免非必要渲染（例如 `shouldComponentUpdate`）的子组件时，它将非常有用。
 
+* 本身，或者向下传递函数的时候都是非常合适的选择。
+
 `useCallback(fn, deps)` 相当于 `useMemo(() => fn, deps)`，因此 `useCallback `能够用 `useMemo`代替
 
 * 在需要子组件给父组件传值时，经常需要父组件传递一个函数给子组件，子组件执行这个函数，父组件因为状态变化就更新组件，子组件也会跟着更新（这一次更新是没有必要的）。
 
   callback 就是为了解决这个问题，传递的函数是经过 `useCallback` 处理过的，传递的函数就被缓存下来了，只有后边的依赖发生变化的时候，才会更新传递的函数。因此，子组件也需要设置 props 更新拦截，只有需要的 props 更新的时候才能更新子组件。
   
+  ==如果依赖项为空，则默认第一次执行==
+  
 * 目的：
 
   如果定义的函数是变化的，页面就会重新渲染绑定，如果一个函数体不需要变化，只是函数中的数据发生了变化，建议使用 useCallback 来缓存。==绑定的函数总是更新的==
 
+  ==就是用来缓存函数的==
+  
   ```js
   function Form() {
     const [text, updateText] = useState('');
@@ -2404,7 +2416,7 @@ const memoizedCallback = useCallback(
     );
   }
   ```
-
+  
   
 
 ## 6. React.memo
@@ -2553,6 +2565,14 @@ function WelcomeDialog() {
 * 不会更新页面
 * 每次渲染数据都是独立的，怎样让每次的渲染产生联系呢？可以保存在 useRef 中，可以永远保持。
 * 从概念上讲，你可以认为 refs 就像是==一个 class 的实例变量（同一个实例，单例）==。除非你正在做 [懒加载](https://zh-hans.reactjs.org/docs/hooks-faq.html#how-to-create-expensive-objects-lazily)，否则避免在渲染期间设置 refs —— 这可能会导致意外的行为。相反的，通常你应该在事件处理器和 effects 中修改 refs。
+
+https://juejin.cn/post/7009946969099468831
+
+
+
+### 问题
+
+* 如果说需要 useEffect 依赖一个对象进行更新，可以使用 useMemo 对对象进行缓存。
 
 
 

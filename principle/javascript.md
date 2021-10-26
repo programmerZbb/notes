@@ -1098,6 +1098,313 @@ https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Equa
 
   引用类型的计算，最后是基本类型的计算。
 
+  * 特例：undefined 转换为NaN，null 转换为 0。null == 0 为 false，所有在比较时，undefined 和 null 是特例。
+
 ## valueOf 与 toString
 
 * 对象做计算的时候，先调用 valueOf 方法，如果 valueOf 方法没有重写或者返回一个引用类型，就会去调用 toString 方法
+
+
+
+# call apply 还有一些不知道的 
+
+* 如果 call 第一个参数是 基础类型（除了 null、undefined），则会返回该类型的构造函数
+
+## bind 返回的函数，this不会改变
+
+```js
+let obj = {test: 1}
+
+function fn(){ console.log(this) }
+
+const an1 = fn.bind(obj)
+
+an1.call(window)
+// {test: 1}
+```
+
+## 箭头函数中 this 不会被修改
+
+* 因为构造函数要执行this，因此箭头函数不能被 new
+
+## bind 与 new
+
+```js
+function func() {
+  console.log(this, this.__proto__ === func.prototype)
+}
+
+boundFunc = func.bind(1)
+new boundFunc() 
+```
+
+* bind 只是修改调用时候的 this ，不是修改 new 时候的this
+
+
+
+## bind 和 箭头函数
+
+* 箭头函数的优先级小于 bind
+
+
+
+# undefined 和 null
+
+* 在 es5 中 undefined 是可以修改的，因此建议和 `void(0)` 进行比较。
+
+
+
+# context
+
+## 变量提升
+
+https://juejin.cn/post/6943035836691087397
+
+https://juejin.cn/post/6933377315573497864#heading-10
+
+* ==只有 var 和 function 关键字会出现变量提升，如果直接赋值一个值，不会出现变量提升。==
+* 如果使用 var 变量提升，则代码块 if 是不会作为一个单独作用域的。
+* `var a = 1, b =2` 相当于每一个都有 var ，和 ; 不同
+* `var a = b = 1` b 没有变量提升
+
+* 如果 函数内部的值没有赋值，var 会变量提升，参数没有变量提升，不是用var定义的。因此形参会覆盖掉内部的数据。
+
+  var 提升，形参不提升
+
+  ```js
+  var a = 1;
+  function foo(a) {
+      console.log(a)
+      var a
+      console.log(a)
+  }
+  foo(a);
+  // 11
+  ```
+
+
+
+### 易错点
+
+* ==一点要注要，没有 var 和 function 不会变量提升!!!!!!==
+
+  ```js
+  function foo(){
+      console.log(a)
+      a =12;
+      b = '林一一'
+      console.log('b' in window)
+      console.log(a, b)
+  }
+  foo()
+  // 报错
+  ```
+
+* 直接使用一个值会报错，一定要搞清楚有没有定义！！！
+
+  ```js
+  fn();
+  console.log(v1); // 报错
+  console.log(v2);
+  console.log(v3);
+  function fn(){
+      var v1 = v2 = v3 = 2019;
+      console.log(v1);
+      console.log(v2);
+      console.log(v3);
+  }
+  
+  ```
+
+* if 语句中的变量没有提升
+
+* 如果遇到 函数和普通变量，在赋值之前调用，一定调用的是函数
+
+  ```js
+  console.log(a);   
+  var a=1;
+  function a(){
+      console.log(1);
+  }
+  ```
+
+* 修改 arguments 能够修改形参的值
+
+  ```js
+  function fn(a) {
+    a = 1
+    arguments[0] = 2
+    // a === 2
+  }
+  ```
+
+  
+
+
+
+## 赋值这个动作发生之后才会改变变量的值
+
+```js
+var b = {
+    a,
+    c: b
+}
+console.log(b.c);
+// b.c 执行的时候，b还是 undefined的
+```
+
+## arguments 能够修改形参的值
+
+```js
+function fn(a) { arguments[0] = 2; console.log(a) }
+// 输出 2
+```
+
+## 非匿名自执行函数的变量提升
+
+* 匿名执行函数和非匿名自执行函数在全局环境下不具备变量提升的机制
+
+  ```js
+  var a = 10;
+  (function c(){
+  })()
+  console.log(c)
+  // Uncaught ReferenceError: c is not defined
+  
+  ```
+
+  IIFE 函数具备自己的作用域，所以全局下不会变量提升。
+
+* 匿名自执行函数在自己的作用域内存在正常的变量提升，说白了就是拿的最外层的数据。
+
+  ```js
+  var a = 10;
+  (function(){
+      console.log(a)
+      a = 20
+      console.log(a)
+  })()
+  console.log(a)
+  // 10, 20, 20
+  ```
+
+* 自调用函数不能修改自己的函数名
+
+  ```js
+  var a = 10;
+  (function a(){
+      console.log(a)
+      a = 20
+      console.log(a)
+  })()
+  ```
+
+### 总结
+
+1. 不会变量提升，在外边拿不到这个函数
+2. 内部不能修改函数的赋值，并且这个函数能够在内部访问到（在外部访问不到）
+
+
+
+
+
+
+
+# 原型链
+
+* 原型链整个替换不影响原来的实例，因为已经赋值了，明白吗？
+* 如果通过 this.\__prop__.test() 调用的方法 this 执行原型对象，不是 this
+
+https://juejin.cn/post/6943035836691087397#heading-14
+
+
+
+## 函数原型链
+
+* 只有构造函数有 prototype
+
+函数本身：
+
+```js
+Function.prototype.__proto__ === Object.prototype
+// true
+
+function fn() {}
+fn.__proto__ === Function.prototype
+// 明显函数是由 Function 实例而来的
+
+Function.__proto__ === Object.prototype
+// false
+
+fn1.prototype.__proto__ === Object.prototype
+// true，构造函数一开始的 prototype 不是Object 的原型对象
+```
+
+
+
+
+
+# new 操作符
+
+* 如果不进行括号，默认跟着后边的第一个带括号的函数
+
+
+
+# 前端模板化
+
+## 1. dsl
+
+https://zhuanlan.zhihu.com/p/107947462
+
+* DSL 即「Domain Specific Language」，中文一般译为「领域特定语言」，在[《领域特定语言》](https://link.zhihu.com/?target=https%3A//book.douban.com/subject/21964984/)这本书中它有了一个定义：
+
+  > 一种为**特定领域**设计的，具有**受限表达性**的**编程语言**
+
+
+
+# setInterval 的问题
+
+- 使用 setInterval 时，某些间隔会被跳过；
+- 可能多个定时器会连续执行；
+
+setInterval 只会告诉你，固定一段时间执行里边的回调，并不会告诉你数据更新的频率，取决于你计算的快慢。
+
+
+
+# event 事件对象
+
+## 1. target 和 currentTarget
+
+* currentTarget 永远等于 this
+* target 等于当前触发的元素，可能是由它上报上来的
+
+
+
+# 图片懒加载
+
+* 使用 intersectionObserver，实现一下?
+
+  例子：
+
+  ```js
+  // Register IntersectionObserver
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      // Add 'active' class if observation target is inside viewport
+      if (entry.intersectionRatio > 0) {
+        entry.target.classList.add('active');
+      }
+      // Remove 'active' class otherwise
+      else {
+        entry.target.classList.remove('active');
+      }
+    })
+  })
+  
+  // Declares what to observe, and observes its properties.
+  const boxElList = document.querySelectorAll('.box');
+  boxElList.forEach((el) => {
+      io.observe(el);
+  })
+  ```
+
