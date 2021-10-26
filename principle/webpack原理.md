@@ -619,3 +619,6 @@ module.exports = {
 ## 默认优化
 
 * mode： 代码压缩
+
+
+
