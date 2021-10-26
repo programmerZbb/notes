@@ -536,8 +536,6 @@ module.exports = {
     ```js
     app.use('/api/v1/control/', proxy({
         target: staticData.targetOrigin3, // target host
-        // target: 'http://172.18.92.103:8080',
-        // target: 'https://mock.corp.kuaishou.com/mock/3195',
         changeOrigin: true, // needed for virtual hosted sites
         onProxyReq: (proxyReq, req, res) => {
             // add custom header to request: 用于本地测试绕过 SSOs
@@ -621,6 +619,3 @@ module.exports = {
 ## 默认优化
 
 * mode： 代码压缩
-
-
-
