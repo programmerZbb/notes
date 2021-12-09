@@ -65,6 +65,16 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/Document/readyState
 
 # 性能 api
 
+## performance
+
+* api 时序图
+
+![browser-imgs](./browser-imgs/browser-imgs.jpg)
+
+* 详情可参考：https://juejin.cn/post/6916527678807867400
+
+
+
 ## PerformanceObserver
 
 * 能够做性能监控
@@ -253,6 +263,49 @@ element.onclick = function() {
 * 首屏加载时长？
 * https://www.jianshu.com/p/bf9353cfbbc6
 * 使用 mutationObserver + getBoundingClientRect 来计算
+
+## 问题
+
+* 每个业务首屏加载的定义不一样，因此每个公司定义的首屏可能不太一样，需要问清楚
+  * 新闻网站一般看文字
+  * 电商网站一般看图片
+
+## 首屏加载时长
+
+* 普通的元素根据 MutationObserver 的配置就能获取到
+
+  ```js
+  {
+    childList: true, // 观察目标子节点的变化，添加或者删除
+    subtree: true // 默认为 false，设置为 true 可以观察后代节点
+  }
+  ```
+
+* 
+
+
+
+
+
+# 浏览器各部分耗时监控
+
+```js
+/*
+{
+  0: {key: "Redirect", desc: "网页重定向的耗时", value: 0}
+  1: {key: "AppCache", desc: "检查本地缓存的耗时", value: 0}
+  2: {key: "DNS", desc: "DNS查询的耗时", value: 0}
+  3: {key: "TCP", desc: "TCP连接的耗时", value: 0}
+  4: {key: "Waiting(TTFB)", desc: "从客户端发起请求到接收到响应的时间 / Time To First Byte", value: 132.11499998578802}
+  5: {key: "Content Download", desc: "下载服务端返回数据的时间", value: 17.014999990351498}
+  6: {key: "HTTP Total Time", desc: "http请求总耗时", value: 149.12999997613952}
+  7: {key: "DOMContentLoaded", desc: "dom加载完成的时间", value: 2252.680000034161}
+  8: {key: "Loaded", desc: "页面load的总耗时", value: 4014.0450000180863}
+}
+*/
+```
+
+
 
 
 
@@ -775,5 +828,27 @@ HTML媒体元素接口在属性和方法中添加了 [`HTML元素`](https://deve
 
 
 
+# DOM
 
+## 自定义事件
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Document/createEvent
+
+```js
+// 创建事件
+var event = document.createEvent('Event');
+
+// 定义事件名为'build'.
+event.initEvent('build', true, true);
+
+// 监听事件
+elem.addEventListener('build', function (e) {
+  // e.target matches elem
+}, false);
+
+// 触发对象可以是任何元素或其他事件目标
+elem.dispatchEvent(event);
+```
+
+* 一版使用在 webview jsBridge 的挂载方面
 

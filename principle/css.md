@@ -190,3 +190,9 @@ https://developer.mozilla.org/zh-CN/docs/Learn/CSS/Building_blocks/Selectors
 https://developer.mozilla.org/zh-CN/docs/Web/CSS/clip-path
 
 * 用来裁剪方式创建元素的显示区域。对元素的显示区域进行裁剪。
+
+# lottie 动画
+
+参考：剖析 lottie-web 动画实现原理 - 云音乐前端技术团队的文章 - 知乎 https://zhuanlan.zhihu.com/p/342477231
+
+* 样例：https://lottiefiles.com/featured

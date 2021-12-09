@@ -176,6 +176,163 @@ callback
 
 
 
+# RPC 调用
+
+• Remote Procedure Call(远程过程调用)
+
+* 和 Ajax 有什么相同点?
+
+  * 都是两个计算机之间的网络通信 
+
+  * 需要双方约定一个数据格式
+
+*  和 Ajax 有什么不同点?
+  * 不一定使用 DNS 作为寻址服务 
+  * 应用层协议一般不使用 HTTP
+  * 基于TCP或UDP协议
+
+## RPC 请求过程
+
+### 寻址/负载均衡
+
+* RPC：使用特有服务进行寻址
+
+![rpc](./img/rpc-process.jpg)
+
+* al 使用 vip 方式去寻址 -> 寻址服务器
+
+### 通信方式
+
+* tcp 通信方式：
+
+  * 单工通信
+    * 只能一方往另一方发包，如果需要反过来，需要重新建立 tcp 链接
+
+  * 半双工通信
+    * 同一时间内只能一端向另一端发送数据
+    * 轮番单工通信
+  * 全双工通信
+    * 交叉的方式进行通信
+
+* 区别：实现难度和成本
+
+### 使用协议
+
+* 二进制协议
+  * 更小的数据包体积
+  * 更快的编解码速率
+
+### 总结
+
+* 寻址 + 负载均衡 有运维去消化
+* 多路复用 + 二进制协议 bff 需要理解和实现
+
+
+
+## node buffer
+
+* 参考：http://nodejs.cn/api/buffer.html#bufferfrom-bufferalloc-and-bufferallocunsafe
+
+### Buffer.from 和 Buffer.alloc()——创建buffer
+
+一版就用这两种情况创建新的 buffer 实例
+
+* `Buffer.from`：从现有的一个字符串或者数组创建出一个 buffer 实例
+
+```js
+const buffer1 = Buffer.from('test')
+// 产生 4 位 buffer 每一位代表一个字符
+const buffer2 = Buffer.from([1,2,3])
+// 产生三个 buffer 每一位是数组的一个元素
+```
+
+* Buffer.alloc(): 按规定长度创建出一个 buffer 实例
+
+  ```js
+  const buffer3 = Buffer.alloc(20)
+  // 长度位 20 的一个为空的 buffer （每一位都是 00）
+  ```
+
+
+
+### 读取 buffer
+
+* 主要是 read**BE & read\*\*LE，BE 和 LE 区别就是大小。大段和小段。
+
+  使用这些 方法能够对 buffer 对象进行读写操作。
+
+* Todo ： utf-8 ?
+
+```js
+const buffer1 = Buffer.from([1,2,3,4])
+
+// buffer1.writeInt16BE(256, 1)
+buffer1.writeInt16LE(256, 1) // 16 进制需要占两位
+
+console.log(buffer1)
+```
+
+```js
+buf.writeInt8(value[, offset])
+buf.writeInt16BE(value[, offset])
+// 这些方法的区别就是添加的 value 的大小是有限制的
+```
+
+
+
+### Protocol Buffer
+
+* 使用 Protocol Buffer 工具能够快速的对二进制协议进行编解码。node 环境
+* 参考：https://github.com/mafintosh/protocol-buffers
+
+
+
+### toString 方法
+
+* 能够解码，默认 `utf-8`
+
+  如果超出了 unicode 码的范围，则解析不出任何数据
+
+* http://nodejs.cn/api/buffer.html#buftostringencoding-start-end
+
+
+
+总结：
+
+* toString 和 readInt** 等方法能够 decode buffer，但是 toString 有局限性。
+
+
+
+## node net
+
+### Node.js net 搭建多路复用的 RPC 通道
+
+### node net 模块
+
+* http://nodejs.cn/api/net.html
+
+```js
+const net = require('net');
+const server = net.createServer((socket) => {
+ 	// socket 网络通道代理对象，能够读写
+  socket.on('data', (buffer) => {
+    
+  })
+});
+server.on('error', (err) => {
+  throw err;
+});
+server.listen(8124, () => {
+  console.log('server bound');
+});
+```
+
+* Socket 相当于通道，能够读取和写入数据
+* socket 传递的数据都是 buffer，需要使用 buffer 的方法进行处理
+* 双方（客户端和服务端）都是通过 socket.write 的方式去往通道中写数据；通过监听 data 事件的方式从管道中拿数据。
+
+
+
 # koa 洋葱模型实现
 
 * 一个 middleware 队列保存 use 的中间件
