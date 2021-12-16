@@ -196,3 +196,19 @@ https://developer.mozilla.org/zh-CN/docs/Web/CSS/clip-path
 参考：剖析 lottie-web 动画实现原理 - 云音乐前端技术团队的文章 - 知乎 https://zhuanlan.zhihu.com/p/342477231
 
 * 样例：https://lottiefiles.com/featured
+
+
+
+# 1. 渐变色字体
+
+1. 首先把背景色渐变：
+
+   `background-image: liner-gradient(to right, #000， #fff)`
+
+2. 背景剪裁，只有字体显示背景
+
+   `background-clip: text;`
+
+3. 字体颜色设置成透明：
+
+   `color: transparent`
