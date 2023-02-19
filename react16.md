@@ -944,7 +944,9 @@ diff 规则：
 
 1. ref 是在页面渲染之后执行的，因此不能直接在页面渲染的时候去使用 ref 的DOM。
 
+## forwardRef
 
+* 如果想要在上层组件获取下层组件的DOM实例，可以使用 `React.forwardRef` 。
 
 # `React.lazy`
 
@@ -2163,15 +2165,23 @@ import { combineReducers } from 'redux-immutable'
 
 * react 16.8 新增
 
-## 0. 背景
+## 0. 背景——为什么需要hooks
 
-* class 编写的组件
+* class 编写的组件——https://zh-hans.reactjs.org/docs/hooks-intro.html#complex-components-become-hard-to-understand
 
-  > 难以复用状态逻辑
+  > ==难以复用状态逻辑==——主要是面向对象 class 横切关注点问题的解决，而函数可以随便传播，很容易实现面向切面编程（aspect oriented programming）(参考设计模式入门)
   >
-  > 难以捉摸的生命周期
+  > ==难以捉摸的生命周期==——如果不同的生命周期执行相同的逻辑，必须一一对照，如果有一个生命周期没有执行，就会产生bug，导致逻辑不一致。
   >
-  > 混乱的副作用
+  > ==混乱的副作用==——完全不相干的代码却在同一个方法组合在一起，违背单一原则，出错的概率大增。
+
+### 官方动机
+
+三个动机：代码复用，代码维护管理（复杂组件的数据动向）、class在应用中的问题（this、优化api）
+
+#### [难以理解的class](https://zh-hans.reactjs.org/docs/hooks-intro.html#classes-confuse-both-people-and-machines)
+
+* react就是要使用函数式编程，js中的class和别的不一样（对于其他程序员）：this问题，
 
 ## 1. 开始
 
@@ -2419,9 +2429,29 @@ const memoizedCallback = useCallback(
   
   
 
-## 6. React.memo
+## 6. React.memo——性能优化
 
 * 一个高阶函数，参数是需要监控的组件，适合监控所有的 props 属性更新。放到组件最外层，代替 `pureComponent`
+
+​	父组件更新子组件必然跟着更新，可以使用这个高阶函数进行包装，优化子组件的渲染
+
+重要的是能够定制刷新的维度，比如进行几层的对比。
+
+```typescript
+const B: FC<{
+    bProp: number;
+}> = memo(props => {
+    console.log('render B')
+    return (
+        <></>
+    );
+}, (preProps, nextProps) => {
+    if (nextProps.bProp !== preProps.bProp) {
+        return true
+    }
+    return false;
+});
+```
 
 ## 7. useReducer
 
@@ -2685,9 +2715,9 @@ export function Container() {
 
 ```
 
+### ==非常大的优势——重要==
 
-
-
+* 有了 portal 这个东西，在做一些 noframework 的项目时有很大的优势。能够直接通过element连接，不需要依赖任何框架
 
 
 
@@ -2752,7 +2782,32 @@ function App(){
 // 和正常的闭包情况不太一样
 ```
 
+### 为什么有闭包问题呢？
 
+* 一个原理解释
+
+  第一种情况没有for循环作用域，是全局的作用域（全局会打印出一个i的值）；第二种情况，会有for循环作用域，每个settimeout回调的scope link上都有一个i，就出现了闭包问题
+
+```typescript
+for (var i=0;i<5;i++) {
+    //console.log(i)
+    setTimeout(() => {
+        console.log(i)
+    }, 100)
+}
+```
+
+```typescript
+for (let i=0;i<5;i++) {
+    //console.log(i)
+    setTimeout(() => {
+        console.log(i)
+    }, 100)
+}
+// 0 1 2 3 4 5
+```
+
+* 每个都拿的当前的值。react函数也是一样的，每次都是一个全新的作用域 scope
 
 ### 使用 useRef 能解决闭包问题？
 
@@ -2909,3 +2964,31 @@ setState((state, props) => {}, callback)
 2. atomic 设计
 
    https://zhuanlan.zhihu.com/p/48282122
+
+
+
+# react 性能
+
+## 目前问题
+
+一个好的讨论
+
+为什么尤雨溪说react的性能不如vue？ - Andy Lee的回答 - 知乎 https://www.zhihu.com/question/501745074/answer/2533826292
+
+* vue： reactivity 响应式
+* react: comparison 比较响应式
+
+## 最大的问题
+
+react最大的问题还是精确渲染的问题，父组件带动子组件进行比较
+
+* react 很多优化api，能做出性能很好的app；但是程序员用不好也能做出最差app
+
+## react 推荐性能检测工具
+
+https://create-react-app.dev/docs/measuring-performance/
+
+https://juejin.cn/post/6930903996127248392
+
+https://blog.csdn.net/weixin_40906515/article/details/106394217?utm_medium=distribute.pc_relevant.none-task-blog-baidujs_title-9&spm=1001.2101.3001.4242
+

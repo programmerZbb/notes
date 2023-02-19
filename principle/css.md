@@ -95,13 +95,76 @@ CSS 通用属性值： [`initial`](https://developer.mozilla.org/zh-CN/docs/Web/
 
 
 
-# Element.getBoundingClientRect()
+# 盒模型
+
+## 标准盒模型
+
+
+
+## 行内元素自动换行问题
+
+```html
+<div class="inner">
+  <span>
+    dwada111
+  </span>
+  <span>
+    dwada222dwadawdawdawdawdawdwadw
+  </span>
+</div>
+```
+
+* 上面第二个span，如果父盒子宽度小，则可能自动拐弯换行
+
+# 高级api
+
+## Element.getBoundingClientRect()——边界矩形
 
 `**Element.getBoundingClientRect()**` 方法返回元素的大小及其相对于视口的位置。
 
+* 通俗点说就是获取边界矩形
+
 https://developer.mozilla.org/zh-CN/docs/Web/API/Element/getBoundingClientRect
 
+如果是标准盒子模型，元素的尺寸等于`width/height` + `padding` + `border-width`的总和。如果`box-sizing: border-box`，元素的的尺寸等于 `width/height`。
 
+* 其实使用 style. 或者 offsetTop 等属性也能获取到这些熟悉，这个api只是提供了一个更为方便的方法访问这些属性。
+
+* 返回的结果是包含完整元素的==最小矩形(如果行内元素换行，那就是最小包含矩形)==，并且拥有`left`, `top`, `right`, `bottom`, `x`, `y`, `width`, 和 `height`这几个以像素为单位的只读属性用于描述整个边框。除了`width` 和 `height` 以外的属性是相对于视图窗口的左上角来计算的。
+
+  ==top、left是相对于视口的位置，滚动也会发生变化。非常方便==
+
+
+
+## getClientRects()——获取矩形
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Element/getClientRects
+
+`**Element.getClientRects()**` 方法返回一个指向客户端中每一个盒子的边界矩形的矩形集合。
+
+> 起初，微软打算让这个方法给文本的每一行都返回一个TextRectangle，但是，CSSOM工作草案规定它应该给每个边框返回一个ClientRect。因此，对于行内元素这两个定义是相同的，但是对于块级元素，Mozilla只会返回一个矩形。（译者注：==对于行内元素，元素内部的每一行都会有一个边框；对于块级元素，如果里面没有其他元素，一整块元素只有一个边框==）。
+
+### 与getBoundingClientRect的区别
+
+* getBoundingClientRect 不论行内还是块级元素都返回矩形边界
+
+* ==getClientRects 行内元素会返回每一行的边界，所以返回的是一个数组==
+
+  行内元素自动换行——是指最后一个 span 如果内容过长可能出现折叠换行，内容不连续，该span被拆成了两部分，因此需要获取一个数组，分别定制
+
+> 不过呢，**行内元素**会产生自动换行这类看似分割整体的歧义，所以，我会把行内元素根据它换行划分成*多个盒子边界矩形*。这也是我和我的兄弟——getBoundingClientRect的区别。
+>
+> https://zhuanlan.zhihu.com/p/38568124
+
+
+
+## DOMRect 
+
+一个 DOMRect 代表一个矩形
+
+*`DOMRect` 从它的父类继承方法，[`DOMRectReadOnly`](https://developer.mozilla.org/zh-CN/docs/Web/API/DOMRectReadOnly)。* 不同之处在于它们不再是只读的。
+
+DOMRectReadOnly 没有啥特殊的
 
 # 类型选择器(后期需要总结)
 
@@ -122,6 +185,12 @@ https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Selectors
 1. 先看类型 id > class > 标签，从外到里
 2. 类型相同看距离，越近越高
 3. 距离不相同，则路径越长越好;(越长越精确)
+
+
+
+## 相对选择器
+
+https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Selectors#relative_selector
 
 
 
@@ -191,6 +260,47 @@ https://developer.mozilla.org/zh-CN/docs/Web/CSS/clip-path
 
 * 用来裁剪方式创建元素的显示区域。对元素的显示区域进行裁剪。
 
+
+
+## 2. pointer-events
+
+* https://developer.mozilla.org/zh-CN/docs/Web/CSS/pointer-events
+
+  鼠标事件怎么样穿透
+
+  > 某个特定的图形元素可以成为鼠标事件的target
+
+## 3. overflow
+
+* overflow: overlay; 和auto表现一样，只能在 webkit 内核中使用，滚动条不会占据位置。
+
+  在 Chrome 和 Safari 能使用
+
+  https://developer.mozilla.org/zh-CN/docs/Web/CSS/overflow
+
+## 4. filter
+
+[CSS](https://developer.mozilla.org/zh-CN/docs/Web/CSS)属性 **`filter`** 将模糊或颜色偏移等图形效果应用于元素。滤镜通常用于调整图像、背景和边框的渲染。
+
+### 函数
+
+1. url：获取指向 SVG 滤镜的 URI，该 [SVG filter](https://developer.mozilla.org/zh-CN/docs/Web/SVG/Element/filter) 可以嵌入到外部 XML 文件中。
+
+2. blur: 使模糊
+
+3. contrast 对比度
+
+   filter: contrast(500%);
+
+4. grayscale 改变图像灰度
+
+   > [`grayscale()`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/filter-function/grayscale) 函数将改变输入图像灰度。`amount` 的值定义了转换的比例。值为 `100%` 则完全转为灰度图像，值为 `0%` 图像无变化。值在 `0%` 到 `100%` 之间，则是效果的线性乘数。若未设置值，默认是 `0`。
+
+5. hue-rotate 色相旋转
+6. drop-shadow [`drop-shadow()`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/filter-function/drop-shadow) 函数对输入图像应用阴影效果。
+
+
+
 # lottie 动画
 
 参考：剖析 lottie-web 动画实现原理 - 云音乐前端技术团队的文章 - 知乎 https://zhuanlan.zhihu.com/p/342477231
@@ -212,3 +322,119 @@ https://developer.mozilla.org/zh-CN/docs/Web/CSS/clip-path
 3. 字体颜色设置成透明：
 
    `color: transparent`
+
+# flex
+
+## flex 1 和 width 0
+
+* 不知道原因，只说表象吧。如果需要 flex 1 的元素宽度需要父元素分配，则需要设置宽度为0；否则将会受到子元素宽度的影响！
+
+> 如果没有设置width,当内部元素的内容大小超过平均分配的剩余空间时,元素的宽度等于内容大小,如果设置了width并且这个width的大小小于平均分配的剩余空间大小时,取平均分配的剩余空间;
+> 当flex设置为 1 时 相当于 剩余空间大小 = 父元素的宽度 因此
+> 平均的剩余空间大小等于 = 父元素的宽度 / 元素的个数
+> 直接设置width为0可以保证元素宽度平分父元素宽度
+
+## flex 怎么设置超出隐藏——flex省略号不出现
+
+* 如果 flex: 1 沾满了，没给其他元素位置，也可以使用这个破解！
+
+```less
+.box {
+  flex: 1,
+  width: 0 // 这个是关键
+}
+```
+
+## flex 子元素过长导致父元素兄弟元素被挤压
+
+* 如题，也可以使用 width: 0 解决
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .parent {
+            display: flex;
+            align-items: stretch;
+            height: 500px;
+        }
+        .child1 {
+            background-color: red;
+            flex: 1;
+        }
+        .child1-child {
+            width: 1000px;
+            background-color: blue;
+            height: 300px;
+        }
+        .child2 {
+            width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <!-- flex 子元素过长导致父元素兄弟元素被挤压 -->
+    <div class="parent">
+        <div class="child1">
+            <div class="child1-child"></div>
+        </div>
+        <div class="child2"></div>
+    </div>
+</body>
+</html>
+```
+
+* 子元素把父元素宽度撑大了，宽度设置为0，让flex去计算
+
+
+
+# 文档流相关
+
+## position
+
+### Fixed 布局
+
+* fixed 是相对于浏览器的位置
+
+#### 什么情况下能影响 fixed 布局
+
+* 在父元素使用了 translate 样式后，子元素的 fixed 布局会失效。会相对于父元素布局
+
+# 工具
+
+## scss
+
+
+
+## classnames
+
+* 这个工具能把驼峰转换成 - 拼接的
+
+  https://github.com/JedWatson/classnames
+
+# 开发中成长——问题记录
+
+## 父组件overflow:hidden怎么破
+
+* 可以使用一个代理盒子，这个盒子是一个 fixed 定位的盒子，相对于浏览器窗口的，需要超出显示的盒子写到这个代理盒子的里面即可实现。
+
+## 新手引导样式怎么做
+
+* 一个蒙层，怎么样让一个按钮穿过蒙层呢？也就是子元素穿过蒙层的样式呢？
+
+![guide-intro](./imgs/css/guide-intro.png)
+
+	* 实际上蒙层的样式是由父元素的 border-shadow 控制的，也就是这个蒙层完全就是border的阴影，子元素的样式就能直接穿透了。比如说不设置背景色就能拿到蒙层后的元素样式。（注意：不能用边框，动态的，不知道边框多大）
+
+# css3
+
+## 前缀
+
+* 浏览器针对css3实现的不同，需要加前缀
+
+  todo 前缀和浏览器内核的对应关系

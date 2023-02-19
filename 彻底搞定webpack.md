@@ -1,8 +1,16 @@
 # todo
 
 1. webpack 常见配置
-
 2. 写webpack
+
+
+
+# 是什么——简介
+
+* 本质上，**webpack** 是一个用于==现代 JavaScript 应用程序==的 ==*静态模块打包工具*==。当 webpack 处理应用程序时，它会在内部从一个或多个入口点构建一个 [依赖图(dependency graph)](https://webpack.docschina.org/concepts/dependency-graph/)，==然后将你项目中所需的每一个模块组合成一个或多个 *bundles*==，它们均为静态资源，用于展示你的内容。
+* 从 v4.0.0 开始，**webpack 可以不用再引入一个配置文件**来打包项目，然而，它仍然有着 [高度可配置性](https://webpack.docschina.org/configuration)，可以很好满足你的需求。
+
+
 
 # webpack 基础配置
 

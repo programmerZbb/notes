@@ -4,7 +4,7 @@
 
 https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/seal
 
-通常，一个对象是[可扩展的](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/isExtensible)（可以添加新的属性）。密封一个对象会让这个对象变的不能添加新属性，且所有已有属性会变的不可配置。属性不可配置的效果就是属性变的==不可删除==，以及一个数据属性不能被重新定义成为访问器属性，或者反之。但属性的值仍然可以修改。尝试删除一个密封对象的属性或者将某个密封对象的属性从数据属性转换成访问器属性，结果会静默失败或抛出[`TypeError`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypeError)org/zh-CN/docs/Web/JavaScript/Reference/Strict_mode) 中最常见的，但不唯一）。
+通常，一个对象是[可扩展的](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/isExtensible)（可以添加新的属性）。密封一个对象会让这个对象变的不能添加新属性，且所有已有属性会变的不可配置。属性不可配置的效果就是属性变的==不可删除==，以及一个数据属性不能被重新定义成为访问器属性，或者反之。但属性的值仍然可以修改。尝试删除一个密封对象的属性或者将某个密封对象的属性从数据属性转换成访问器属性，结果会静默失败或抛出[`TypeError`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypeError)org/zh-CN/dnocs/Web/JavaScript/Reference/Strict_mode) 中最常见的，但不唯一）。
 
 不会影响从原型链上继承的属性。但 [`__proto__`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object/proto)
 
@@ -87,7 +87,16 @@ writable 为 false
   obj.test = 1 // 可遍历的
   ```
 
-  
+
+### 数据描述符
+
+* value、writable、configurable、enumerable
+
+### 存取描述符
+
+* get、set、configurable、enumerable
+
+
 
 #### 描述符默认值汇总
 
@@ -171,7 +180,21 @@ set
 
 
 
+## 获取属性描述符——Object.getOwnPropertyDescriptor
+
+* 使用 Object.getOwnPropertyDescriptor 能够获取某个属性的属性描述符。
+
+
+
 ## Object.prototype.valueOf
+
+JavaScript 调用 `valueOf` 方法将对象转换为原始值。原始值也就是能参与计算的值。你很少需要自己调用 `valueOf` 方法；==当遇到要预期的原始值的对象时==，JavaScript 会==自动调用==它。
+
+默认情况下，`valueOf` 方法由 [`Object`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Object) 后面的每个对象继承。 每个内置的核心对象都会覆盖此方法以返回适当的值。如果对象没有原始值，则 `valueOf` ==将返回对象本身==。(所有的 valueof 都继承自这个方法，只有这个部署了 valueof)
+
+> // 返回本身
+>
+> let o = {}
 
 * 是一个函数，返回这个对象参与计算时的值
 
@@ -179,13 +202,31 @@ set
 
    valueOf > toString
 
+## Object.prototype.toString()
 
+**`toString()`** 方法返回一个表示该对象的字符串。
+
+每个对象都有一个 `toString()` 方法，当该对象被表示为一个文本值时，或者一个对象以预期的字符串方式引用时自动调用。
+
+* 如果没部署，则调用 Object.prototype.toString，返回一个 [object *type*] 字符串
+
+
+
+## Object.setPropertyOf
+
+* 手动修改一个对象的原型
+
+## Object.getPropertyOf
+
+* 获取原型对象
 
 
 
 # JSON
 
 ## JSON.parse
+
+* 这个方法是同步的，可能引起性能问题
 
 * 参数：
 
@@ -205,7 +246,7 @@ set
 
   ```js
   JSON.parse('{"1": 1, "2": 2,"3": {"4": 4, "5": {"6": 6}}}', function (k, v) {
-      console.log(k); // 输出当前的属性名，从而得知遍历顺序是从内向外的，
+      console.log(k); // 输出当前的属性名，从而得知遍历顺序是从内向外的，先找到某一层的最后一个
                       // 最后一个属性名会是个空字符串。
       return v;       // 返回原始属性值，相当于没有传递 reviver 参数。
   });
@@ -251,9 +292,19 @@ set
 
 
 
+# 数组
+
+## 1. 扩展运算符和 concat 方法比较
+
+* 感觉 数组的 concat 方法更强一些，参数可以是数组或者单个元素（一维数组可以直接拍平）。
+
+  扩展运算符只能传递数组。
+
+
+
 # 类型总结
 
-基础类型：string、number、boolean、undefined、null、symbol
+基础类型：string、number、boolean、undefined、null、symbol、BigInt
 
 引用类型：object (Array，Function，Object，Promise)
 
@@ -281,6 +332,130 @@ https://www.jianshu.com/p/e375ba1cfc47
   * object 打印类型
   * function 打印 源码
 
+# Reflect
+
+## 简介
+
+`Reflect`对象与`Proxy`对象一样，也是 ES6 为了操作对象而提供的新 API。`Reflect`对象的设计目的有这样几个。
+
+1. 将Object对象上一些明显语言内部的方法（比如`Object.defineProperty`），放到`Reflect`对象上。现阶段，某些方法同时在`Object`和`Reflect`对象上部署，未来的新方法将只部署在`Reflect`对象上。也就是说，从`Reflect`对象上可以拿到语言内部的方法。
+
+   * 主要是一些 Object 静态的方法
+
+2. 修改了一些 Object 方法的返回结果，使返回更合理。比如说 Object.definePropety 的configurable设置为 false，则不能继续修改它的属性描述符，Object调用此方法可能抛出错误。Reflect 不会抛出错误，而是返回 Boolean 值
+
+   ```typescript
+   // 老写法
+   try {
+     Object.defineProperty(target, property, attributes);
+     // success
+   } catch (e) {
+     // failure
+   }
+   
+   // 新写法
+   if (Reflect.defineProperty(target, property, attributes)) {
+     // success
+   } else {
+     // failure
+   }
+   ```
+
+3. 修改了一些原来命令式的语句，变成函数式的。比如`name in obj`和`delete obj[name]`，而`Reflect.has(obj, name)`和`Reflect.deleteProperty(obj, name)`让它们变成了函数行为。
+
+4. `Reflect`对象的方法与`Proxy`对象的方法一一对应，只要是`Proxy`对象的方法，就能在`Reflect`对象上找到对应的方法。这就让`Proxy`对象可以方便地调用对应的`Reflect`方法，完成默认行为，作为修改行为的基础。也就是说，不管`Proxy`怎么修改默认行为，你总可以在`Reflect`上获取默认行为。
+
+   * 也就是 proxy 定义 handle 的方法，都能用 Reflect 调用
+   * ==这proxy一一对应这个才是最重要的！==
+
+## 总结
+
+* 遇到 proxy 或者 Object 的静态方法，可以想到使用 Reflect 来解决，一定有对应的（有一小部分改了名称）
+
+
+
+# api
+
+## encodeURI
+
+> **`encodeURI()`** 函数通过将特定字符的每个实例替换为一个、两个、三或四转义序列来对统一资源标识符 (URI) 进行编码 (该字符的 UTF-8 编码仅为四转义序列) 由两个 "代理" 字符组成)。
+
+> UTF-8 (UCS Transformation Format 8) 是万维网上最常用的[字符编码](https://developer.mozilla.org/zh-CN/docs/Glossary/character_encoding)。每个字符由 1 到 4 个字节表示。UTF-8 与 [ASCII](https://developer.mozilla.org/zh-CN/docs/Glossary/ASCII) 向后兼容，可以表示任何标准的 Unicode 字符。
+
+* 假定一个 URI 是完整的 URI，那么无需对那些保留的并且在 URI 中有特殊意思的字符进行编码。
+
+在url中有特殊含义的字符将不会被编码: 比如 & # / 等
+
+`encodeURI` 会替换所有的字符，但不包括以下字符，即使它们具有适当的 UTF-8 转义序列：
+
+| 类型         | 包含                                          |
+| :----------- | :-------------------------------------------- |
+| 保留字符     | `;` `,` `/` `?` `:` `@` `&` `=` `+` `$`       |
+| 非转义的字符 | 字母 数字 `-` `_` `.` `!` `~` `*` `'` `(` `)` |
+| 数字符号     | `#`                                           |
+
+> 请注意，`encodeURI` 自身*无法*产生能适用于 HTTP GET 或 POST 请求的 URI，例如对于 XMLHTTPRequests，因为 "&", "+", 和 "=" 不会被编码，然而在 GET 和 POST 请求中它们是特殊字符。然而[`encodeURIComponent`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent)这个方法会对这些字符编码。
+
+### 为什么要转义呢?
+
+因为你请求参数中的特殊字符可能和http中的关键字重复，所以需要转义！  encodeURI 不能够生产出 http 请求时候的 uri
+
+### 转义的对象
+
+* 转义的对象应该是你传递的参数。一般情况下，不能直接转义整个 url，要不然得不到最终的结果！！！
+
+### 浏览器默认采用的转义方式
+
+* 就是 EncodeURI
+
+## encodeURIComponent
+
+> **`encodeURIComponent()`** 函数通过将一个，两个，三个或四个表示字符的 UTF-8 编码的转义序列替换某些字符的每个实例来编码 [URI](https://developer.mozilla.org/zh-CN/docs/Glossary/URI)（对于由两个“代理”字符组成的字符而言，将仅是四个转义序列）。
+
+```tex
+不转义的字符：
+    A-Z a-z 0-9 - _ . ! ~ * ' ( )
+```
+
+### 任何用户输入的==作为 URI 部分的内容（也就是输入的参数等）==都需要转义
+
+为了避免服务器收到不可预知的请求，对任何用户输入的作为 URI 部分的内容你都需要用 encodeURIComponent 进行转义。==这也是为什么浏览器会对地址栏输入的字符串默认进行转义（只对参数进行转义！！！）==
+
+* 主要说的是参数的转义（有可能包括路由等）
+
+* 因此我们在主动进行请求的时候也要进行转义，除非使用的全是英文
+
+
+
+* 与 encodeURI 的区别
+
+  encodeURI()不会对本身属于URI的[特殊字符](https://www.zhihu.com/search?q=特殊字符&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"article"%2C"sourceId"%3A"135882275"})进行编码
+
+  encodeURIComponent()则会对他发现的任何[非标准字符](https://www.zhihu.com/search?q=非标准字符&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"article"%2C"sourceId"%3A"135882275"})（字母或数字为标准字符）进行编码
+
+### decodeURIComponent
+
+* 能够解析 encodeURI 编码的uri。
+* 一般情况下都是用来解析uri中 编码的参数
+
+
+
+> 对于 [`application/x-www-form-urlencoded`](https://www.whatwg.org/specs/web-apps/current-work/multipage/association-of-controls-and-forms.html#application/x-www-form-urlencoded-encoding-algorithm) (POST) 这种数据方式，空格需要被替换成 '+'，所以通常使用 `encodeURIComponent` 的时候还会把 "%20" 替换为 "+"。
+
+## uri
+
+### http 中的 uri
+
+浏览器会自动对请求中的 uri 中用户输入的部分（非http部分）进行编码，使用 decodeURIComponent 可以进行解码
+
+
+
+## utf-8
+
+> UTF-8 (UCS Transformation Format 8) 是万维网上最常用的[字符编码](https://developer.mozilla.org/zh-CN/docs/Glossary/character_encoding)。每个字符由 1 到 4 个字节表示。UTF-8 与 [ASCII](https://developer.mozilla.org/zh-CN/docs/Glossary/ASCII) 向后兼容，可以表示任何标准的 Unicode 字符。
+
+
+
 
 
 # ==原则问题==
@@ -288,6 +463,20 @@ https://www.jianshu.com/p/e375ba1cfc47
 * 方法一遍挂载到 prototype 上。这个一定要事先搞清楚
 
 
+
+# JavaScript 内存
+
+## js 中的内存空间
+
+https://juejin.cn/post/6868166748709847053#heading-7
+
+JS的内存空间分为栈(stack)、堆(heap)、池(一般也会归类为栈中)。
+
+其中栈存放变量，堆存放复杂对象，池存放常量，所以也叫常量池。
+
+### const
+
+* const 关键字保存的是该变量的地址。对于基础数据类型，保存的就是该值；对于引用数据类型，保存着就是引用类型的地址。
 
 # JavaScript 内存管理
 
@@ -811,6 +1000,20 @@ interface Iterable {
 1. https://www.zhihu.com/question/23374078
 2. http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html?20110621174302
 
+# JavaScript 上下文
+
+## 1. 变量提升
+
+* 函数内的变量只有执行的时候不存在才会报错。因此函数内使用变量不惧怕任何变量提升问题！
+
+## 上下文
+
+> JavaScript 代码运行时，会产生一个全局的上下文环境（context，又称运行环境），包含了当前所有的变量和对象。然后，执行函数（或块级代码）的时候，又会在当前上下文环境的上层，产生一个函数运行的上下文，变成当前（active）的上下文，由此形成一个上下文环境的堆栈（context stack）。
+>
+> 这个堆栈是“后进先出”的数据结构，最后产生的上下文环境首先执行完成，退出堆栈，然后再执行完成它下层的上下文，直至所有代码执行完成，堆栈清空
+>
+> ————https://es6.ruanyifeng.com/?search=%E4%B8%8A%E4%B8%8B%E6%96%87&x=0&y=0#docs/generator#Generator-%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87
+
 
 
 # js 并发模型与事件循环
@@ -851,7 +1054,313 @@ Copy to Clipboard
 
 `queue.waitForMessage()` 会同步地等待消息到达(如果当前没有任何消息等待被处理)。
 
+## 宏队列
 
+* 浏览器宏队列是一个有序集合？有优先级的概念？
+
+## queueMicrotask
+
+* todo
+
+执行顺序，和普通的 promise 回调执行顺序相同，主要看调用时序。
+
+### 使用场景
+
+1. 调整时序
+
+```js
+const messageQueue = [];
+
+let sendMessage = message => {
+  messageQueue.push(message);
+
+  if (messageQueue.length === 1) {
+    queueMicrotask(() => {
+      const json = JSON.stringify(messageQueue);
+      messageQueue.length = 0;
+      fetch("url-of-receiver", json);
+    });
+  }
+};
+```
+
+### messageChannel-消息通道
+
+* 个人理解就是官方实现的 eventbus
+
+* 阅读：https://zhuanlan.zhihu.com/p/432726048
+  * https://zhuanlan.zhihu.com/p/37589777
+
+> MessageChannel允许我们在不同的浏览上下文，比如window.open()打开的窗口或者iframe等之间建立通信管道，并通过两端的端口（`port1`和`port2`）发送消息。MessageChannel以`DOM Event`的形式发送消息，所以它属于异步的宏任务。
+
+* messageChannel 以 DOM Event 的形式发送，因此属于宏任务！
+
+* 上面这个简单的例子就是`MessageChannel`的大致使用过程了。概括来说就是使用`MessageChannel`这个构造函数开创建一个消息管道对象。这个对象实例有两个**只读**属性`port1`和`port2`。我们可以通过其`postMessage`来发送数据，`onmessage`来接收数据。
+
+```text
+const { port1, port2 } = new MessageChannel();
+port1.onmessage = function (event) {
+  console.log('收到来自port2的消息：', event.data); // 收到来自port2的消息： pong
+};
+port2.onmessage = function (event) {
+  console.log('收到来自port1的消息：', event.data); // 收到来自port1的消息： ping
+  port2.postMessage('pong');
+};
+port1.postMessage('ping');
+```
+
+`addEventListener`的写法也可以。
+
+```text
+const { port1, port2 } = new MessageChannel();
+port1.addEventListener('message', function (event) {
+  console.log('收到来自port2的消息：', event.data); // 收到来自port2的消息： pong
+});
+port1.start();
+port2.addEventListener('message', function (event) {
+  console.log('收到来自port1的消息：', event.data); // 收到来自port1的消息： ping
+  port2.postMessage('pong');
+});
+port2.start();
+port1.postMessage('ping');
+```
+
+>  注意，`addEventListener`之后要手动调用`start()`方法消息才能流动，因为初始化的时候是暂停的。`onmessage`已经隐式调用了`start()`方法。
+
+我们把port1和port2统一叫做`MessagePort`。 ——概念！
+
+MessagePort还有两个方法：`close`和`onmessageerror`。 
+
+`close`方法能断开MessagePort的连接，之后两个断开之间将无法通信。建议通信结束后主动调用close方法以便资源回收。
+
+消息不能反序列化时，会出现错误，这时可以用`onmessageerror`方法捕获。
+
+#### node 中的 messageChannel
+
+* node 中也能使用 messageChannel
+
+### messageChannel 和 customEvent 使用区别
+
+
+
+## settimeout、 requestAnimationFrame、 requestIdleCallback、messageChannel
+
+* messageChennel 是宏任务！
+
+`宏Task -> micro Task -> requestAnimationFrame -> 重拍、重绘 -> requestIdleCallback`
+
+* messageChannel 和 settimeout 执行顺序和调用顺序相关。
+
+
+
+
+
+# 异步编程
+
+## 函数保持同步或异步
+
+* 如果一个函数需要返回值，涉及到返回异步的问题，建议都返回异步，而不是既能返回同步又能返回异步！
+* 函数作为参数同理
+
+因为涉及到 release zalog 问题
+
+## **release Zalgo**
+
+https://zhuanlan.zhihu.com/p/30630902
+
+* 简单的就是说一个传入 callback 可能在同步调用，也可能在异步调用，这样是不合理的
+
+```typescript
+// 注: 这是一个相当乌托邦,且省略诸多内容的函数 
+function login (callback) {
+    // 当取得的账号变量name的值为空时， 立即调用函数，此时callback同步调用） 
+    if(!name) {
+        callback();
+        return // name为空时在这里结束函数         
+    }
+    // 当取得的账号变量name的值不为空时， 在请求成功后调用函数（此时callback异步调用）
+    request('post', name, callback)
+}
+```
+
+> **的确，这种函数的编写是公认的需要杜绝的，在英语世界里， 这种可能同步也可能异步调用的回调以及包裹它的函数， 被称作是 “Zalgo” （一种都市传说中的魔鬼）， 而编写这种函数的行为， 被称作是"release Zalgo" (将Zalgo释放了出来)**
+
+* 这种代码是非常可怕的，让我们的代码变得无法预测。函数的调用时间是不确定的，代码变得难以掌控
+
+一个简单的例子：
+
+例如：
+
+```js
+var a =1
+zalgoFunction () {
+  // 这里还有很多其他代码,使得a = 2可能被异步调用也可能被同步调用
+    [  a = 2  ]
+  }
+console.log(a)
+```
+
+
+
+结果会输出什么呢？ **如果zalgoFunction是同步的， 那么a 显然等于2， 但如果 zalgoFunction是异步的，那么 a显然等于1。于是， 我们陷入了无法判断调用影响的窘境。**
+
+
+
+## 竞态问题
+
+* 就是异步任务不按照书写顺序执行，原因：异步任务顺序未知
+* 参考：https://juejin.cn/post/6844903863749705741#heading-4
+
+例子：
+
+输入框频繁输入，返回数据对不上等。
+
+* 解决：
+  * 避免多次请求
+  * 请求前后状态对应
+* 解决竞态问题的一种方案
+
+```typescript
+// 可以封装一个defer工具，实现同步调用，可以直接取消
+class Defer<T = void> {
+    protected _promise: Promise<T>;
+    protected _res: (value: T | PromiseLike<T>) => void;
+    protected _rej: (reason?: any) => void;
+
+    public constructor() {
+        // promise的类型可以这样推出来
+        this._promise = new Promise((res, rej) => {
+            this._res = res;
+            this._rej = rej;
+        });
+    }
+
+    public resolve(value: T): void {
+        this._res(value);
+    }
+
+    public reject(reason: unknown): void {
+        this._rej(reason);
+    }
+
+    public get promise(): Promise<T> {
+        return this._promise;
+    }
+}
+
+// 解决竞态问题
+let defer: Defer<number>;
+setTimeout(() => {
+    if (defer != null) {
+        defer.reject('');
+    }
+    defer = new Defer<number>();
+    defer.resolve(1);
+}, 3000);
+setTimeout(() => {
+    defer = new Defer<number>();
+    defer.resolve(2);
+}, 1000);
+```
+
+## promise cancel
+
+* 如上竞态问题，promise 无法取消，是目前 promise 存在的一个问题
+
+  更多例子查看：https://segmentfault.com/q/1010000009781257
+
+> 比如点赞，取消点赞操作
+> 如果是使用promise当你误点赞了你想点取消赞时， 你就必须等点赞操作结束才能操作
+> 所以有了加强版的promise → observable
+
+> winter的回答
+>
+> 其实还好，多数情况下，我们要取消的不是Promise，而是生成Promise的那个任务。
+>
+> 而且这个任务本身的取消，有时还附带清理现场的需求，比方说，我await了一个存储文件的任务，那么取消这个存储文件任务，意味着中断文件写入，把已经写入的一些信息回滚等等操作。单纯从Promise的角度取消，其实只是取消了Promise后的回调，原本的任务还是执行完成了，若真设计出取消功能，很容易造成误判。
+>
+> 此外，当真正需要取消时，我们完全可以在await之后或者then的回调中加入控制逻辑，这能够保证代码逻辑紧凑，否则，我们调试时可能面临“Promise被取消时到处找取消的代码”这样的窘境
+
+* 讨论参考：https://www.zhihu.com/question/495412354/answer/2244899074
+
+## generator
+
+
+
+## async
+
+* async 是 generator实现的语法糖，generator能做的，async也能做
+
+## 基础
+
+async 肯定返回一个 promise，promise 的值由内部中断的语句赋值
+
+* 有return 就是该return 的值
+
+* 没有return就是 return undefined
+
+* 如果有 promise.reject 或者 throw error(也就是error对象) 的出现（也视为中断），那就是该错误值
+
+  ==一起函数的返回值都是看其中断值！！！==
+
+await 可以跟着一个 promise 实例，返回的值就是其中断值。如果是一个普通常量，就是该常量（常量没有中断值，就是其本身）
+
+==await返回就是一个值，不是一个promise。而且是一个成功的值，不进行错误处理==
+
+* await 意味着后面会有一个值出现，它等到直到这个值出现
+
+
+
+### 并发异步操作——promise.all
+
+* 因为 generator 可以处理并发异步操作，async也可以实现
+
+* 对象
+
+  ```typescript
+  let fn1 = async function () {
+      let res = await {
+      1: Promise.resolve(1),
+      2: Promise.resolve(2),
+    };
+      console.log(res)
+  }
+  ```
+
+* 数组
+
+  ```typescript
+  let fn1 = async function () {
+      let res = await [
+          new Promise((res, rej) => {
+              setTimeout(() => {
+                  res(11)
+              },2000)
+          }),
+          Promise.reject(2),
+          new Promise((res, rej) => {
+              setTimeout(() => {
+                  res(22)
+              },1000)
+          })
+      ]
+      console.log(res)
+  }
+  ```
+
+并发处理和 Promise.all 一模一样，响应的数据和数组的 index 对应。等到所有并发处理完成，才会进行下一步。
+
+
+
+# 编程范式
+
+## 1. FRP——函数响应式编程
+
+* functional-reactive-programming
+
+  https://juejin.cn/post/6844903929814188045
+
+* 典型应用：rxjs
 
 # 浏览器相关
 
@@ -952,7 +1461,7 @@ console.log(f2.a) // 2
 ## 单词
 
 * sup 超级，上层的
-* sup 附属的，下层的
+* Sub 附属的，下层的
 * sibling 兄弟的
 
 
@@ -1048,6 +1557,8 @@ https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/Equa
 - ==如果一个操作数是`null`，另一个操作数是`undefined`，则返回`true`。==
 
   但是不等于 0。这个是相等运算的特例，要记住。
+
+  也就是null和undefined可以互相成就。
 
 - ==如果两个操作数是不同类型的，就会尝试在比较之前将它们转换为相同类型：==
 
@@ -1410,6 +1921,210 @@ setInterval 只会告诉你，固定一段时间执行里边的回调，并不�
 
 
 
+# Blob
+
+## 简介
+
+Blob 对象表示一个不可变、原始数据的类文件对象。它的数据可以按文本或二进制的格式进行读取，也可以转换为 ReadableStream 来用于数据操作
+
+Blob 表示的不一定是 JavaScript 原生格式的数据。File 接口基于 Blob，集成了 blob 的功能并将其扩展以支持用户系统的文件
+
+## 使用 Blob
+
+* 创建一个 blob 对象
+
+  要从其它非 blob 对象和数据构造一个 `Blob`，请使用 [`Blob()`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob/Blob) 构造函数
+
+* 创建一个子集
+
+  要创建一个 blob 数据的子集 blob，请使用 [`slice()`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob/slice) 方法。
+
+* 获取用户文件系统上文件对应的 Blob 对象，参考 File 文档
+
+  File 对象继承了 Blob 的 api
+
+## 创建一个 Blob 对象
+
+```
+var aBlob = new Blob( array, options );
+```
+
+- *array* 是一个由[`ArrayBuffer`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer), [`ArrayBufferView`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypedArray), [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob), [`DOMString`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String) 等对象构成的 [`Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array) ，或者其他类似对象的混合体，它将会被放进 [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)。DOMStrings 会被编码为 UTF-8。
+
+- options
+
+  是一个可选的
+
+  ```
+  BlobPropertyBag
+  ```
+
+  字典，它可能会指定如下两个属性：
+
+  - `type`，默认值为 `""`，它代表了将会被放入到 blob 中的数组内容的 MIME 类型。
+  - `endings`，默认值为`"transparent"`，用于指定包含行结束符`\n`的字符串如何被写入。它是以下两个值中的一个：`"native"`，代表行结束符会被更改为适合宿主操作系统文件系统的换行符，或者 `"transparent"`，代表会保持 blob 中保存的结束符不变 非标准
+
+## 属性
+
+* size: *返回 Blob 对象中所包含数据的大小（字节）。利用这个方法能够获取字符串所占的内存大小*
+* Type: 返回创建 Blob 对象时的 MIME 类型，如果类型未知，则该值返回为空
+
+## 实例方法
+
+### [`Blob.prototype.arrayBuffer()`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob/arrayBuffer)
+
+返回一个 promise，其会兑现一个包含 `Blob` 所有内容的二进制格式的 [`ArrayBuffer`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)。
+
+### [`Blob.prototype.slice()`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob/slice)
+
+返回一个新的 Blob 对象，包含了源 Blob 对象中指定范围内的数据
+
+```typescript
+blob2.slice(1,3,'test')
+// 开始、结束、新blob的类型
+```
+
+[`Blob.prototype.stream()`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob/stream)
+
+* 返回一个能读取 Blob 内容的 ReadableStream
+
+[`Blob.prototype.text()`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob/text)
+
+* 返回一个 promise，能够获取一个包含 Blob 所有内容的 UTF-8 格式的字符串
+
+  获取 blob 中的内容
+
+## 从 Blob 中读取数据
+
+### 1. 使用 fileReader
+
+**`FileReader`** 对象允许 Web 应用程序异步读取存储在用户计算机上的文件（或原始数据缓冲区）的内容，使用 [`File`](https://developer.mozilla.org/zh-CN/docs/Web/API/File) 或 [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob) 对象指定要读取的文件或数据。
+
+* Input 上传的文件 File
+* 拖拽的数据 DataTransfer 对象
+* 来自在一个[`HTMLCanvasElement`](https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLCanvasElement)上执行`mozGetAsFile()`方法后返回结果。
+
+#### 用法
+
+```typescript
+// 1. 创建一个 reader 对象
+const reader = new FileReader()
+// 2. 监听事件
+reader.onload = e => {
+    console.log(e.target.result) // reader.result 就是结果
+}
+// 读取方式
+reader.readAsText(blob)
+```
+
+#### 事件
+
+[`FileReader.onabort`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/abort_event)
+
+处理[`abort`](https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLMediaElement/abort_event)事件。该事件在读取操作被中断时触发。
+
+[`FileReader.onerror` (en-US)](https://developer.mozilla.org/en-US/docs/Web/API/FileReader/error_event)
+
+处理[`error`](https://developer.mozilla.org/zh-CN/docs/Web/API/Element/error_event)事件。该事件在读取操作发生错误时触发。
+
+[`FileReader.onload`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/load_event)
+
+处理[`load`](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/load_event)事件。该事件在读取操作完成时触发。
+
+#### 读取方式
+
+[`FileReader.abort()`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/abort)
+
+中止读取操作。在返回时，`readyState`属性为`DONE`。
+
+[`FileReader.readAsArrayBuffer()`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsArrayBuffer)
+
+开始读取指定的 [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)中的内容，一旦完成，result 属性中保存的将是被读取文件的 [`ArrayBuffer`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) 数据对象。
+
+[`FileReader.readAsBinaryString()`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsBinaryString) 非标准
+
+开始读取指定的[`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)中的内容。一旦完成，`result`属性中将包含所读取文件的原始二进制数据。
+
+[`FileReader.readAsDataURL()`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsDataURL)
+
+开始读取指定的[`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)中的内容。一旦完成，`result`属性中将包含一个`data:` URL 格式的 Base64 字符串以表示所读取文件的内容。
+
+[`FileReader.readAsText()`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsText)
+
+开始读取指定的[`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)中的内容。一旦完成，`result`属性中将包含一个字符串以表示所读取的文件内容。
+
+### 2. 使用 Response 对象
+
+
+
+```typescript
+const text = await (new Response(blob)).text();
+```
+
+### 3. 直接使用 Blob.prototype.text() 方法
+
+* 省略
+
+## 引用 Blob 对象
+
+* 使用 URL.createObjectURL，参见下面
+
+## 应用场景
+
+### 1. 获取字符串内存大小
+
+```typescript
+/**
+ * 用来校验内容大小。通过返回true，不通过返回false
+ */
+export const checkContentSize = (content: string): boolean => {
+    const blob = new Blob([content]);
+    // const targetSize = 8 * 1024 * 1024; // 目标大小8M
+    const targetSize = 100 * 1024; // 目标大小临时100k
+    if (blob.size > targetSize) {
+        return false;
+    }
+    return true;
+};
+```
+
+
+
+# File
+
+* 基于 Blob，集成了 blob 的功能并将其扩展以支持用户系统的文件。就是基于 Blob 然后进行了扩展，比如：文件名，修改时间
+* 文件（File）接口提供有关文件的信息，允许JavaScript访问其内容
+
+> 通常情况下，File对象是来自用户在 input file 选择文件后的 Filelist 对象（e.target.files），也有可能是拖拽操作生成的 DataTransfer 对象。或者来自 [`HTMLCanvasElement`](https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLCanvasElement) 上的 `mozGetAsFile`() API
+
+File 对象时特殊类型的 Blob，且可以用在任意 Blob 类型的 context 中。
+
+## 构造函数
+
+* 和 Blob 有点像
+
+  第一个参数是 一个包含[`ArrayBuffer`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)，[`ArrayBufferView`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypedArray)，[`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)，或者 [`DOMString`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String) 对象的 [`Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array) — 或者任何这些对象的组合。这是 UTF-8 编码的文件内容。
+
+  第二个参数是 filename 或者文件路径
+
+  第三个参数：options 选项
+
+  * type: 类型
+  * lastmodified: 最后修改时间，不传默认当前
+
+## 属性
+
+`File` 接口也继承了 [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob) 接口的属性：
+
+* [`File.lastModified`](https://developer.mozilla.org/zh-CN/docs/Web/API/File/lastModified) 只读： 返回毫秒数
+* [`File.lastModifiedDate`](https://developer.mozilla.org/zh-CN/docs/Web/API/File/lastModifiedDate) 返回时间戳（带时区的）
+
+## 方法
+
+* 参考 Blob
+
+
+
 # ArrayBuffer
 
 * 知乎 arrayBuffer 使用来干嘛的？
@@ -1444,7 +2159,84 @@ setInterval 只会告诉你，固定一段时间执行里边的回调，并不�
 
 你不能直接操作 `ArrayBuffer` 的内容，==而是要通过[类型数组对象](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypedArray)或 [`DataView`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/DataView) 对象来操作==，==它们会将缓冲区中的数据表示为特定的格式==，并通过这些格式来读写缓冲区的内容。
 
-## TypedArray
+
+
+## TypedArray——JavaScript类型化数组
+
+* 一个类似数组的对象，提供了一种用于在内存缓存区中访问原始二进制数据的机制（缓存区、访问二进制）
+* 不能世界使用 TypedArray 类型或者构造函数（下面所述，它分为两类）
+* 类型化数组需要新开辟一个内存空间，然后再进行读取和写入
+
+### 为什么出现
+
+背景：
+
+> [`Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array) 存储的对象能动态增多和减少，并且可以存储任何 JavaScript 值。JavaScript 引擎会做一些内部优化，以便对数组的操作可以很快。然而，随着 Web 应用程序变得越来越强大，尤其一些新增加的功能例如：音频视频编辑、访问 WebSockets 的原始数据等，很明显有些时候如果使用 JavaScript 代码可以快速方便地通过类型化数组来操作原始的二进制数据将会非常有帮助。JavaScript 类型化数组中的每一个元素都是原始二进制值，而二进制值采用多种支持的格式之一（从 8 位整数到 64 位浮点数）。
+
+* 随着wen技术的发展，程序变得强大，需要访问一些原始的二进制数据（音视频、websocket的socket buffer），所以出现了类型化数组
+
+### 不是普通的数组
+
+* 使用 Array.isArray 返回false
+* 不是所有的方法都能使用，比如扩展数组长度的方法。pop push 等
+
+### 缓冲和视图：类型数组的架构
+
+* 介绍怎么样操作类型数组
+
+==为了达到最大的灵活性和效率！JavaScript类型化数组将实现拆分为了缓存和视图两部分==
+
+* 缓存（由ArrayBuffer对象实现）描述的是一个数据分块。缓存没有格式可言，并且不提供访问其内容的机制（只是一个数据分块，一个内存区域）
+* 视图：为了访问在缓冲对象中包含的内存，需要使用视图。视图提供了上下文——即数据类型、起始偏移量和元素数——将数据转换为实际有类型的数组。
+
+操作逻辑：
+
+1. 先定大小
+2. 进行读写操作
+
+以下是arrayBuffer
+
+![ArrayBuffer 中的类型化数组](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays/typed_arrays.png)
+
+* 8位数组一个单元格就是一个 byte，也就是一个字节
+
+### 类型化数组视图
+
+* 类型化数组视图具有==自描述性的名字（功能体现在名字上）== 和 ==所有常用的数值类型（像 `Int8`、`Uint32`、`Float64` 等等）==。
+
+他们的范围如下：
+
+| 类型                                                         | 值范围                                         | 字节数 | 描述                                                  | 对应的 Web IDL 类型   | 等效的 C 类型                |
+| :----------------------------------------------------------- | :--------------------------------------------- | :----- | :---------------------------------------------------- | :-------------------- | :--------------------------- |
+| [`Int8Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Int8Array) | -128~127                                       | 1      | 8 位有符号整数（补码）                                | `byte`                | `int8_t`                     |
+| [`Uint8Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array) | 0~255                                          | 1      | 8 位无符号整数                                        | `octet`               | `uint8_t`                    |
+| [`Uint8ClampedArray`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray) | 0~255                                          | 1      | 8 位无符号整数（值会被裁剪）                          | `octet`               | `uint8_t`                    |
+| [`Int16Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Int16Array) | -32768~32767                                   | 2      | 16 位有符号整数（补码）                               | `short`               | `int16_t`                    |
+| [`Uint16Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array) | 0~65535                                        | 2      | 16 位有符号整数                                       | `unsigned short`      | `uint16_t`                   |
+| [`Int32Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Int32Array) | -2147483648~2147483647                         | 4      | 32 位有符号整数（补码）                               | `long`                | `int32_t`                    |
+| [`Uint32Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array) | 0~4294967295                                   | 4      | 32 位有符号整数                                       | `unsigned long`       | `uint32_t`                   |
+| [`Float32Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Float32Array) | `-3.4E38`~`3.4E38` 以及 `1.2E-38`（最小正数）  | 4      | 32 位 IEEE 浮点数（7 位有效数字，例如 `1.123456`）    | `unrestricted float`  | `float`                      |
+| [`Float64Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Float64Array) | `-1.8E308`~`1.8E308` 以及 `5E-324`（最小正数） | 8      | 64 位 IEEE 浮点数（16 位有效数字，例如 `1.123...15`） | `unrestricted double` | `double`                     |
+| [`BigInt64Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/BigInt64Array) | -263~263 - 1                                   | 8      | 64 位有符号整数（补码）                               | `bigint`              | `int64_t (signed long long)` |
+| [`BigUint64Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/BigUint64Array) | 0~264 - 1                                      | 8      | 64 位无符号整数                                       | `bigint`              |                              |
+
+* 使用方式：
+
+  ```typescript
+  new Int8Array(new ArrayBuffer(10))
+  ```
+
+* 他们的数字分别代码 bytes 数，8个 bytes 又是一个字节。
+
+  描述的是每一个元素的字节数，初始化时确定长度。比如创建一个16个字节的 ArrayBuffer
+
+  使用 Int32Array 去处理它，则一共有四个元素，每个元素有四个字节。32 / 8 = 4
+
+### DataView——操作缓冲区的一种
+
+* todo 如下
+
+### 使用
 
 一个类型化数组（TypedArray） 对象描述了一个底层的二进制数据缓冲区（binary data buffer）的一个类数组视图（view）。TypedArray 是一类构造函数的统称。
 
@@ -1471,8 +2263,693 @@ Int16Array(); // 一个元素表示一个字节，如果引用上述的 buffer2�
 Uint16Array();
 Int32Array();
 Uint32Array();
-Float32Array();
-Float64Array();
+Float32Array(); // 对应32长度的
+Float64Array(); // 对应64位
 ```
 
 * 可以通过 [0] 数组引用的方式去取或者设置数组的每一项
+
+### 同一个数据不通的视图
+
+* 同一个 ArrayBuffer ，使用不同的视图操作（Int16、Int32），他们操作的是同一个数据源，只是展示不同
+
+### 使用类型化数组的web api
+
+[`FileReader.prototype.readAsArrayBuffer()`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsArrayBuffer)
+
+* `FileReader.prototype.readAsArrayBuffer()` 读取对应的 [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob) 或 [`File`](https://developer.mozilla.org/zh-CN/docs/Web/API/File) 的内容
+
+[`XMLHttpRequest.prototype.send()`](https://developer.mozilla.org/zh-CN/docs/Web/API/XMLHttpRequest/send)
+
+* `XMLHttpRequest` 实例的 `send()` 方法现在支持使用类型化数组和 [`ArrayBuffer`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) 对象作为参数。
+
+[`ImageData.data`](https://developer.mozilla.org/zh-CN/docs/Web/API/ImageData)
+
+* 是一个 [`Uint8ClampedArray`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray) 对象，用来描述包含按照 RGBA 序列的颜色数据的一维数组，其值的范围在 `0` 到 `255` 之间。
+
+### 总结
+
+* 操作 缓冲 （ArrayBuffer） 需要新建一个视图
+
+## ArrayBuffer
+
+一下主要是mdn内容，主要为了描述作为缓冲对象在 typedArray 中的作用。 https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Typed_arrays
+
+* ArrayBuffer 是一个种数据类型（不是一个具体的对象），用来表示一个通用的、固定长度（初始化时确定）的二进制数据缓冲区。你不能直接操作其内容，需要创建一个类型化数组的视图或一个描述缓冲数据格式的 DataView，使其能够读写缓冲区中的内容
+* 也就是 typedArray 中的缓冲区
+
+初始化长度是字节！！！
+
+## DataView 
+
+[`DataView`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/DataView) 是一种底层接口，它提供有可以操作缓冲区中任意数据的访问器（getter/setter）API
+
+> **`DataView`** 视图是一个可以从 二进制[`ArrayBuffer`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) 对象中读写多种数值类型的底层接口，使用它时，不用考虑不同平台的[字节序](https://developer.mozilla.org/zh-CN/docs/Glossary/Endianness)问题。
+
+```typescript
+var buffer = new ArrayBuffer(16);
+var view = new DataView(buffer, 0);
+
+view.setInt16(1, 42);
+view.getInt16(1); // 42
+```
+
+# URL 对象
+
+## URL 构造函数
+
+* 浏览器的 url 能够通过 location 进行读取写入操作。那么一个新的 url 没有挂载到浏览器的地址栏，该怎么进行处理呢？js有内置对象 URL 进行处理，把url传入返回一个对象，就能够像 location一样进行操作。
+
+```typescript
+const url = new URL('/test?name=aaa', 'http://www.baidu.com')
+// or
+const url1 = new URL('http://www.baidu.com?test=2')
+```
+
+
+
+## URL.createObjectURL()
+
+* 能够将一个 Blob 或者 File 对象返回一个关联的 string。其中包含一个表示参数中给出的对象的 URL
+
+  这个 URL 的生命周期和创建它的窗口中的 [`document`](https://developer.mozilla.org/zh-CN/docs/Web/API/Document) 绑定。这个新的 URL 对象表示指定的 [`File`](https://developer.mozilla.org/zh-CN/docs/Web/API/File) 对象或 [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob) 对象。
+
+* 也就是用一个 url 表示一个文件
+
+## URL.revokeObjectURL
+
+* 主要是配合上面的静态方法，释放 string 关联的 File，主要是为了平台在适合的时候进行垃圾回收
+
+```typescript
+// URL 的静态方法
+const node: HTMLInputElement = document.querySelector('input')!
+console.log(node)
+node.addEventListener('change', (e: any) => {
+    console.log(e.target.files)
+    const file: File = e.target.files[0]
+
+    const url = URL.createObjectURL(file)
+    const img = document.createElement('img')
+    img.src = url
+    img.onload = () => {
+        document.body.appendChild(img)
+        setTimeout(() => {
+            URL.revokeObjectURL(url);
+        }, 1000);
+    }
+})
+```
+
+### 应用场景
+
+* 图片预览，把本地上传的文件，用 img 标签进行预览
+* a 标签下载本地文件，还能设置 a 标签的 href 字段进行下载操作
+
+
+
+# ==todo Stream==
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Streams_API
+
+# URL
+
+* 使用这个构造函数可以轻松的处理url，获取一些属性
+
+## 1. searchParams
+
+* https://developer.mozilla.org/zh-CN/docs/Web/API/URLSearchParams
+* 定义了一些使用的 方法来处理URL的查询字符串。
+  * 可以迭代、判断是否存在，get，和set
+
+
+
+# 浏览器全局对象
+
+* 在操作窗口（尤其是 iframe）的时候非常有用！
+
+## parent
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Window/parent
+
+返回当前窗口的父窗口对象.
+
+如果一个窗口没有父窗口,则它的 `parent` 属性为自身的引用.
+
+如果当前窗口是一个 `<iframe>`, `<object>`, 或者 `<frame>`,则它的父窗口是嵌入它的那个窗口
+
+* 拿到当前子窗口的
+
+  ```js
+  window.parent.frames
+  ```
+
+## top
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Window/top
+
+window.top 返回窗口层级最顶层窗口的引用。
+
+ `window.parent` 返回当前窗口的直接父对象，而 [`window.top`](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/top) 返回最顶层的窗口对象。
+
+## self
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Window/self
+
+返回当前window对象的引用
+
+## Window.frames
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Window/frames
+
+* 返回当前窗口，一个类数组对象，列出了当前窗口的所有直接子窗口。
+
+# string
+
+
+
+
+
+# 上报相关
+
+## unhandledrejection
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Window/unhandledrejection_event
+
+* 能够捕获 reject 错误
+
+## rejectionhandle
+
+https://zhuanlan.zhihu.com/p/30047612
+
+
+
+# 语言基础
+
+## 换行
+
+在 Linux 和 macOS 上为 `\n`，在 Windows 上为 `\r\n`。
+
+
+
+## for循环
+
+* 和js其他情况一致，for循环第二个条件用来判断的，所以一起js能用来判断的情况都可以使用
+
+```js
+for ( var i = 0, type; type = [ 'String', 'Array', 'Number' ][ i++ ]; ) {}
+// 数组弟四项是undefined，所以第四项为出口
+
+let test = {
+    0: 1,
+    1: 1,
+    2: 0
+}
+for ( var i = 0, type; test[i++]; ) {
+    console.log(111)
+}
+// 打印两次111，第二项是0，直接退出
+```
+
+
+
+## for in 和 for of
+
+* for in 能遍历到key，不能遍历到部署 iterator 接口的数据结构（比如Set）
+* For of 能够遍历到所有部署 iterator 接口的数据结构
+
+```typescript
+let pets = new Set(["Cat", "Dog", "Hamster"]);
+pets["species"] = "mammals";
+for (let pet in pets) {
+  console.log(pet); // "species"
+}
+for (let pet of pets) {
+  console.log(pet); // "Cat", "Dog", "Hamster"
+}
+```
+
+
+
+## label语句——循环标记
+
+* https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Loops_and_iteration#label_%E8%AF%AD%E5%8F%A5
+
+* 循环标记提供了一个让你的程序中其他位置引用它的标识。
+
+  例如，你可以用 label 标识一个循环， 然后使用 `break` 或者 `continue` 来指出程序是否该停止循环还是继续循环。
+
+看起来更像：
+
+```
+label :
+   statement
+```
+
+```typescript
+var func = function(){
+    outerloop:
+    for ( var i = 0; i < 10; i++ ){
+        innerloop:
+        for ( var j = 0; j < 10; j++ ){
+            if ( i * j >30 ){
+                break outerloop;
+            }
+        }
+    }
+};
+
+// while循环
+outer:
+while(true) {
+    for (let i =0; i< 100; ++i) {
+        console.log(i)
+        if (i > 10) {
+            break outer
+        }
+    }
+}
+
+```
+
+
+
+## 函数编程
+
+### 两个没有用的特性——callee，caller
+
+* 可以使用 arguments 对象获取当前函数的name（在匿名函数循环调用时有用）
+* arguments.callee.caller可以获取函数调用栈的上一个函数
+
+### length
+
+* 函数的length 代表函数参数的个数
+
+### currying
+
+
+
+### uncurrying
+
+
+
+
+
+
+
+## 字符串
+
+* 换行
+
+  `\n` `\r` `\t` 
+
+  \t 跳格    \r 回车    \n 换行 
+
+### 模板字符串
+
+* 在模板字符串中写一个换行，转换成字符串是一个 `\n`，调用 console.log 可以显示换行，字符串不能直接显示。
+
+  html可以使用innerHtml来换行
+
+
+
+
+
+
+
+## bigInt
+
+* 用n结尾的数字类型
+
+* https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/BigInt
+
+  **`BigInt`** 是一种内置对象，它提供了一种方法来==表示大于 `2^53 - 1` 的整数==。这原本是 Javascript中可以用 [`Number`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Number) 表示的最大数字。**`BigInt`** 可以表示任意大的整数。
+
+### 注意
+
+不可以直接数字进行操作，需要使用 BigInt 进行转换
+
+```typescript
+1 + 1n
+// 报错
+
+BigInt(1) + 1n
+```
+
+
+
+
+
+## 解释型语言和编译型语言
+
+![编译型语言和解释型语言的执行流程](http://c.biancheng.net/uploads/allimg/191231/1-1912311J415L7.gif)
+
+
+
+* https://baike.baidu.com/item/%E8%A7%A3%E9%87%8A%E6%80%A7%E8%AF%AD%E8%A8%80/4665504?fr=aladdin
+
+  https://baike.baidu.com/item/%E7%BC%96%E8%AF%91%E5%9E%8B%E8%AF%AD%E8%A8%80/9564109
+
+  * 解释型语言的程序不需要在运行前编译，在运行程序的时候才翻译，专门的解释器负责在每个语句执行的时候解释程序代码。这样解释型语言每执行一次就要翻译一次，效率比较低。
+  * 编译型语言是相对于解释性语言存在的，编译型语言首先需要将源代码编译成机器语言，再由机器运行机器码（二进制文件）
+
+* http://c.biancheng.net/view/4136.html
+
+
+
+## 调用栈
+
+https://developer.mozilla.org/zh-CN/docs/Glossary/Call_stack
+
+
+
+## 错误——error
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Error
+
+### Error 对象
+
+Error 对象有两个属性
+
+* message 初始化时候的信息
+* stack 抛出错误的堆栈信息
+
+
+
+## url——路由相关
+
+### pathname 和 href
+
+pathname 会对 url 进行转义
+
+href 不会进行转义
+
+### 无刷新改变路由
+
+参考：https://segmentfault.com/a/1190000022822185
+
+1. 通过修改hash的方式更新路由
+
+   window.location.hash = 'test'
+
+2. 通过history的方式更新路由
+
+   - **history.back()**: 返回浏览器会话历史中的上一页，跟浏览器的回退按钮功能相同
+   - **history.forward()**:指向浏览器会话历史中的下一页，跟浏览器的前进按钮相同
+   - **history.go()**: 可以跳转到浏览器会话历史中的指定的某一个记录页
+   - **history.pushState()**可以将给定的数据压入到浏览器会话历史栈中，该方法接收3个参数，对象，title和一串url。pushState后会改变当前页面url
+   - **history.replaceState()**将当前的会话页面的url替换成指定的数据，replaceState后也会改变当前页面的url
+
+### pushState 和 replaceState
+
+* 两个主要是更新页面状态 （state），一个是添加，一个是更新
+
+* 区别：
+
+  pushState 会给历史堆栈中添加数据，可以点击返回；replaceState 不会给历史堆栈中添加数据，点击返回无响应。
+
+* 两个都不会刷新页面
+
+### 监控路由变化
+
+#### 监听hash变化
+
+```javascript
+window.addEventListener('hashchange',function(event){
+   console.log(event);
+})
+```
+
+#### 监听 back/forward/go
+
+```javascript
+window.addEventListener('popstate', function(event) {
+     console.log(event);
+})
+```
+
+但是，history.pushState()和history.replaceState()不会触发popstate事件，所以需要自己手动增加事件
+
+#### 监听 pushState 和 replaceState 变化
+
+* todo：通过自定义事件实现
+
+* HTML5 引入了 [history.pushState()](https://developer.mozilla.org/zh-CN/docs/Web/API/History/pushState) 和 [history.replaceState()](https://developer.mozilla.org/zh-CN/docs/Web/API/History_API#The_replaceState()_method) 方法，它们分别可以添加和修改历史记录条目。这些方法通常与[`window.onpopstate`](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/popstate_event) 配合使用。
+
+  spa 返回按钮触发就是通过 onpopstate 事件进行监听的
+
+> **备注：** 调用 `history.pushState()` 或者 `history.replaceState()` 不会触发 `popstate` 事件。`popstate` 事件只会在浏览器某些行为下触发，比如点击后退按钮（或者在 JavaScript 中调用 `history.back()` 方法）。即，在同一文档的两个历史记录条目之间导航会触发该事件。
+
+
+
+## 正则
+
+### 范围
+
+`[]` 
+
+* 可以一个一个罗列，[a,b]等价于(a|b)
+
+* 直接写范围，用于数字和字母，[a-b]、 [0-9]
+
+* 可以用逗号隔开，也可以直接罗列
+
+  ```tsx
+  /[14, 12]/.test('4')
+  // 能够匹配 1 4 1 2四个
+  ```
+
+  eg: 匹配win和mac的目录分割符
+
+  ```typescript
+  /[\\/]node_modules[\\/]/
+  // [\\/] 能够匹配 mac 下的 / 和 win 下的 \\
+  ```
+
+  
+
+### 个数范围
+
+{}
+
+* 至少三个：{3}
+* 3到5个：{3,5}
+
+### 特殊字符
+
+https://www.runoob.com/regexp/regexp-syntax.html
+
+\* 个数0或者多个
+
+\. 匹配所有
+
+
+
+### js 正则
+
+#### match 方法
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String/match
+
+* match 方法会匹配从外到里所有的规则（如果有括号的话，外层匹配完还去输出括号内的匹配）
+
+```typescript
+let str = 'test/str/test2/index'
+str.match(/test\/str\/(.+)\/index/)
+
+// 输出
+['test/str/test2/index', 'test2', index: 0, input: 'test/str/test2/index', groups: undefined]
+
+```
+
+
+
+#### replace 方法
+
+* 奇淫技巧todo
+
+```tsx
+'18888888888'.replace(/^(\d{3})(\d*)(\d{4})/, '$1-$2-$3')
+// 188-8888-8888，一个括号匹配一个，同上
+```
+
+
+
+#### 转义符号
+
+* js 中的转义符号不需要转义，能够在正则中直接使用
+
+
+
+### 匹配路径
+
+* js 中字符串中的路径可以为 `'\'`, `'/'` 
+
+* 匹配规则
+
+  ```typescript
+  /[\\/]/
+  // 第一个 \ 是转义
+  ```
+
+  
+
+
+
+## 词法作用域
+
+* JavaScript 是词法作用域，与之对立的是动态作用域，问题来源：https://github.com/MuYunyun/blog/issues/2
+
+  todo了解
+
+
+
+# 开发实践
+
+## 1. 日志相关
+
+### console.log
+
+* 能够识别 `\n` ，可以在做日志的时候进行换行
+
+  ```js
+  console.log('1da\ndwada')
+  ```
+
+* 或者直接使用 模板字符串
+
+  ```js
+  console.log(`
+  	111
+  	222
+  `)
+  ```
+
+#### 加颜色——加样式
+
+* 参考：https://developer.mozilla.org/zh-CN/docs/Web/API/Console
+
+可以使用 `%c` 为打印内容定义样式：
+
+```
+console.log("This is %cMy stylish message", "color: yellow; font-style: italic; background-color: blue;padding: 2px");
+```
+
+指令前的文本不会受到影响，但指令后的文本将会使用参数中声明的 CSS 样式。
+
+* %c 后面跟着的第二个参数字符串就是样式，如果不写则%c会被当成字符串本身。如果写了其他非样式字符串，则该字符串不起任何作用
+
+```js
+console.log('%c我是测试')
+// %c我是测试
+
+console.log('%c我是测试', 'testtest')
+// 我是测试
+```
+
+#### 加编组
+
+* 由里到外匹配组
+
+```typescript
+console.log('start')
+console.group('%cgroup1', 'color:red;') // 甚至可以给分组加颜色
+console.log('dwad')
+console.group('group2')
+console.log('dwadawdaawq')
+console.groupEnd()
+console.log('qqqqq')
+console.groupEnd()
+```
+
+### 打印函数调用堆栈
+
+```typescript
+function foo() {
+  function bar() {
+    console.trace('%ctest stack', 'color:red');
+  }
+  bar();
+}
+
+foo();
+/**
+	输出：
+	react_devtools_backend.js:4026 test stack
+  overrideMethod	@	react_devtools_backend.js:4026
+  bar	@	VM1728:3
+  foo	@	VM1728:5
+  (anonymous)	@	VM1728:8
+*/
+```
+
+
+
+
+
+#### 第三方工具
+
+colors.js https://www.npmjs.com/package/colors
+
+### 日志函数名称
+
+* 
+
+## 2. 错误捕获
+
+* 一个完美的错误闭环，能够捕获到所有的错误
+
+```typescript
+window.onerror = () => {
+    console.log(666)
+}
+
+window.Error = new Proxy(window.Error, {
+    get: function(target, name) {
+        console.log(111)
+        if (name === 'prototype') {
+          return Object.prototype;
+        }
+        return 'Hello, ' + name;
+      },
+    
+      apply: function(target, thisBinding, args) {
+          console.log(222)
+        return args[0];
+      },
+    
+      construct: function(target, args) {
+          console.log(333)
+        return {value: args[1]};
+      }
+})
+
+window.onerror = () => {
+    console.log(666)
+}
+```
+
+* 只需要一个 window.onerror ＋ unhandlerejectederror 即可实现
+
+
+
+## 编程范式
+
+ OOP （面向对象编程）、FP （函数式编程）和 FRP （函数响应式编程）。
+
+todo 单独一章去学习
+
+
+
+# 哲学
+
+## 1. 渐进增强和优雅降级
+
+> 渐进增强 progressive enhancement：针对低版本浏览器进行构建页面，保证最基本的功能，然后再针对高级浏览器进行效果、交互等改进和追加功能达到更好的用户体验。
+
+> 优雅降级：在网站设计时，术语优雅降级指的是新的或者是复杂特点的明智实施，目的是确保大部分的因特网使用者可以有效的和站点上的页面交互。过去几年站点设计和因特网使用的重要的里程碑包括图片，帧，在线游戏，Java, JavaScript, ActiveX控制，浏览标签，因特网上的语音通话(VoIP)和视频会议技术的引入。当浏览器或操作系统的更新版本发布时，它们经常包含新的特征来保持和因特网功能的最新增强的同步。因为各种各样的原因，许多因特网使用者喜欢使用他们已有的浏览器而不是每当一个新的Web站点技术流行时，立即更新到最新版本。当一个站点被有意识设计成有优雅降级的特点时，这些使用者不会突然被强迫升级他们的浏览器除非他们正在使用“古董”。
+>
+> 优雅降级是因某些新发布的CSS样式或HTML标签在老的浏览器上不兼容，而在写代码时做的了一定的处理，确保在浏览器不兼容时，也能够达到原效果或部分原效果。
+
+### 渐进增强
+
+参考：https://www.cnblogs.com/analyzer/articles/1375464.html

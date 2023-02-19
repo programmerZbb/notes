@@ -67,7 +67,7 @@ tsc hello.ts
 
 ### 使用tsconfig.json
 
-- 不带任何输入文件的情况下调用`tsc`，编译器会从当前目录开始去查找`tsconfig.json`文件，逐级向上搜索父目录。
+- ==不带任何输入文件的情况下调用`tsc`，编译器会从当前目录开始去查找`tsconfig.json`文件，逐级向上搜索父目录。==
 - 不带任何输入文件的情况下调用`tsc`，且使用命令行参数`--project`（或`-p`）指定一个包含`tsconfig.json`文件的目录。
 
 当命令行上指定了输入文件时，`tsconfig.json`文件会被忽略。（直接使用 tsc index.ts 的形式）
@@ -610,6 +610,12 @@ const arr1: readonly number[] = [1, 2];
 
 
 
+#### 常量数组
+
+[常量数组](## as const 问题)
+
+<a href='## as const 问题'>常量数组</a>
+
 
 #### 注意
 
@@ -794,9 +800,19 @@ function fn4(name: string): string {
 fn4('1')
 ```
 
+4. declare 一个函数声明，这种情况不需要写函数的实现
+
+   ```typescript
+   declare function PromiseAll(arg: string): void
+   ```
+
+   
+
 
 
 ### 重载
+
+重载(overloading) 是在一个类里面，方法名字相同，而参数不同。返回类型可以相同也可以不同。
 
 重载允许一个函数接受不同数量或类型的参数时，作出不同的处理。
 
@@ -808,14 +824,55 @@ fn4('1')
 
 上例中，我们重复定义了多次函数 `reverse`，前几次都是函数定义，最后一次是函数实现。在编辑器的代码提示中，可以正确的看到前两个提示。
 
-注意，TypeScript 会优先从最前面的函数定义开始匹配，所以多个函数定义==如果有包含关系，需要优先把精确的定义写在前面。==
+注意，TypeScript 会优先从最前面的函数定义开始匹配，所以多个函数定义==如果有包含关系，需要优先把精确的定义写在前面。==也就是函数的主体肯定是类型最多的，也就是上述函数的联合类型。
 
 ```typescript
-
+function reverse(x: number): number;
+function reverse(x: string): string;
+function reverse(x: number | string): number | string | void {
+    if (typeof x === 'number') {
+        return Number(x.toString().split('').reverse().join(''));
+    } else if (typeof x === 'string') {
+        return x.split('').reverse().join('');
+    }
+}
 ```
 
 1. 写几个函数不同参数的定义
 2. ==在一个宽泛的函数中写出它的具体实现==（any 参数）
+
+
+
+* class 内的重载
+
+  ```typescript
+  class Child {
+      // private test() { // 不能修改父类的修饰符
+      // public test(age: number): number {}
+      /**
+       * 1. 不能修改父类的修饰符
+       * 2. 不能修改输入输出
+       */
+      test(name: number): number;
+      test(name: unknown): unknown {
+          return name
+      }
+  }
+  ```
+
+  
+
+
+
+### 重写（override）
+
+重写是子类对父类的允许访问的方法的实现过程进行重新编写, 返回值和形参都不能改变。**即外壳不变，核心重写！**
+
+重写的好处在于子类可以根据需要，定义特定于自己的行为。 也就是说子类能够根据需要实现父类的方法。
+
+重写方法不能抛出新的检查异常或者比被重写方法申明更加宽泛的异常
+
+
 
 ## 类型断言
 
@@ -1285,7 +1342,57 @@ interface IConstruc {
 
 
 
-## 泛型（牛的）（generics）
+### constructor
+
+* 如果有返回且是一个引用类型，则采用该类型作为实例
+
+* 如果用 protected 修饰能作为基类
+
+  ```typescript
+  // 1. protected constructor作为基类
+  class BasicClass {
+      // public test: string;
+  
+      protected constructor(
+          protected test: string, // 这样写直接能作为一个内部的参数，不需要显式定义了
+      ) {
+          this.test = test
+      }
+  }
+  ```
+
+* constructor 中的参数只要加了修饰符就可以作为一个已经被定义过的参数了
+
+  换成 public、private、protected、readonly都是可以的
+
+```typescript
+class BasicClass {
+    // public test: string;
+
+    protected constructor(
+        protected test: string, // 这样写直接能作为一个内部的参数，不需要显式定义了
+    ) {
+        this.test = test
+    }
+}
+// 换成 public、private、protected、readonly都是可以的
+```
+
+如果继续在外层定义该属性，则会报错！！！报错信息：重复命名
+
+
+
+### 类和接口的区别
+
+* 类是数据和逻辑的集合，接口是类型的集合
+
+### 基类和接口的区别
+
+* 基类提供一些公共方法或数据的集合（等于类型约束+逻辑实现）；接口一般是类型的约束。
+
+
+
+## 泛型（牛的）（generics）——类型的参数
 
 泛型（Generics）是指在定义函数、接口或类的时候，不预先指定具体的类型，而在使用的时候再指定类型的一种特性。
 
@@ -1432,6 +1539,318 @@ interface Log<T = string> {
 1. 函数和类可以轻松的支持多种类型，增强程序的可扩展性
 2. 不必写多条函数重载，冗长的联合类型生命，增强代码可读性
 3. 灵活控制类型之间的约束
+
+### 匿名函数使用泛型
+
+泛型的使用都在函数的后面跟着，匿名函数没有函数名称，因此泛型直接写到函数前边就可以
+
+```typescript
+let two2 : <T>(a : T[]) => T = function (a) {
+    return a[0];
+}
+```
+
+
+
+
+
+## 装饰器
+
+若要启用实验性的装饰器特性，你必须在命令行或`tsconfig.json`里启用`experimentalDecorators`编译器选项：
+
+### 简介
+
+*装饰器*是一种特殊类型的声明，它能够被附加到[类声明](https://www.tslang.cn/docs/handbook/decorators.html#class-decorators)，[方法](https://www.tslang.cn/docs/handbook/decorators.html#method-decorators)， [访问符](https://www.tslang.cn/docs/handbook/decorators.html#accessor-decorators)，[属性](https://www.tslang.cn/docs/handbook/decorators.html#property-decorators)或[参数](https://www.tslang.cn/docs/handbook/decorators.html#parameter-decorators)上。 装饰器使用 `@expression`这种形式，`expression`求值后必须为一个函数，它会==在运行时被调用==，被装饰的声明信息做为参数传入。
+
+### 装饰器工厂函数
+
+* 也就是返回一个装饰器函数的函数，能够进行一些定制（比如说传递一些值）
+
+### 装饰器组合
+
+也就是多个装饰器使用。由下向上，像函数组合一样传递返回的函数
+
+同样的，在TypeScript里，当多个装饰器应用在一个声明上时会进行如下步骤的操作：
+
+1. 由上至下依次对装饰器表达式求值。
+2. 求值的结果会被当作函数，由下至上依次调用。
+
+### 类装饰器求值
+
+类装饰器按一下规定的顺序应用：实例、静态成员、构造函数、类
+
+类中不同声明上的装饰器将按以下规定的顺序应用：
+
+1. *参数装饰器*，然后依次是*方法装饰器*，*访问符装饰器*，或*属性装饰器*应用到每个实例成员。
+2. *参数装饰器*，然后依次是*方法装饰器*，*访问符装饰器*，或*属性装饰器*应用到每个静态成员。
+3. *参数装饰器*应用到构造函数。
+4. *类装饰器*应用到类。
+
+### 执行顺序
+
+* 会在类的模块执行时执行，也就是实例化之前执行
+
+### 类装饰器
+
+*类装饰器*在类声明之前被声明（紧靠着类声明）。 类装饰器应用于类构造函数，可以用来==监视，修改或替换类定义==。 类装饰器不能用在声明文件中( `.d.ts`)，也不能用在任何外部上下文中（比如`declare`的类）。
+
+类装饰器表达式会在运行时当作函数被调用，类的构造函数作为其唯一的参数。
+
+### 方法装饰器
+
+ 它会被应用到方法的 *属性描述符*上，可以用来监视，修改或者替换方法定义。
+
+方法装饰器表达式会在运行时当作函数被调用，传入下列3个参数：
+
+1. 对于静态成员来说是类的构造函数，对于实例成员是类的原型对象。
+2. 成员的名字。
+3. 成员的*属性描述符*。
+
+如下实现了两个方法装饰器，一个修改了定义第二个监视了方法的调用。
+
+```typescript
+// 方法装饰器是有副作用的，因为他返回的是属性描述符，所以需要修改它的引用
+function fnBind<T extends Function>(
+    target: any, // 目标函数挂载的对象。实例成员是原型对象，静态成员是构造函数
+    propertyKey: string | symbol, // 成员名字
+    descriptor: TypedPropertyDescriptor<T>,
+): TypedPropertyDescriptor<T> {
+    // console.log(descriptor);
+    if (descriptor == null || (typeof descriptor.value !== 'function')) {
+        throw new TypeError('only used by function');
+    }
+    // 返回一个属性描述符
+    return {
+        configurable: true,
+        enumerable: true,
+        // 实现bind
+        get(...args) {
+            // console.log(this, '----我是this', args);
+            // 谁取值，那就绑定谁！这个是重点！
+            // console.log(this, '---this222');
+            const bound: T = descriptor.value!.bind(this)
+            // Object.defineProperty(this, propertyKey, {
+            //     value: bound,
+            //     configurable: true,
+            //     writable: true,
+            // })
+            return bound
+        }
+
+        // 实现代理
+        // get() {
+        //     return new Proxy(descriptor.value!, {
+        //         apply(target, thisArg, argArray) {
+        //             console.log('函数被调用了，做出处理！');
+        //             return target.apply(thisArg, argArray)
+        //         }
+        //     })
+        // }
+    };
+
+    // if (typeof propertyKey === 'string' && target[propertyKey] instanceof Function) {
+    //     const origin = target[propertyKey]
+    //     target[propertyKey] = origin.bind(target)
+    //     console.log(target[propertyKey], '---', propertyKey, origin.bind(target), target);
+    // }
+}
+// 一个proxy decorator。handle 由使用者传入
+function proxyDecorator(handle: Function): MethodDecorator {
+    return (
+        target: Object,
+        propertyKey: string
+         | symbol,
+        descriptor: PropertyDescriptor,
+    ): TypedPropertyDescriptor<any> => {
+        const value = (target as any)[propertyKey]
+        if (descriptor == null || (typeof value !== 'function')) {
+            throw new TypeError('only used by function');
+        }
+        // console.log(target, '----target---', value);
+        return {
+            configurable: true,
+            enumerable: true,
+            get() {
+                return new Proxy(value, {
+                    apply(target, thisArg, argArray) {
+                        // console.log('函数被调用了，做出处理！');
+                        handle(thisArg, argArray);
+                        return target.apply(thisArg, argArray)
+                    }
+                })
+            }
+        }
+    }
+}
+```
+
+### 访问装饰器
+
+* 和方法装饰器差不多，主要应用于 get 方法！
+
+### 参数装饰器
+
+参数装饰器表达式会在运行时当作函数被调用，传入下列3个参数：
+
+1. 对于静态成员来说是类的构造函数，对于实例成员是类的原型对象。
+2. 成员的名字。
+3. 参数在函数参数列表中的索引。
+
+>  注意  参数装饰器只能用来监视一个方法的参数是否被传入。
+
+## 元信息
+
+https://www.ruanyifeng.com/blog/2007/03/metadata.html
+
+> 元信息是关于信息的信息，元信息允许服务器提供所发送数据的信息，如**[HTTP](https://baike.baidu.com/item/HTTP?fromModule=lemma_inlink)**可以提高所发的对象语言和对象，也可以用元信息来实现有条件请求以及报告事务完成。收到数据的浏览器可以根据元信息确定服务器发来的是什么内容，预料有什么数据，确知是否接收完整的数据，以及过程中是否出错，这样客户就可以知道传输对象的类型
+>
+> * 比如说http的元信息，能够用来做判断。
+> * 运行时
+
+> 元信息是关于信息的信息，用于描述[信息](https://baike.baidu.com/item/信息?fromModule=lemma_inlink)的结构、语义、用途和用法等。在计算机科学中，**反射**是指[计算机程序](https://baike.baidu.com/item/计算机程序?fromModule=lemma_inlink)在[运行时](https://baike.baidu.com/item/运行时?fromModule=lemma_inlink)（Run time）可以访问、检测和修改它本身状态或行为的一种能力。**反射**利用元信息为管理、控制和使用复杂信息提供了一种高效的途径。 通过从元信息到信息的反射机制，用户可以以更简单、更灵活、更自动化的方式使用信息本身。 元信息和元信息建模可以用于软件体系结构的描述和使用过程中。
+>
+> 百度百科
+
+* 信息的信息
+* 反射——可以访问、检测和修改它本身状态或行为的一种能力。**反射**利用元信息为管理、控制和使用复杂信息提供了一种高效的途径
+* 元数据最大的好处是，它使信息的描述和分类可以实现格式化，从而为机器处理创造了可能。
+
+元信息伴随着反射的使用
+
+### 元信息实现原理
+
+https://juejin.cn/post/6876776311696654344#heading-2
+
+* 就是一个全局的 weakMap，采用 iife 函数注入全局
+
+> 本质是一个可以单独运作的库，通过IIFE（立即调用函数表达式）形式，往全局的`Reflect`对象**增加**了一些方法。并且与typescript有特别的配合，当启用typescript `emitDecoratorMetadata` 选项时，typescript会在生成的装饰器函数调用中额外添加一些代码(调用 `reflect-metadata` 相关api)
+>
+> 
+>
+> 作者：teriri
+> 链接：https://juejin.cn/post/6876776311696654344
+> 来源：稀土掘金
+> 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+## 应用——控制反转（IOC）和 依赖注入（DI）
+
+阅读：https://zhuanlan.zhihu.com/p/33492169
+
+https://segmentfault.com/a/1190000008626680
+
+* 如果类 A 依赖 B，需要进行依赖解耦，交出控制权。——空
+
+### 控制反转
+
+Ioc 不是一种技术，只是一种思想，一个重要的面向对象编程法则，它能指导我们如何设计松耦合、更优良的系统。传统应用程序都是由我们在类内部主动创建依赖对象，从而导致类与类之间高耦合，难于测试；有了 IoC 容器后，把创建和查找依赖对象的控制权交给了容器，由容器注入组合对象，所以对象之间是松散耦合，这样也便于测试，利于功能复用，更重要的是使得程序的整个体系结构变得非常灵活。　　
+
+其实 IoC 对编程带来的最大改变不是从代码上，而是思想上，发生了"主从换位"的变化。应用程序本来是老大，要获取什么资源都是主动出击，但在 IoC思想中，应用程序就变成被动了，被动的等待 IoC 容器来创建并注入它所需的资源了。　
+
+### 依赖注入
+
+DI - Dependency Injection，即"依赖注入"：组件之间的依赖关系由容器在运行期决定，形象的说，即由容器动态的将某个依赖关系注入到组件之中。
+
+## Reject-metaData 使用
+
+和元信息、反射有相关性。
+
+因为添加的元信息既能是字符串 也能是实例或者方法。因此也可以作为获取实例或者方法函数的一种途径
+
+```typescript
+// 需要开启 emitDecoratorMetadata 配置
+import "reflect-metadata";
+
+function setFn(
+    target: Object,
+    propertyKey: string | symbol,
+    descriptor: TypedPropertyDescriptor<any>,
+) {
+    console.log(Reflect.getMetadata('design:type', target, propertyKey), '---setFn');
+    console.log(Reflect.getMetadata('design:paramtypes', target, propertyKey), '---setFn1');
+    console.log(Reflect.getMetadata('design:returntype', target, propertyKey), '---setFn2');
+}
+
+@Reflect.metadata("meta:class", "metaData")
+class MetaData {
+  @Reflect.metadata("meta:type", "测试测试")
+  public initStr: string = "";
+  @setFn
+  fn(arg: string[]): string {
+    return ''
+  }
+}
+
+let test = new MetaData();
+// 属性元数据三个参数：metaKey, target, propertyKey
+// Reflect.getMetadata('design:type', target, key) 获取属性类型
+// 除能获取属性类型外，通过 Reflect.getMetadata("design:paramtypes", target, key) 和 Reflect.getMetadata("design:returntype", target, key) 可以分别获取函数参数类型和返回值类型。
+console.log(Reflect.getMetadata("meta:class", MetaData));
+```
+
+* 官方定义了三种获取类型的方式：主要是函数类型、函数参数、return类型三种
+
+* 也支持在装饰器中自己设置 Reflect.defineMetadata(metadataKey: any, **metadataValue: any**, target: Object) 方法
+
+  或者直接使用 @Reflect.metadata("meta:class", "metaData") 的方式直接添加到对象上（方法或者对象）
+
+### typescript 注入元数据
+
+- `design:type`：成员类型
+- `design:paramtypes`：成员所有参数类型
+- `design:returntype`：成员返回类型
+
+TypeScript 结合自身语言的特点，为使用了装饰器的代码声明注入了 3 组元数据：
+
+### 使用场景
+
+* todo 控制反转（ioc）和依赖注入的实现
+
+控制反转实现，把控制权交给外界
+
+```typescript
+
+type Constructor<T> = new (...args: any[]) => T
+function classDecorator<T>(
+    target: Constructor<T>
+) {
+    // 获取的是constructor 的参数
+    const providers = Reflect.getMetadata('design:paramtypes', target)
+    // 控制权在这里！
+    const args = providers.map((provider: any) => new provider());
+    console.log(providers, '---providers---', ...args);
+}
+
+class Temp {}
+
+// @Reflect.metadata("meta:class", "metaData")
+@classDecorator
+class MetaData {
+  protected name: string;
+
+  constructor(name: string, readonly temp: Temp) {
+    this.name = name
+  }
+    
+  @Reflect.metadata("meta:type", "测试测试")
+  public initStr: string = "";
+  @setFn
+  fn(arg: string[]): string {
+    return ''
+  }
+}
+
+let test = new MetaData('www', new Temp());
+// 属性元数据三个参数：metaKey, target, propertyKey
+// Reflect.getMetadata('design:type', target, key) 获取属性类型
+// 除能获取属性类型外，通过 Reflect.getMetadata("design:paramtypes", target, key) 和 Reflect.getMetadata("design:returntype", target, key) 可以分别获取函数参数类型和返回值类型。
+console.log(Reflect.getMetadata("meta:class", MetaData));
+// console.log(test.initStr);
+
+```
+
+* 如上所述，就能拿到 construct 函数的参数类型（比如说是一个具体的类），就可以实现依赖注入了，把这个类的实例传给该组件。
+
+
 
 # ts 的类型检查机制
 
@@ -1779,7 +2198,7 @@ getValues(obj1, ['name', 'age'])
 
    ```typescript
    type RecordObj = Record<'x' | 'y', Obj>
-   // 左侧是key，右侧是 value
+   // 左侧是key，右侧是 value。左侧的 key 必须全部出现
    ```
 
 ## 5. 条件类型
@@ -1795,7 +2214,7 @@ getValues(obj1, ['name', 'age'])
 
 T 如果可以赋值给 U 类型，就返回 X 类型
 
-### 官方实现的条件类型
+### ==官方实现的条件类型==
 
 * `Exclude<T, U>` 排除后边的类型
 * NonNullable<T> 不是 undefined 和null
@@ -1822,6 +2241,15 @@ let test6: ReturnType<() => number> = 1
 
 
 
+
+
+## 6. 其他官方实现的类型-utility type
+
+https://www.typescriptlang.org/docs/handbook/utility-types.html
+
+* Parameters
+* Uppercase 字符串大写
+
 # 注意
 
 * 所有的类型都是在定义的时候规定的，在赋值的右边是不需要去定义类型的
@@ -1832,6 +2260,20 @@ let test6: ReturnType<() => number> = 1
 
 * js 中常规的类型就是字面量，比如 object
 
+## 一些小技巧
+
+* 如果一个 undefined 的值需要赋值给一个 string 类型的数据，可以使用 `!` ——感叹号
+
+  ```tsx
+  let aa: string
+  
+  aa = undefined!
+  ```
+
+  * 避免严格模式中 undefined 不是指定类型的子集
+
+  
+
 # 工程篇
 
 
@@ -1840,6 +2282,7 @@ let test6: ReturnType<() => number> = 1
 
 * ts 项目中 `tsconfig.json`文件能配置 ts检查的规则
 * 在项目中只要配置了 ts-loader 规则，就会自动读取 tsconfig 文件的配置
+* 顶层配置：`compilerOptions`，`files`，`include`，和`exclude`、`extends`
 
 ## 1. null 和 undefined 问题
 
@@ -1996,6 +2439,30 @@ import a = Shape.circle
 ### 5.1 命名空间和模块补充
 
 “内部模块”现在称做“命名空间”。 “外部模块”现在则简称为“模块”
+
+### 命名空间编译
+
+* 命名空间会编译成为一个全局对象
+
+```tsx
+export namespace Test {
+    export const Kind = 'kind'
+}
+
+// 编译之后
+export var Test;
+(function (Test) {
+    Test.Kind = 'kind';
+})(Test || (Test = {}));
+```
+
+
+
+### 现代使用方式
+
+* 命名空间就是一个对象，可以在一个模块内多次使用；如果一个文件内就一个命名空间，建议直接导出模块。使用者会重新命名的。
+
+* 模块是对外的。
 
 ## 6. 声明合并
 
@@ -2311,6 +2778,28 @@ declare module '*.css'
 }
 ```
 
+* ==需要在tsconfig中include配置项中引用该声明文件==
+
+
+
+### 配置继承_extends
+
+* 如果有多个项目有相同的ts配置，则可使用继承一个公共配置的方式来组织代码。不用每次都重新写。
+
+`tsconfig.json`文件可以利用`extends`属性从另一个配置文件里继承配置。
+
+`extends`是`tsconfig.json`文件里的==顶级属性==（与`compilerOptions`，`files`，`include`，和`exclude`一样）。 `extends`的值是一个字符串，包含指向另一个要继承文件的路径。
+
+* 会覆盖原文件
+
+  在原文件里的配置先被加载，然后被来至继承文件里的配置重写。 如果发现循环引用，则会报错。
+
+#### 路径规则
+
+* 同esmodule的规则，可以使用相对路径和第三方模块。
+
+
+
 ## 编译工具
 
 ### 从ts-loader到babel
@@ -2531,6 +3020,18 @@ const { CheckerPlugin } = require('awesome-typescript-loader')
 
 
 
+# ts项目
+
+## 配置文件
+
+参考：https://www.tslang.cn/docs/handbook/tsconfig-json.html
+
+* tsconfig.json 查找规则
+
+  不带任何输入文件的情况下调用`tsc`，编译器会从当前目录开始去查找`tsconfig.json`文件，逐级向上搜索父目录。
+
+##
+
 # 创建一个使用 typescript 的 node 项目
 
 ## node 识别 ts 文件
@@ -2539,6 +3040,7 @@ const { CheckerPlugin } = require('awesome-typescript-loader')
 
   ```shell
   yarn add ts-node -g
+  yarn add @types/node -D
   ```
 
 * 执行：
@@ -2549,7 +3051,21 @@ const { CheckerPlugin } = require('awesome-typescript-loader')
 
   
 
+## 热更新
 
+```shell
+$ nodemon -e ts --exec ts-node --files src/main.ts
+```
+
+* 监听 ts 的改变
+
+
+
+## 上线
+
+* 需要用tsc编译成js文件
+
+  https://www.zhihu.com/question/349707413/answer/850705288
 
 # 创建一个 react 项目
 
@@ -2561,7 +3077,7 @@ const { CheckerPlugin } = require('awesome-typescript-loader')
 
    `yarn add @types/react @types/react-dom`
 
-2. ts 配置
+2. ts 配置: 在 compilerOptions 中，要不然会出现 ts 报错！
 
    ```json
    {
@@ -2665,6 +3181,712 @@ const CompNew = HocFn<{name: string}>(Hello) // 在此约束的要传递的类�
 
 
 
+
+# 类型体操
+
+## 1. 链式调用的限制
+
+```typescript
+
+interface ITest1 {
+    test1(): ITest2
+}
+
+interface ITest2 {
+    test2(): void
+}
+
+// let test: ITest2 & ITest1 = {
+
+// }
+
+type NewType = ITest2 & ITest1
+class Test implements NewType {
+    test1() {
+        return this
+    }
+    
+    test2() {
+
+    }
+}
+
+let test: ITest1 = new Test()
+
+test.test1().test2()
+// 能够约束每一个方法的类型
+```
+
+
+
+## typescript 集成
+
+### Omit
+
+* 不能是某个类型的某个值的类型
+
+```tsx
+let test2: Omit<Test, 'test1'> = test.test1
+// 报错
+```
+
+## 文本类型的扩展——typescript 怎么处理const的
+
+```typescript
+const test = '111' // test就是'111'类型，因为不可修改
+let test1 = test // test1就是string类型，可变的
+```
+
+* 如果不想让扩展，就不能使用ts的类型推断，直接规定类型就可
+
+
+
+## as const 问题
+
+```typescript
+const Test = ['111']
+// 此时，Test 被推断为一个 string[] 类型，不符合常量的要求
+const Test1 = ['111'] as const
+// 此时 Test1 被推断为一个 readonly 的常量符合要求。常量数组
+
+```
+
+* 类似于 只读数组。不可以对其进行扩展和修改的操作，可以作为基础类型。
+
+```tsx
+const arr1: readonly number[] = [1, 2];
+```
+
+## typescript 关键字
+
+注意：所有的关键字不能够在interface使用，必须在type关键字中使用
+
+
+
+### in 关键字
+
+* 该类型是后面类型中的一个，只能在 object 的key中使用。
+
+* 在写类型逻辑的时候使用，比如官方实现的 Pick 功能。
+
+```tsx
+type MyPick<T, U extends keyof T> = {
+    [prop in U]: T[U]
+}
+```
+
+### keyof
+
+* 如上：某个 object 类型的 key。==一般情况只能在类型定义的左边使用，而且必须使用继承去承接==。
+* ==只要使用了 extends 就代表类型已经知道了部分约束，因此一般只能写在左边==
+
+### T[U] 
+
+* 如上表示类型中的某些key，类型中的某个值怎么表示——T[U]
+
+### extends
+
+* 继承一个类型
+
+* 如上：可以继承一个接口，也可以继承一个具体的类型。
+
+```typescript
+type Test2<T extends '1' | '2'> = T
+
+let test1: Test2<'1'> = '1'
+```
+
+
+
+
+
+### is 关键字
+
+* 一般能够在函数返回。返回一个Boolean值
+
+```typescript
+type ITest = '11'
+function fn(obj): obj is ITest { // 约束之后必须返回一个 Boolean 值
+  
+}
+```
+
+### typeof
+
+类型中的typeof是一个类型和js中的typeof不一样
+
+* ==ts冒号的右侧一定是一个类型==。如果用在类型部分，就是当前的真实类型，如果用在逻辑部分，就是js的typeof出来的模糊值
+
+```tsx
+
+let test = '1'
+
+let test1: typeof test = ''
+// 这样是合理的，但是 test 的位置不能为一个常量
+```
+
+* 类型体操
+
+  怎么样拿到object获取array的所有值类型
+
+```typescript
+const test = {test: 2} as const
+
+let test1: (typeof test)[keyof (typeof test)] // 2
+
+const arr = [1,2,3] as const;
+let test2: (typeof arr)[number] // 1,2,3
+
+// 如果不加const就会返回一个number取代2，和上班的文本类型扩展对应，只有const能够固定基础的类型
+```
+
+
+
+### ReturnType
+
+* 如果定义了一个函数，想拿到函数返回的类型，可以使用这个关键字
+
+```typescript
+function fn() {
+    return 1
+}
+type Test = ReturnType<typeof fn>
+```
+
+### readonly
+
+* 不仅能在interface中使用，还能在 type 关键字中使用。不是class关键字。
+* class属性关键字只能在 interface 中使用不能在type中使用
+
+
+
+## 高级技巧
+
+### 接口泛型
+
+* 如果一个接口里的变量需要互相联动，可以使用接口泛型
+
+```typescript
+interface Props<T = string | Array<string>> { // 可能是string或者Array<string>
+    value: T | undefined,
+    onChange: (e: SelectChangeEvent<T>) => void, // 类型有问题
+}
+```
+
+* 如上，value和onchange就可以联动
+
+
+
+### 其他关键字
+
+#### Function
+
+* ts支持Function关键字，是所有函数的统称
+
+  ```typescript
+  type T2 = Exclude<string | number | (() => void), Function>
+  ```
+
+
+
+#### infer
+
+* `infer` 最早出现在此 [PR](https://github.com/Microsoft/TypeScript/pull/21496) 中，表示在 `extends` 条件语句中待推断的类型变量。
+
+  * 必须要extends条件中
+  * 然后待推断
+
+  ```typescript
+  type AwaitedTest<T extends Promise<any>> = T extends Promise<infer P> ? P : never
+  // infer后面的P待推断
+  
+  type Test4 = Promise<string>;
+  
+  let awaitedTest: AwaitedTest<Test4>
+  ```
+
+
+
+
+#### declare
+
+* 如果一个变量暂时没有被赋值，然后又知道这个变量的类型，可以直接使用 declare 来声明，就可以使用该变量的属性了。可以声明各种类型
+
+```typescript
+declare const config: Chainable
+// 如果用 const config: Chainable 就报错了，因为没有赋值
+```
+
+* ==所有declare 的类型都需要赋值实体==
+
+```typescript
+declare const test23: typeof PromiseAll // 需要实体
+
+// 这种方式泛型不需要填
+declare function PromiseAll<T extends Array<any>>(promises: readonly [...T]): Promise<{
+    [P in keyof T]: T[P] extends Promise<infer S> ? S : T[P]
+}>
+```
+
+
+
+
+
+### 类型逻辑
+
+#### 三元计算
+
+* 在类型区域可以直接使用三元运算符
+
+   ```typescript
+   type First<T extends any[]> = T extends [] ? never : T[0]
+   ```
+
+* ==由于类型区域没有全等运算符，能够只用extends代替==
+
+
+
+#### 单个类型和联合类型比较
+
+* 在类型中怎么判断一个类型是不是一个联合类型中的一个？
+
+  使用 extends
+
+  ```typescript
+  
+  type isPillarMen = Includes<['Kars', 'Esidisi', 'Wamuu', 'Santana'], 'Dio'> // expected to be `false`
+  
+  type Includes<T extends Array<any>, U> = U extends T[number] ? true : false
+  // U extends T[number]，U是联合类型中一个
+  ```
+
+  
+
+
+
+#### 类型中的属性的使用
+
+* ==可用属性来获取类型的值==，但是要确定该属性肯定存在。
+
+* 一共有两种属性
+
+  * 自定义的属性
+
+    ```typescript
+    interface IProp {
+        test: string;
+    }
+    type IPropTest = IProp['test']
+    ```
+
+  * js自带属性，比如说数组自带length类型，可以直接使用
+
+    ```typescript
+    type TArray = Array<unknown>
+    type TArrayTest = TArray['length']
+    ```
+
+
+
+#### 联合类型在逻辑中会一项一项执行
+
+```typescript
+type IExclude = MyExclude<'test' | 'test1', 'test'>
+
+type MyExclude<T, U> = T extends U ? never : T // 会一项一项测试找到符合的
+```
+
+
+
+#### 数组的扩展运算符
+
+* 在类型中可以使用数组的扩展运算符
+
+```typescript
+type Result = Concat<[1], [2]> // expected to be [1, 2]
+
+type Concat<T extends Array<any>, U extends Array<any>> = [...T, ...U]
+```
+
+* ==经过测试对象的扩展运算符不能使用==
+
+
+
+#### 函数在类型逻辑中的使用
+
+* 函数一定要写输入输出的类型
+
+  ```typescript
+  type MyParameters<T> = T extends ((...args: infer P) => any) ? P : never
+  
+  // args需要写类型，还可以使用扩展运算符
+  ```
+
+  
+
+#### 值在类型中的使用
+
+* 一个具体的值想要在类型系统中使用，可以使用 typeof 字段
+
+#### 递归的使用
+
+* 在typescript类型系统中，可以自己调用自己（类似于函数中递归）
+
+```typescript
+type DeepReadonly<T> = {
+    readonly [P in keyof T]: (T[P] extends object ? DeepReadonly<T[P]> : T[P])
+}
+```
+
+
+
+#### 类型变量
+
+```typescript
+/**
+ * 两个知识点：1. 类型的泛型可以作为一个变量保存当前的类型，需要给一个默认值
+ * 2. 函数的泛型可以默认不填
+ */
+
+type Chainable<T = {}> = {
+    option<Key extends string, Value>(key: Key, value: Value): Chainable<T & Record<Key, Value>>,
+    get(): T,
+}
+```
+
+* 可以给一个默认值，然后把其当成变量去使用
+* 还有一种就是 infer，不过只能在 extends 中使用
+
+
+
+#### 赋值影响类型
+
+* 一般情况下赋值是不能影响类型的——依赖倒置，依赖于接口编程
+* 如果类型中的类型确实需要填值的类型，目前只能使用infer
+
+
+
+#### 遍历数组或对象
+
+* 在类型中遍历数组和对象使用的方案是一样的
+
+```typescript
+interface PromiseAll<T extends Array<any> = any[]> {
+    (promises: readonly [...T]): Promise<{ // 遍历数组
+        [P in keyof T]: T[P] extends Promise<infer S> ? S : T[P]
+    }>
+}
+```
+
+
+
+#### 遍历字符串
+
+* 字符串没有直接遍历的方式，但是可以用过递归的方式去查找，直到找到符合的要求
+
+  ```typescript
+  type TrimLeft<T extends string> = T extends `${" " | "\n" | "\t"}${infer R}` ? TrimLeft<R> : T
+  // 自己调用自己知道去除完所有的空字符
+  ```
+
+* 只要写成两个infer，后面的infer一定是一个rest
+
+  ```typescript
+  type capitalized = MyCapitalize<'hello world'> // expected to be 'Hello world'
+  
+  type Test27 = Uppercase<'aaa'>
+  
+  type MyCapitalize<T> = T extends `${infer F}${infer R}` ? `${Uppercase<F>}${R}` : T
+  ```
+
+
+* 长度大于等于1的才能递归，小于1就会走else
+
+
+
+#### 只有数组的长度是一个常量（真实值）
+
+* 如题，string的长度是一个number类型
+
+#### 表达式作为数组中的一员——三元
+
+* 表达式作为数组中的一个元素，需要转换成这个元素
+
+  ```typescript
+  type Flatten<T extends Array<any>> = T extends [infer L, ...infer R]
+      ? [...(L extends Array<any> ? Flatten<L> : [L]), ...Flatten<R>] : []
+  // 三元作为数组中的一个元素
+  ```
+
+
+
+#### never类型在类型计算中的作用
+
+* never类型的数组是所有类型数组的子类型，如果要判断请和never类型本身去判断。==只限数组哦==
+* never类型和所有类型的联合类型都是该类型本身，不会修改合并的类型
+
+
+
+#### 一个空对象在逻辑中怎么表示
+
+* 如果一个空对象 {} 需要在extends中表示，需要使用 `{[prop: string]: never}` 才能正确表示
+
+```typescript
+type Sample1 = AnyOf<[1, "", false, [], {}]>; // expected to be true.
+type Sample2 = AnyOf<[0, "", false, [], {}]>; // expected to be false.
+
+type AnyOf<T extends Array<any>> = T[number] extends (0 | "" | false | [] | {[propName:string]:never})
+    ? false
+    : true
+```
+
+
+
+#### 常用操作符、运算符
+
+* https://juejin.cn/post/7019914200273125407#heading-0
+
+#### 限制对象key的取值范围
+
+* 开发中常用限制对象的key为一个联合类型，但是有一个问题，那就是所有key都必须实现。这个不是我们所期望的
+
+  可以使用 Partial 把它们都变成可选类型，这样就能限制他们的范围，并且不能超出范围。
+
+
+
+### 类型逻辑中的问题
+
+#### 两个infer
+
+* 一般情况下两个 infer 不能都使用infer后的类型作为逻辑中的类型
+
+```typescript
+type Test28<T> = T extends `${infer L}${" "}${infer R}` ? L : R
+// 报错
+```
+
+==更正：== 所有的infer操作，只能放到extends的前边，不能放到后边。infer的变量不能放到 : 后面。
+
+#### 函数在逻辑中的问题
+
+* 参数一定要有形参，不能直接写类型
+
+
+
+### 从联合类型中选取一个
+
+* 只能使用交叉类型实现，==联合类型和交叉类型可以互相成就==
+
+```typescript
+type MyPickTest<T, U> = U & T;
+let testPick: MyPickTest<Action1, {method: 'resize-column'} | {method: 'hide-column'}> = {
+    method: 'resize-column',
+    id: '',
+    width: 1,
+}
+```
+
+
+
+### 服务端 ts 配置(node)
+
+服务端和客户端 ts 配置是不一样的。
+
+* ts-config
+
+  这一条非常重要，需要解析成 commonjs。
+
+  https://stackoverflow.com/questions/62096269/cant-run-my-node-js-typescript-project-typeerror-err-unknown-file-extension
+
+```json
+{
+  "compilerOptions": {
+    "module": "commonjs"
+  }
+}
+```
+
+* Package.json
+
+  去掉 type: module
+
+
+
+### node 端ts
+
+* 全局对象时 global。官方定义为 globalThis
+
+### ts-node配置
+
+* tsconfig.json 配置
+
+  ```typescript
+  {
+    "comment": "ts-node配置，需要这是files。参考：https://stackoverflow.com/questions/51610583/ts-node-ignores-d-ts-files-while-tsc-successfully-compiles-the-project",
+    "ts-node": {
+      "files": true,
+      // It is faster to skip typechecking.运行时不进行类型检查，加快运行速度
+      // Remove if you want ts-node to do typechecking.
+      "transpileOnly": true,
+    },
+    "files": [
+      "src/**/*.d.ts",
+      "src/**/*.ts",
+      "config/**/*.d.ts",
+      "config/**/*.ts",
+    ]
+  }
+  ```
+
+### mocha等js库运行ts文件
+
+```shell
+npx mocha --require ts-node/register test/*.ts
+```
+
+### 指定模块声明文件查找位置——设置 paths（==还可以设置alias别名==）
+
+* 在开发 webpack 的时候，webpack 本身有声明文件，但是写的有问题。想引用 @types/webpack 的声明文件
+
+```ts
+{
+  "paths": { // 设置paths 可以指定声明文件查找位置
+      "webpack": ["node_modules/@types/webpack"] // 这个能修改类型去哪里找，而不是默认去包下找 type 字段
+    },  
+}
+```
+
+
+
+
+
+## 类型默认值
+
+* 可以使用 `= 和 extends`来给类型添加默认值
+
+  *=相当于默认值，在使用该类型的时候不需要传递值也可执行*
+
+  extends代表限定类型，使用的时候必须传值，传递的值必须符合继承关系
+
+* 更准确的是 = 是默认值，extends是限定关键字
+
+==默认值相当于函数的参数，有默认值可以不用传值，没有默认值一定要传值==
+
+* 函数function的写法不需要写泛型就可以使用
+
+  ```typescript
+  function fn<T extends string>(arg: T): T {
+      return arg
+  }
+  fn('111') // 不需要填泛型
+  ```
+
+* 类型别名和interface的方式必须要写泛型
+
+
+
+## ==在类型中使用具体的值==
+
+* 如果在类型中需要使用具体的值，需要加 typeof，和js typeof不一样
+
+```typescript
+// 拿到函数返回类型
+
+type MyReturnType<T> = T extends (...arg: any) => infer P ? P : any
+
+function fn() {
+    return ''
+}
+
+let testFn: MyReturnType<typeof fn>
+```
+
+
+
+## any 和 unknown 类型
+
+参考：https://www.zhihu.com/question/355283769/answer/2136229141
+
+* any会抵消所有类型检查。更像一个超级子类型，继承了所有的类型，啥属性都有
+* unknown是所有类型的父类型，啥属性都没有，原始的
+
+使用as改变类型，只能在继承链上移动，比如 A extends B、C extends B
+
+```typescript
+// 指鹿为马
+declare let test: A
+let test1 = test as B as C // 能在继承链上上下移动
+
+// 建议操作，如果A和C没有任何关系
+let test1 = test as unknow as C
+
+// 放弃这种操作
+let test1 = test as any as C
+```
+
+
+
+
+
+## ts-node
+
+* 没有整体说一下 ts-node 的使用
+
+### 怎么样加node参数呢？
+
+* ts-node 执行文件是不能直接添加node参数的
+
+  比如：
+
+  ```bash
+  npx ts-node --throw-deprecation process-warning.ts
+  ```
+
+* 解决方法：
+
+  ```bash
+  node --loader ts-node/esm process-warning.ts
+  ```
+
+  或者：(推荐，上面那种方式官方不再推荐)
+
+  ```bash
+  node -r ts-node/register 文件名
+  ```
+
+​	或者使用 NODE_OPTIONS 的方式(写到node命令的前面，是环境变量)
+
+```bash
+NODE_OPTIONS="-r ts-node/register --no-warnings" node ./index.ts
+```
+
+
+
+参考：https://nodejs.org/api/cli.html#cli_node_options_options
+
+https://github.com/TypeStrong/ts-node#node-flags-and-other-tools
+
+
+
+## ts 配置
+
+https://www.dengwb.com/typescript/configuration/file-options.html
+
+
+
+## ts 编译选项
+
+https://www.tslang.cn/docs/handbook/compiler-options.html
+
+## ts 异常提示问题
+
+https://www.dengwb.com/typescript/configuration/vscode-compiler.html
+
+## todo
+
+* keyof
+* Omit
+* Exclude
 
 # 单词
 

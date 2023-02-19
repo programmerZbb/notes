@@ -6,6 +6,20 @@
 
 
 
+# 引擎
+
+* 参考百度：https://baike.baidu.com/item/%E6%8E%92%E7%89%88%E5%BC%95%E6%93%8E/8371898?fromtitle=gecko&fromid=7348782
+
+WebKit、Blink、Trident 和 Gecko。
+
+## Chrome
+
+浏览器内核： webkit -> blink
+
+js 引擎： v8
+
+* 需要区分开 js 引擎 和 浏览器内核
+
 # 前端路由 hash 模式 & history 模式
 
 * 修改 hash 并且回车，并不会请求后端，只会用于页面定位。会被 window.hashchange 事件监控到。，HashHistory就是利用页面定位实现的不刷新跳转（传统的a标签默认get请求，target为当前tab），本质就是一个浏览器内置的发布订阅（只是能在url上用hash体现出来），改变hash会广播hashchange事件。
@@ -16,14 +30,16 @@
 
 
 
-# readyState 
+# 渲染原理相关
+
+## readyState 
 
 https://developer.mozilla.org/zh-CN/docs/Web/API/Document/readyState
 
 * 能够使用 ==onreadystateChange== 模拟 DOMContentLoaded(该事件也是针对于 document)
 * 描述了 ==document== 的加载状态，不是其他的状态，后期进行回流和重绘都不会影响。
 
-## 状态
+### 状态
 
 一个文档的 `**readyState**` 可以是以下之一：
 
@@ -38,6 +54,10 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/Document/readyState
 - `complete`（完成）
 
   文档和所有子资源已完成加载。表示 `load (en-US)` 状态的事件即将被触发。
+
+## DOMContentLoaded
+
+当初始的 **HTML** 文档被完全加载和解析完成之后，**`DOMContentLoaded`** 事件被触发，而无需等待样式表、图像和子框架的完全加载。
 
 
 
@@ -101,6 +121,10 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/Document/readyState
 
 ## addEventListener
 
+https://developer.mozilla.org/zh-CN/docs/Web/API/EventTarget/addEventListener
+
+**EventTarget.addEventListener()** 方法将指定的监听器注册到 [`EventTarget`](https://developer.mozilla.org/zh-CN/docs/Web/API/EventTarget) 上，当该对象触发指定的事件时，指定的回调函数就会被执行。 事件目标可以是一个文档上的元素 [`Element`](https://developer.mozilla.org/zh-CN/docs/Web/API/Element),[`Document`](https://developer.mozilla.org/zh-CN/docs/Web/API/Document)和[`Window`](https://developer.mozilla.org/zh-CN/docs/Web/API/Window)或者任何其他支持事件的对象 (比如 `XMLHttpRequest`)`。`
+
 注册一个事件。
 
 * 第二个参数，一般情况下是一个函数，也可以是一个 EventListener 对象
@@ -122,11 +146,22 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/Document/readyState
   一个指定有关 `listener `属性的可选参数**对象**。可用的选项如下：
 
   - `capture`:  [`Boolean`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Boolean)，表示 `listener` 会在该类型的事件捕获阶段传播到该 `EventTarget` 时触发。
-  - `once`:  [`Boolean`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Boolean)，表示 `listener 在添加之后最多只调用一次。如果是` `true，` `listener` 会在其被调用之后自动移除。
-  - `passive`: [`Boolean`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Boolean)，设置为true时，表示 `listener` 永远不会调用 `preventDefault()`。如果 listener 仍然调用了这个函数，客户端将会忽略它并抛出一个控制台警告。查看 [使用 passive 改善的滚屏性能](https://developer.mozilla.org/zh-CN/docs/Web/API/EventTarget/addEventListener#使用_passive_改善的滚屏性能) 了解更多.
-  - `signal`：[`AbortSignal`](https://developer.mozilla.org/zh-CN/docs/Web/API/AbortSignal)，该 `AbortSignal` 的 [`abort()`](https://developer.mozilla.org/zh-CN/docs/Web/API/AbortController/abort) 方法被调用时，监听器会被移除。
-
   
+    ==在捕获阶段就执行，意味着它提前执行了。只有他提前执行了，如果捕获路径上有其他的事件还会按冒泡顺序执行==
+  
+  - `once`:  [`Boolean`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Boolean)，表示 `listener 在添加之后最多只调用一次。如果是` `true，` `listener` 会在其被调用之后自动移除。
+  
+  - `passive`: [`Boolean`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Boolean)，设置为true时，表示 `listener` 永远不会调用 `preventDefault()`。如果 listener 仍然调用了这个函数，客户端将会忽略它并抛出一个控制台警告。查看 [使用 passive 改善的滚屏性能](https://developer.mozilla.org/zh-CN/docs/Web/API/EventTarget/addEventListener#使用_passive_改善的滚屏性能) 了解更多.
+  
+  - `signal`：[`AbortSignal`](https://developer.mozilla.org/zh-CN/docs/Web/API/AbortSignal)，该 `AbortSignal` 的 [`abort()`](https://developer.mozilla.org/zh-CN/docs/Web/API/AbortController/abort) 方法被调用时，监听器会被移除。
+  
+  
+
+* 第四个参数
+
+  useCapture: 是否采用捕获顺序。[`Boolean`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Boolean)，在 DOM 树中，注册了 listener 的元素， 是否要先于它下面的 EventTarget，调用该 listener（也就是提高执行顺序）
+
+
 
 ### 1. 优点
 
@@ -167,6 +202,22 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/Document/readyState
   ==如果是冒泡阶段，会在下一次事件触发的时候触发，因为当前只是添加了一个宏任务==
 
   宏任务和微任务的分界：微任务一定会在宏任务的周期内执行完成。
+
+## removeEventListener
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/EventTarget/removeEventListener
+
+* 第三个参数
+
+  - `options` 可选
+
+    一个指定事件侦听器特征的可选对象。可选项有：
+
+  - `capture`: 一个 [`Boolean`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Boolean) 表示这个类型的事件将会被派遣到已经注册的侦听器，然后再派遣到 DOM 树中它下面的任何 `EventTarget`。
+
+    唯一的作用就是要和 addEventListener 对应，比如 { capture: true }
+
+
 
 ## dom2 中的旧方法
 
@@ -218,6 +269,18 @@ element.onclick = function() {
 
 
 
+### ==preventDefault——重要==
+
+* Event.preventDefault() 方法也是顺着事件流执行的。
+
+  如果事件执行顺序 = 冒泡顺序，则中间有一个事件执行了 preventDefault ，后面冒泡的事件的默认行为将会被阻止（相当于继承了这个事件，会在事件对象的defaultPrevented属性中表现，如果阻止了默认行为，defaultPrevented为true）
+
+  如果事件流 = 捕获顺序，如果先执行的事件执行了 preventDefault，后面执行的事件都会阻止默认行为
+
+* 是线性的，中间有一个变化，后面的链式都会变化
+
+
+
 ## 事件对象
 
 * event
@@ -231,6 +294,27 @@ element.onclick = function() {
 2. currentTarget: 永远等于当前事件绑定的元素，等于 this
 
 3. path: 事件触发路径，就是冒泡路径。是一个数组，能够查找到所有链表上的元素。
+
+4. defaultPrevented：是否需要阻止默认行为
+
+### eventPhase
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Event/eventPhase#%E4%BA%8B%E4%BB%B6%E9%98%B6%E6%AE%B5%E5%B8%B8%E9%87%8F
+
+表示事件流当前处于哪一个阶段。如果一个事件触发，打印 event.phase 可以知道该事件是冒泡触发的还是捕获触发的还是本身触发的
+
+| 常量                    | 值   | 描述                                                         |
+| :---------------------- | :--- | :----------------------------------------------------------- |
+| `Event.NONE`            | 0    | 这个时间，没有事件正在被处理                                 |
+| `Event.CAPTURING_PHASE` | 1    | 事件正在被目标元素的祖先对象处理。这个处理过程从[`Window`](https://developer.mozilla.org/zh-CN/docs/Web/API/Window)开始，然后[`Document`](https://developer.mozilla.org/zh-CN/docs/Web/API/Document), 然后是[`HTMLHtmlElement`](https://developer.mozilla.org/zh-CN/docs/Web/API/HTMLHtmlElement), 一直这样，直到目标元素的父元素。 通过[`EventTarget.addEventListener()`](https://developer.mozilla.org/zh-CN/docs/Web/API/EventTarget/addEventListener) 注册为捕获模式的[Event listeners](https://developer.mozilla.org/zh-CN/docs/conflicting/Web/API/EventTarget/addEventListener_380cb5f366307beb2c072f74e561ee98) 被调用。 |
+| `Event.AT_TARGET`       | 2    | 事件对象已经抵达[the event's target](https://developer.mozilla.org/zh-CN/docs/Web/API/EventTarget). 为这个阶段注册的事件监听被调用。 如果 [`Event.bubbles`](https://developer.mozilla.org/zh-CN/docs/Web/API/Event/bubbles) 的值为 false，对事件对象的处理在这个阶段后就会结束。 |
+| `Event.BUBBLING_PHASE`  | 3    | 事件对象逆向向上传播回目标元素的祖先元素，从父亲元素开始，并且最终到达包含元素 [`Window`](https://developer.mozilla.org/zh-CN/docs/Web/API/Window). 这就是冒泡，并且只有[`Event.bubbles`](https://developer.mozilla.org/zh-CN/docs/Web/API/Event/bubbles) 值为 true 的时候才会发生。 为这个阶段注册的[Event listeners](https://developer.mozilla.org/zh-CN/docs/conflicting/Web/API/EventTarget/addEventListener_380cb5f366307beb2c072f74e561ee98) 在这个过程中被触发。 |
+
+## contextMenu
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Element/contextmenu_event
+
+* 用户点击右键或者键盘按菜单键触发
 
 
 
@@ -263,6 +347,21 @@ element.onclick = function() {
 * 首屏加载时长？
 * https://www.jianshu.com/p/bf9353cfbbc6
 * 使用 mutationObserver + getBoundingClientRect 来计算
+
+```typescript
+let ob1 = new MutationObserver((arg1,arg2) => {
+    console.log(arg1,arg2)
+})
+ob1.observe(document.querySelector('.box'), {
+    attributes: true, // 属性发生变化。可以监听到 style 的变化，各种属性的添加和删除
+    childList: true, // 子元素添加或删除
+    subtree: true, // 子元素是否发生上述两种类型
+})
+```
+
+* arg1 参数只有两种类型的变化，会在 type 字段中表现
+
+
 
 ## 问题
 
@@ -377,6 +476,16 @@ element.onclick = function() {
 
 
 
+# cookie
+
+## 弱机密性-不限制端口port
+
+https://www.itranslater.com/qa/details/2108495980466275328
+
+由于历史原因，cookie包含许多安全和隐私信息。 例如，服务器可以指示给定的cookie用于“安全”连接，但Secure属性在存在活动网络攻击者时不提供完整性。 同样，给定主机的cookie在该主机上的所有端口之间共享，即使Web浏览器使用的通常的“同源策略”隔离了通过不同端口检索的内容。
+
+Cookie不提供端口隔离。 如果cookie在一个端口上运行的服务可读，则cookie也可由在同一服务器的另一个端口上运行的服务读取。 如果cookie在一个端口上可由服务写入，则cookie也可由在同一服务器的另一个端口上运行的服务写入。 出于这个原因，服务器不应该在同一主机的不同端口上运行相互不信任的服务，并使用cookie来存储安全敏感信息。
+
 
 
 # html5
@@ -429,6 +538,120 @@ element.onclick = function() {
 
 
 # ==webApi==
+
+## intersection Observer
+
+`**IntersectionObserver**`**接口** (从属于[Intersection Observer API](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)) 提供了一种异步观察目标元素与其祖先元素或顶级文档视窗([viewport](https://developer.mozilla.org/zh-CN/docs/Glossary/Viewport))交叉状态的方法。祖先元素与视窗([viewport](https://developer.mozilla.org/zh-CN/docs/Glossary/Viewport))被称为**根(root)。**
+
+```typescript
+let ob = new IntersectionObserver(() => {}, {
+  root: document.querySelector('#scrollArea'), // 更元素
+  rootMargin: '0px', // 交叉时更元素的margin，为了更精细的计算。比如在做图片懒加载的时候，可以适当的设置一点margintop，提前加载
+  threshold: 1.0, // 阈值，也就是交叉子元素的百分比。可以是一个数组，[0.5,1.0] 这两个比例都会触发第一个callback
+});
+```
+
+* 文档中的属性就是能够添加的实例时的配置。https://developer.mozilla.org/zh-CN/docs/Web/API/IntersectionObserver#%E5%B1%9E%E6%80%A7
+
+* 如果添加了 root 元素，如果有滚动条，会在滚动条滚动交叉时触发
+
+### observer 方法
+
+* 绑定元素，可以绑定多个
+
+
+
+## 自定义事件
+
+参考：https://developer.mozilla.org/zh-CN/docs/Web/Events/Creating_and_triggering_events
+
+基础：
+
+```typescript
+// 1. 注册
+let event = new CustomEvent('test')
+// 2. 监听
+document.addEventListener('test', e => {
+    console.log(e)
+})
+// 3. 触发
+document.dispatchEvent(event)
+// 监听和触发时同一个元素
+```
+
+### 特点
+
+* 自定义事件是不可信任的，在event对象中字段 isTrusted 为false
+
+  浏览器事件触发 event 对象字段 isTrusted 为 true
+
+
+
+## AbortController
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/AbortController
+
+**`AbortController`** 接口表示一个控制器对象，允许你根据需要中止一个或多个 Web 请求。
+
+你可以使用 [`AbortController.AbortController()`](https://developer.mozilla.org/zh-CN/docs/Web/API/AbortController/AbortController) 构造函数创建一个新的 `AbortController`。使用 [`AbortSignal`](https://developer.mozilla.org/zh-CN/docs/Web/API/AbortSignal) 对象可以完成与 DOM 请求的通信。(也可以和事件进行通信)
+
+例子：
+
+```typescript
+let controller = new AbortController()
+document.documentElement.addEventListener('click', (e) => {
+    console.log('out', e.target)
+}, {
+    capture: true,
+    once: true,
+    passive: true,
+    signal: controller
+})
+controller.abort() // 能够取消该事件
+```
+
+* signal 信号，由AbortController 实例返回
+* abort() 方法，放弃该事件（请求）
+
+
+
+## Date.now 和 performance.now
+
+### performance.now
+
+* todo https://developer.mozilla.org/zh-CN/docs/Web/API/Performance/now
+
+* performance.now 是相对于页面加载的时长
+
+  并且在数量级上更精确。用例包括基准测试和其他需要高分辨率时间的情况，例如媒体（游戏、音频、视频等）
+
+  比如：性能测试，媒体时长等
+
+* Date.now 是相对于 标准时间（**the Unix epoch** (1970-01-01T00:00:00Z)），依赖于系统时钟（就是有可能出错，如果用户主动设置过的话）
+
+
+
+## Element
+
+### Element.scroll
+
+* Todo scrollto scrollby
+
+## location
+
+### location.assign
+
+加载给定 URL 的内容资源到这个 Location 对象所关联的对象上。能够替换 href 和 pathname，不进行转义
+
+### location href 和 pathname
+
+pathname 会对 url 进行转义
+
+href 不会进行转义
+
+
+
+
 
 ## Blob
 
@@ -828,6 +1051,51 @@ HTML媒体元素接口在属性和方法中添加了 [`HTML元素`](https://deve
 
 
 
+## iframe
+
+* iframe 对象的 ifr1.contentDocument 可以获取iframe 对象的document 对象
+
+  ifr1.contentWindow 获取 iframe window
+
+### 与主窗口通信
+
+* 实际上是获取主窗口对象，然后返送请求
+
+```js
+otherwindow.parent.postMessage('other message')
+```
+
+* 反之亦然，获取iframe 对象进行通信
+
+
+
+## BroadcastChannel
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/BroadcastChannel
+
+* todo
+
+
+
+## inserAdjacentHTML
+
+> **`insertAdjacentHTML()`** 方法将指定的文本解析为 [`Element`](https://developer.mozilla.org/zh-CN/docs/Web/API/Element) 元素，并将结果节点插入到 DOM 树中的指定位置。它不会重新解析它正在使用的元素，因此它不会破坏元素内的现有元素。这避免了额外的序列化步骤，使其比直接使用 innerHTML 操作更快。
+
+* 比 innerHTML 更快的操作方式
+
+插入位置：
+
+围绕该标签的第一个tag和第二个tag展开。
+
+* `'beforebegin'`：元素自身的前面。
+* `'afterbegin'`：插入元素内部的第一个子节点之前。
+* `'beforeend'`：插入元素内部的最后一个子节点之后。
+* `'afterend'`：元素自身的后面。
+
+第二个参数：
+
+html 字符串，能够直接解析
+
 # DOM
 
 ## 自定义事件
@@ -852,3 +1120,129 @@ elem.dispatchEvent(event);
 
 * 一版使用在 webview jsBridge 的挂载方面
 
+
+
+## document
+
+* document.write() 能够持续往页面上添加内容，识别标签
+
+## Shadow DOM——影子DOM
+
+* webComponent 基础，用来做组件隔离。就想 vue2 一样写组件
+
+> 一组 JavaScript API，用于将封装的“影子”DOM 树附加到元素（与主文档 DOM 分开呈现）并控制其关联的功能。通过这种方式，您可以保持元素的功能私有，这样它们就可以被脚本化和样式化，而不用担心与文档的其他部分发生冲突。
+>
+> https://developer.mozilla.org/zh-CN/docs/Web/Web_Components
+
+Web components 的一个重要属性是封装——可以将标记结构、样式和行为隐藏起来
+
+* 为了组件化而生
+* 单向数据流
+
+### 注意
+
+* 不能直接在外层通过 dom api 获取内部的元素
+* shadow 内部能够获取外部的 dom
+
+## webComponent
+
+
+
+# History
+
+## 1. history.pushstate
+
+* https://developer.mozilla.org/zh-CN/docs/Web/API/History/pushState#%E7%A4%BA%E4%BE%8B
+
+从某种程度来说, 调用 `pushState()` 和 `window.location = "#foo"`基本上一样, 他们都会在当前的document中创建和激活一个新的历史记录。但是 `pushState()` 有以下优势：
+
+- 新的URL可以是任何和当前URL同源的URL。但是设置 [`window.location`](https://developer.mozilla.org/zh-CN/docs/Web/API/Window/location) 只会在你只设置锚的时候才会使当前的URL。
+
+  ==pushState使用当前域名不会刷新页面，可作为路由或者短链开发的技术==
+
+- 非强制修改URL。相反，设置 `window.location = "#foo";` 仅仅会在锚的值不是#foo情况下创建一条新的历史记录。
+
+  
+
+- 可以在新的历史记录中关联任何数据。`window.location = "#foo"`形式的操作，你只可以将所需数据写入锚的字符串中。
+
+  * 隐式传值吗？
+  * 可以在state中设置所有值，当前页面能够通过histoty.state获取
+
+
+
+# 浏览器术语
+
+## browsing context-浏览器上下文
+
+https://developer.mozilla.org/zh-CN/docs/Glossary/Browsing_context
+
+> **浏览上下文**（browsing context）是一个浏览器（browser）展示文档（[`Document`](https://developer.mozilla.org/zh-CN/docs/Web/API/Document)）的环境。在现代浏览器中，通常是一个标签页（tab），也可能是一个窗体（window）或只是页面的一部分，如 frame 或 iframe。
+
+* 每个浏览器上下文都有一个活动文档的源（origin）和一个记录所有展示文档的历史（history）。
+
+
+
+
+
+# 开发实践
+
+## 1. 点击其他区域，input不失焦
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <input id="input" type="text">
+    <button onclick="test()">测试</button>
+
+    <script>
+      	// 主要是阻止默认事件
+        document.addEventListener('mousedown', e => {
+            console.log(e)
+            if (e.target.id !== 'input') {
+                e.preventDefault();
+            }
+        }, false);
+
+        function test() {
+            console.log('执行')
+        }
+    </script>
+</body>
+</html>
+```
+
+* 只有 mousedown 事件能实现
+
+## mousedown 和 click 区别
+
+todo
+
+
+
+# chrome技巧
+
+## 是否为无痕模式
+
+https://juejin.cn/post/6844903921060675598
+
+
+
+## getSelection
+
+https://developer.mozilla.org/zh-CN/docs/Web/API/Window/getSelection#see_also
+
+获取用户当前点击的元素位置等信息
+
+
+
+## Chrome 调试技巧
+
+* https://juejin.cn/post/6844903749379588110 慢慢读吧

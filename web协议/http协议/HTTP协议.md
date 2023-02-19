@@ -33,6 +33,8 @@ https://www.ruanyifeng.com/blog/2016/08/http.html
 > Content-Type: text/html; charset=utf-8
 > ```
 
+* 注意：末尾不能够再添加分号！
+
 客户端请求的时候，可以使用`Accept`字段声明自己可以接受哪些数据格式。
 
 > ```http
@@ -186,6 +188,8 @@ HTTP/2 复用TCP连接，在一个连接里，客户端和浏览器都可以同�
 举例来说，在一个TCP连接里面，服务器同时收到了A请求和B请求，于是先回应A请求，结果发现处理过程非常耗时，于是就发送A请求已经处理好的部分， 接着回应B请求，完成后，再发送A请求剩下的部分。
 
 这样双向的、实时的通信，就叫做多工（Multiplexing）。
+
+* ? 问题：没有发现 http2 就是 tcp 的全双工通信，http1 就是半双工通信。和 node 实现的 RPC 有什么联系
 
 ## 数据流
 
@@ -410,6 +414,13 @@ HTTP 响应状态代码指示特定 [HTTP](https://developer.mozilla.org/zh-cn/H
 
 * 200
 
+* 201: 
+
+  > 在 HTTP 协议中，**`201 Created`** 是一个代表成功的应答状态码，表示请求已经被成功处理，并且创建了新的资源。新的资源在应答返回之前已经被创建。同时新增的资源会在应答消息体中返回，其地址或者是原始请求的路径，或者是 [`Location`](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Location) 首部的值。
+
+  * 状态码：201 Created
+  * 这个状态码的常规使用场景是作为 [`POST`](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Methods/POST) 请求的返回值。注意：作为post请求的返回码！！
+
 * 204：服务器成功处理了请求，但不需要返回任何实体内容
 
   常见于 options 预检的请求
@@ -508,6 +519,8 @@ HTTP 响应状态代码指示特定 [HTTP](https://developer.mozilla.org/zh-cn/H
 缓存的种类有很多,其大致可归为两类：私有与共享缓存。共享缓存存储的响应能够被多个用户使用。私有缓存只能用于单独用户。本文将主要介绍浏览器与代理缓存，除此之外还有网关缓存、CDN、反向代理缓存和负载均衡器等部署在服务器上的缓存方式，为站点和 web 应用提供更好的稳定性、性能和扩展性。
 
 https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Caching
+
+https://zhuanlan.zhihu.com/p/93163523
 
 普遍的缓存案例:
 
@@ -624,9 +637,27 @@ Cache-Control: public
 * 切换不同的版本。比如说PC和移动端使用不同的版本。
 * 当缓存服务器收到一个请求，只有当前的请求和原始（缓存）的请求头跟缓存的响应头里的Vary都匹配，才能使用缓存的响应。
 
+### 协商缓存
+
+* 协商缓存一般关掉强缓存，比如设置 max-age 为0
+
+### webpack 强缓存
+
+* 每次的文件名都是变化的（chunk hash），那么只要入口设置强缓存为0，js文件强缓存为永不过期就可以了。只要文件变化，路径就会不同！
+
 
 
 # header 字段解析
+
+## http 头部列表
+
+https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers
+
+## 0. 禁止修改的header
+
+https://developer.mozilla.org/zh-CN/docs/Glossary/Forbidden_header_name
+
+todo
 
 ## 1. origin
 
@@ -637,6 +668,26 @@ Cache-Control: public
 ## 2. referer
 
 * `**Referer**` 请求头包含了==当前请求页面==的==来源页面==的地址，即表示当前页面是通过此来源页面里的链接进入的。服务端一般使用 `Referer` 请求头识别访问来源，可能会以此进行统计分析、日志记录以及缓存优化等。
+
+
+
+## 3. Content-Type
+
+
+
+## 4. Content-Disposition
+
+* 能够控制内容是否下载
+
+https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Disposition
+
+## 5. Accept-Ranges
+
+> 服务器使用 HTTP 响应头 **`Accept-Ranges`** 标识自身支持范围请求 (partial requests)。字段的具体值用于定义范围请求的单位。
+>
+> 当浏览器发现`Accept-Ranges`头时，可以尝试*继续*中断了的下载，而不是重新开始。
+
+* 值 bytes & none 
 
 
 
@@ -652,3 +703,32 @@ Cache-Control: public
   * 文件  input:file 
   * 文档 http 请求文档
   * 字节流
+
+## 2. http 范围请求
+
+https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Range_requests
+
+todo 断点续传相关
+
+https://juejin.cn/post/6844903588825825294
+
+https://juejin.cn/post/6844903577882722317#heading-0
+
+
+
+# 实践
+
+## 1. get请求能带请求体吗？post请求参数能在queryString中合理吗？
+
+* body 在chrome里也叫 payload
+
+> POST 请求用的 URL 也可以带参数，这是完全合乎规范且有时候很有用的，比如想在请求日志里暴露出一些参数方便 grep。
+>
+> GET 和 POST 最明显的区别就是能不能带 body，这也是经常被提起的一个问题，因为很多人认为 GET 请求也可以带 body。说这个问题前，先来改一下术语 body 的叫法 ，body 也可以叫 payload，还有叫 entity 的，现在最新的 HTTP 规范里已经改叫 content，关于 GET 请求能不能带 content，规范里是这么说的：
+>
+> 
+>
+> 作者：紫云飞
+> 链接：https://www.zhihu.com/question/549907469/answer/2654938556
+> 来源：知乎
+> 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
