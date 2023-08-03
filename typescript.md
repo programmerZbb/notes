@@ -1732,6 +1732,8 @@ https://juejin.cn/post/6876776311696654344#heading-2
 > 来源：稀土掘金
 > 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 
+可以通过查看 Reflect.js 文件查看 metadata 实现源码，就是一个闭包中的一个 weakmap 存储的元数据，而不是保存到 target 上的。
+
 ## 应用——控制反转（IOC）和 依赖注入（DI）
 
 阅读：https://zhuanlan.zhihu.com/p/33492169
@@ -3296,7 +3298,7 @@ type Test2<T extends '1' | '2'> = T
 let test1: Test2<'1'> = '1'
 ```
 
-
+* 在函数中可以不传入
 
 
 
@@ -3872,15 +3874,37 @@ https://github.com/TypeStrong/ts-node#node-flags-and-other-tools
 
 https://www.dengwb.com/typescript/configuration/file-options.html
 
+使用过的总结：
 
+```ts
+{
+    "compilerOptions": {
+      "strictPropertyInitialization": false,             // 对象的属性可以不被初始化，在构建class定义而不是接口定义的时候有用
+      "esModuleInterop": true, // 开启后，如果模块没有实现 export.default，也可以使用 import path 的语法，否则需要使用 import * as 的方式
+      "allowSyntheticDefaultImports": true, // 这个只是影响编译，不影响代码生成。如果模块没有导出default，也不会报错！
+    }
+}
+```
+
+### 模块化
+
+参考：https://segmentfault.com/a/1190000018249137
+
+[esModuleInterop做了什么](https://zhuanlan.zhihu.com/p/148081795)
 
 ## ts 编译选项
 
 https://www.tslang.cn/docs/handbook/compiler-options.html
 
+https://www.dengwb.com/typescript/configuration/compiler-options.html
+
 ## ts 异常提示问题
 
 https://www.dengwb.com/typescript/configuration/vscode-compiler.html
+
+## ts 不同文件命名冲突
+
+> 在默认情况下，当你开始在一个新的 TypeScript 文件中写下代码时，它处于全局命名空间中，使用全局变量空间是危险的，因为它会与文件内的代码命名冲突。改成使用文件模块，文件中包含import或者export，就会在当前文件中创建一个本地作用域
 
 ## todo
 

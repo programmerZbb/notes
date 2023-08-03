@@ -311,6 +311,7 @@ https://www.runoob.com/linux/linux-system-boot.html
 
   ```shell
   type cd
+  # cd is a shell builtin
   ```
 
 ### 3. Info 帮助
@@ -807,7 +808,21 @@ sed [-hnV][-e<script>][-f<script文件>][文本文件]
 - p ：打印，亦即将某个选择的数据印出。通常 p 会与参数 sed -n 一起运行～
 - s ：取代，可以直接进行取代的工作哩！通常这个 s 的动作可以搭配正则表达式！例如 1,20s/old/new/g 就是啦！
 
+### awk
 
+一个方便操作文件的命令，支持管道和标准输入输出。
+
+```bash
+$ ls -a -l | awk '{t+=1} END {print t} BEGIN {t=3}'
+```
+
+语法：
+
+```bash
+$ awk -F '分隔符' 'pattern {语句}'
+```
+
+* pattern 直接写到引号下，语句逻辑写到 `{}` 中，可以存在多个语句（相当于 if else）
 
 ## 打包和压缩
 
@@ -1030,6 +1045,24 @@ Linux tree命令用于以树状图列出目录的内容。
 ### 3. find 命令
 
 Linux find 命令用来在==指定目录==（和which的区别）下查找文件。任何位于参数之前的字符串都将被视为欲查找的目录名。如果使用该命令时，不设置任何参数，则 find 命令将在当前目录下查找子目录与文件。并且将查找到的子目录和文件全部进行显示。
+
+### 4. 花括号的使用
+
+* `{}` 能够表示一个集合，在可以加多个参数的命令场景下非常有用
+
+比如：
+
+```bash
+mkdir app{,test}
+# 相当于创建app和apptest两个文件夹
+```
+
+* 表范围，包括数字、字母等
+
+```bash
+echo {0..9} 
+# 0 1 2 3 4 5 6 7 8 9
+```
 
 ## 命令逻辑
 
@@ -2185,6 +2218,86 @@ $ yum makecache
   lrwx------ 1 root root 64 Jan  6 22:44 3 -> socket:[15180]
   ```
 
+### 守护进程
+
+https://www.ruanyifeng.com/blog/2016/02/linux-daemon.html
+
+守护进程（daemon）就是一直在后台运行的进程（deamon）
+
+#### 问题由来
+
+启动一个node服务应用，在退出命令行窗口，这个应用就退出了，无法访问
+
+* 怎么才能让它变成系统的守护进程（deamon），成为一种服务（service），一直在后台运行呢
+
+#### 前台任务和后台任务
+
+* bash任务的子任务可以是前台任务和后台任务
+
+> 上面这样启动的脚本，称为"前台任务"（foreground job）。它会独占命令行窗口，只有运行完了或者手动中止，才能执行其他命令。
+>
+> 变成守护进程的第一步，就是把它改成"后台任务"（background job）。
+>
+> > ```bash
+> > $ node server.js &
+> > ```
+
+只要在命令的尾部加上符号`&`，启动的进程就会成为"后台任务"。如果要让正在运行的"前台任务"变为"后台任务"，可以先按`ctrl + z`，然后执行`bg`命令（让最近一个暂停的"后台任务"继续执行）。
+
+==在关闭窗口的时候会提示有后台程序在执行==
+
+#### 后台任务特点
+
+后台任务的两个特点：
+
+1. 继承当前 session （对话）的标准输出（stdout）和标准错误（stderr）。因此，后台任务的所有输出依然会同步地在命令行下显示。
+2. 不再继承当前 session 的标准输入（stdin）。你无法向这个任务输入指令了。如果它试图读取标准输入，就会暂停执行（halt）。
+
+* 后台程序与前台程序最大的区别就是：是否继承标准输入。也就预示着后台任务在执行的时候，依然能够忘窗口输出命令。
+
+### SIGHUP信号
+
+变为"后台任务"后，一个进程是否就成为了守护进程呢？或者说，用户退出 session 以后，"后台任务"是否还会继续执行？
+
+Linux系统是这样设计的。
+
+> 1. 用户准备退出 session
+> 2. 系统向该 session 发出`SIGHUP`信号
+> 3. session 将`SIGHUP`信号发给所有子进程
+> 4. 子进程收到`SIGHUP`信号后，自动退出
+
+上面的流程解释了，为什么"前台任务"会随着 session 的退出而退出：因为它收到了`SIGHUP`信号。
+
+那么，"后台任务"是否也会收到`SIGHUP`信号？
+
+这由 Shell 的`huponexit`参数决定的。
+
+> ```bash
+> $ shopt | grep huponexit
+> ```
+
+执行上面的命令，就会看到`huponexit`参数的值。
+
+大多数Linux系统，这个参数默认关闭（`off`）。因此，session 退出的时候，不会把`SIGHUP`信号发给"后台任务"。所以，一般来说，"后台任务"不会随着 session 一起退出。
+
+### nohup 命令
+
+还有比`disown`更方便的命令，就是`nohup`。
+
+> ```bash
+> $ nohup node server.js &
+> ```
+
+`nohup`命令对`server.js`进程做了三件事。
+
+> - 阻止`SIGHUP`信号发到这个进程。
+> - 关闭标准输入。该进程不再能够接收任何输入，即使运行在前台。
+> - 重定向标准输出和标准错误到文件`nohup.out`。
+
+也就是说，`nohup`命令实际上将子进程与它所在的 session 分离了。
+
+注意，`nohup`命令不会自动把进程变为"后台任务"，所以必须加上`&`符号。
+
 ### screen 使用
 
 使⽤用 screen 命令：（能够类似于 daemon 一样在后台运行，防止网络异常进程中断，因为很多进程，比如 sshd 进程就是通过 socket 通信的，依赖于网络）
@@ -2219,6 +2332,29 @@ Systemd 是 Linux 系统工具，用来启动[守护进程](http://www.ruanyifen
 1. Systemd 并不是一个命令，而是一组命令，涉及到系统管理的方方面面。
 
 * `systemctl`是 Systemd 的主命令，用于管理系统。
+
+```bash
+# 重启系统
+$ sudo systemctl reboot
+
+# 关闭系统，切断电源
+$ sudo systemctl poweroff
+
+# CPU停止工作
+$ sudo systemctl halt
+
+# 暂停系统
+$ sudo systemctl suspend
+
+# 让系统进入冬眠状态
+$ sudo systemctl hibernate
+
+# 让系统进入交互式休眠状态
+$ sudo systemctl hybrid-sleep
+
+# 启动进入救援状态（单用户状态）
+$ sudo systemctl rescue
+```
 
 2. systemd-analyze
 
@@ -2439,6 +2575,117 @@ chkconfig 命令用来设定和查询不同运行级上的系统服务。 注：
   ==如果需要使用 systemd 工具集管理一个新安装的服务，需要先用 chkconfig 服务 on 开机启动这个服务，然后才能被 sytemd 工具集管理。chkconfig on 是在当前级别下启动这个服务。==
 
 > 比如用 yum 安装的Nginx 能够通过 service nginx 来管理，用 chkconfig 管理的服务，就能通过 systemd 工具集来管理nginx 的状态。
+
+## 其他类型进程
+
+`孤儿进程`：故名思义，就是没爹的孩子。父进程退出了，而它的一个或多个进程还在运行，那么这些子进程都会成为孤儿进程。这些孤儿都将被init进程收养，并负责这些孤儿的以后
+
+`僵尸进程`：就是子进程比父进程先结束，而父进程又没有释放子进程占用的资源，那么子进程的描述还留在系统中，这种进程就是僵尸进程
+
+# 内存与磁盘管理
+
+## 概览
+
+
+
+## 内存使用率使用
+
+内存使用率：
+
+* 常用命令
+  * free
+  * top
+
+Linux 内存使用原则：如果存在空闲的，尽可能去占用，因为申请内存空间也会有开销，为了节省开销。
+
+### free
+
+```bash
+$ free -h
+```
+
+```tex
+ 							total        used        free      shared  buff/cache   available
+Mem:          1.8Gi       484Mi       113Mi       2.0Mi       1.2Gi       1.1Gi
+Swap:            0B          0B          0B
+```
+
+available 释放掉 buff 还可以再用多少。
+
+* 如果查看内存使用了很多，不需要着急，需要关注释放掉buff还能有多少内容提供。
+
+* swap 交换内容，如果当前内存确实不够用了，Linux系统程序 会把一部分暂时不需要的内容放到 swap内存中。
+
+  swap内存（交换分区，window叫虚拟内存）不占用真正的内存，而是磁盘的一部分。最快的磁盘读写速度也比内存慢10倍左右。
+
+可不可以不用 swap 内存？
+
+* Linux 在内存占用满之后会随机杀掉一些占用内存高的程序（极大可能是你的主要程序）。保留一些swap还是比较安全。
+
+  一般情况下这种无法预知错误（不确定的错误）发生之后，需要加入维护队列，进行重启操作，恢复到默认数据。（和react 的 error boundary 是不是非常像，未知的错误就重启）
+
+### top
+
+能够动态查看内存使用情况
+
+```tex
+%Cpu(s):  1.7 us,  2.8 sy,  0.0 ni, 95.2 id,  0.0 wa,  0.3 hi,  0.0 si,  0.0 st
+MiB Mem :   1826.8 total,    100.6 free,    487.5 used,   1238.6 buff/cache
+MiB Swap:      0.0 total,      0.0 free,      0.0 used.   1158.5 avail Mem 
+```
+
+## 磁盘使用率的查看
+
+磁盘使用率的查看
+
+查看命令
+
+* fdisk
+* df
+* du
+* du 与 ls 区别
+
+### fdisk
+
+既能查看，又能分区。谨慎使用！！！
+
+查看命令 `fdisk -l`
+
+```tsx
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: dos
+Disk identifier: 0x89ee0607
+
+Device     Boot Start      End  Sectors Size Id Type
+/dev/vda1  *     2048 83886046 83883999  40G 83 Linux
+```
+
+* Linux 会把所有的磁盘当文件来对待（而不是window一样分块）
+* 放在dev目录下，
+
+### df
+
+查看磁盘使用情况。
+
+是一个 fdisk 的补充，fdisk 不能知道具体目录。
+
+```tex
+# 分区                                 挂载目录
+Filesystem      Size  Used Avail Use% Mounted on
+devtmpfs        899M     0  899M   0% /dev
+tmpfs           914M   24K  914M   1% /dev/shm
+tmpfs           914M  572K  913M   1% /run
+tmpfs           914M     0  914M   0% /sys/fs/cgroup
+/dev/vda1        40G   14G   25G  35% /
+```
+
+### du
+
+一般情况适用 `ls -alh` 也能够查看目录下文件占用情况。
+
+du 查看的是文件真正占用的内存（ls 能够查看虚拟内存，不一定是真正的内存）
 
 
 
@@ -3065,7 +3312,7 @@ nginx在运行时与具体业务功能（比如http服务或者email服务代理
 - use epoll
   写在events部分。在Linux操作系统下，nginx默认使用epoll事件模型，得益于此，nginx在Linux操作系统下效率相当高。同时Nginx在OpenBSD或FreeBSD操作系统上采用类似于epoll的高效事件模型kqueue。在操作系统不支持这些高效模型时才使用select。
 
-### 压测工具 Apache ab
+### 压测工具 Apache ab(Apache bench)
 
 我们要测试 nginx 的负载能力，需要借助压力测试工具。本次使用 apache 服务器自带的一个web压力测试工具 ApacheBench，简称ab。ab是一个命令行工具，即通过 `ab` 命令行，模拟多个请求同时对某一个 url 地址进行访问，因此可以用来测试目标服务器的负载能力。
 
@@ -3099,6 +3346,10 @@ ab -c 5000 -n 200000 http://10/211/55/6:80/index.html
 * 查看 nginx 启动日志
 
   `journalctl -u nginx.service`
+  
+* 重启
+
+  Nginx -s reload
 
 
 
@@ -3141,7 +3392,16 @@ Docker 是用 GO语言开发的应用容器引擎，基于容器化，沙箱机�
 
 # shell
 
+## 简介
+
+* Shell 是命令解释器，用于解释用户对操作系统的操作
+* shell 有很多
+  * cat /etc/shells
+* Centos 7 默认使用的 shell 是 bash
+
 ## 变量
+
+变量可分为俩类：环境变量（全局变量），和普通变量（局部变量）
 
 https://www.runoob.com/linux/linux-shell-variable.html
 
@@ -3155,5 +3415,68 @@ echo ${your_name}
 
 ### 环境变量
 
+> 环境变量也称为全局变量，可以在创建他们的Shell及其派生出来的任意子进程Shell中使用，环境变量又可以分为自定义环境变量和bash内置的环境变量
+
+分类：
+
+* 自定义环境变量
+* bash 内置环境变量
+
+首先它也是一种变量
+
 * 也叫全局变量，能够直接获取，不需要定义
 
+#### 查看环境变量
+
+1. set 命令查看所有变量，包括全局变量和局部变量
+2. env 命令，只显示全局变量
+3. declare命令输出所有的变量，函数，整数，和已经导出的变量，set -o命令显示bashShell的所有参数配置信息
+
+#### 设置环境变量
+
+> 环境变量可以在命令行中设置和创建，用户退出命令行时这些变量值就会丢失，想要永久保存环境变量，可在用户家目录下的. bash_profile或. bashrc(非用户登录模式特有，如：SSH)文件中，或在/etc/profile文件中定义，这样每次用户登录时这些变量都将被初始化。
+
+* 在命令行中设置和创建，每次退出就丢失
+* 永久环境变量，可在用户家目录下的.bash_profile或. bashrc(非用户登录模式特有，如：SSH)文件中设置
+
+#### 自定义环境变量
+
+1. export 变量名=value
+2. 变量名=value ; export 变量名
+3. declare - x 变量名=value
+
+设置
+
+1. 在命令行中设置环境变量
+
+```bash
+$ export TEST=VALUE
+# 然后用 node 执行 console.log(process.env) 可以看到这个变量
+```
+
+2. 在 `~/.bash_profile` 中设置
+
+#### 环境变量文件
+
+参考：https://www.cnblogs.com/kevingrace/p/8072860.html
+
+1. 修改/etc/profile文件
+
+   这个是所有的 shell 都有权使用这些环境变量，缺点就是有安全隐患
+
+   ```bash
+   # 修改环境变量
+   $ vim /etc/profile
+   # 执行生效
+   $ source  /etc/profile
+   ```
+
+2. 修改.bashrc文件，只有登录用户有权访问
+
+   ```bash
+   $ vim ~/.bashrc
+   # export PATH=$PATH:/usr/local/mysql/bin
+   $ source  ~/.bashrc
+   ```
+
+   

@@ -61,6 +61,7 @@ jscodeshift 将 babel parser（ast 解析引擎）、[ast-types](https://link.ju
 > jscodeshift 是一个基于 codemod 理念的 JavaScript/TypeScript 重构工具，其原理是将 JS/TS 代码解析为抽象语法树（Abstract Syntax Tree，AST），并提供一系列用于访问和修改 AST 的 API 以实现自动化的代码重构。jscodeshift 将 babel parser、[ast-types](https://link.juejin.cn?target=https%3A%2F%2Fgithub.com%2Fbenjamn%2Fast-types)（用于快速创建新的 AST 节点）和 [recast](https://link.juejin.cn?target=https%3A%2F%2Fgithub.com%2Fbenjamn%2Frecast%2F)（维护生成代码的代码风格信息）三大工具整合在一起，提供了简便快捷的操作接口；同时它还提供了多任务并行执行的功能，使其对于海量代码文件的重构操作可以并行运行，充分利用多核 CPU 算力，缩短重构任务执行时间。
 
 * https://juejin.cn/post/6934911685220106253
+* https://redconservatory.com/articles/better-find-and-replace-with-js-codeshift/
 
 ### transform
 
@@ -118,7 +119,28 @@ j.importDeclaration(
 );
 ```
 
+### 替换
 
+```typescript
+ast.find(jscodeshift.JSXText).forEach(path => {
+  const text = path.node.value;
+  if (text && text.length > 0) {
+    // 简单的替换
+    const pureText = text.replace(/\r|\n/gi, '');
+    // !  这个就是标准的替换代码！！！
+    jscodeshift(path).replaceWith(
+      jscodeshift.identifier(`{${replaceCode(pureText)}}`) // 能够直接写表达式替换
+    );
+    // path.replace(expressionWithBigBrackets(text))
+  }
+});
+```
+
+
+
+# ast 操作参考
+
+https://juejin.cn/post/7061808830274863118#heading-12
 
 
 

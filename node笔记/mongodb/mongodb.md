@@ -1,5 +1,7 @@
 # 1. 概念
 
+## 与传统数据库对比
+
 * 连接按照：datebase -> collection -> id 顺序来操作
 
 | SQL术语/概念 | MongoDB术语/概念 | 解释/说明                           |
@@ -12,7 +14,7 @@
 | table joins  |                  | 表连接,MongoDB不支持                |
 | primary key  | primary key      | 主键,MongoDB自动将_id字段设置为主键 |
 
-
+![img](https://static001.geekbang.org/infoq/bb/bbd00915f97bcbb32c113844818e95b3.png)
 
 ## 快速查询聚合方法
 
@@ -119,3 +121,7 @@ get 某个字段：https://docs.mongodb.com/manual/reference/operator/aggregatio
 ![compare-MySql](./imgs/compare-MySql.png)
 
 * 高可用：复制集的特点（三个节点？），传统：使用第三方软件进行集群的搭建
+
+## 数据结构
+
+![img](https://static001.geekbang.org/infoq/26/2619c14f2c3055c56ca0b986a31cfee9.png)

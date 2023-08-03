@@ -89,7 +89,9 @@ git rebase -i HEAD~4
 
 https://zhuanlan.zhihu.com/p/450129471
 
+## 避免在 pull 的时候产生merge
 
+推荐设置 `git config --global pull.rebase true`
 
 # git diff
 
@@ -127,6 +129,92 @@ Added (A), Copied (C), Deleted (D), Modified (M), Renamed (R), have their type (
 ## --cached
 
 -  **git diff --cached** 查看已缓存的改动： 
+
+# 暂存操作
+
+* git stash
+
+https://zhuanlan.zhihu.com/p/373475727
+
+# HEAD
+
+* HEAD 就是指向当前分支提交指针的引用
+
+## HEAD~ 和 HEAD^ 的区别
+
+https://zhuanlan.zhihu.com/p/591777199
+
+
+
+# git 合并冲突
+
+## ours vs theirs - 已经合并的怎么解决冲突？
+
+参考：https://nitaym.github.io/ourstheirs/
+
+* 如果是已经合并了出现冲突，想直接采用某一方的提交，可以使用 ours 和 theirs 参数
+
+```bash
+# 采用当前分支的合并
+$ git checkout --ours codefile.js
+# 采用来源的合并
+$ git checkout --theirs codefile.js
+```
+
+## git 合并策略
+
+参考：https://blog.walterlv.com/post/git-merge-strategy.html#git-%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A5
+
+指定git合并策略
+
+```bash
+$ git merge origin_branch --strategy=策略
+```
+
+例如：
+
+```bash
+# 简写
+$ git merge origin/master -s resolve
+# 全拼
+$ git merge origin/master --strategy=resolve
+```
+
+合并的策略一共有：
+
+- resolve
+
+  自动合并，算法可能有问题
+
+- recursive （常用）
+
+  默认策略
+
+  当指定为此策略时，可以额外指定下面的这些参数，方法是：
+
+  ```
+  1 $ git merge 要合并进来的分支名 --strategy=合并策略 -X diff-algorithm=参数 
+  ```
+
+  默认延伸出来的合并策略(如上的参数)：
+
+  * Ours 如果不冲突，那么与默认合并一直；如果发生冲突将采用来自自己一方的修改
+
+  * theirs 这与 ours 相反。如果不冲突，那么与默认的合并方式相同。但如果发生冲突，将自动应用来自其他人的修改
+
+  * patience
+
+    此策略的名称叫“耐心”，因为 git 将话费更多的时间来进行合并一些看起来不怎么重要的行，合并的结果也更加准确。当然，使用的算法是 recursive 即递归三路合并算法。
+
+- octopus
+
+- ours
+
+  > 在合并的时候，无论有多少个合并分支，当前分支就直接是最终的合并结果。无论其他人有多少修改，在此次合并之后，都将不存在（当然历史里面还有）。
+
+- subtree
+
+
 
 
 

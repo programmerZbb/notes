@@ -2183,6 +2183,10 @@ import { combineReducers } from 'redux-immutable'
 
 * react就是要使用函数式编程，js中的class和别的不一样（对于其他程序员）：this问题，
 
+### hooks 带来了什么？
+
+* 函数本身是没有状态的，class是数据和逻辑的组合，本身是有状态的。react Hooks 给 function 组件带来的 state，提供逻辑复用的能力。
+
 ## 1. 开始
 
 * react hooks 不再继承 Component 从 react 中，使用纯函数，不再使用 class 定义类的方式。
@@ -2355,7 +2359,17 @@ const [state, setState] = useState(() => {
 
 默认情况下，effect 会在==每轮组件渲染完成后执行==。这样的话，一旦 effect 的依赖发生变化，它就会被重新创建。
 
+### 销毁函数执行时机
 
+* 执行顺序就是先销毁 -> 后执行副作用函数
+
+* 只要依赖值进行变化，就需要先执行销毁（也就是执行上一个依赖值对应的销毁函数），然后执行这个依赖值的副作用函数。
+
+  可以简单的理解为只要依赖的数据进行了销毁就会执行销毁函数。
+
+> useEffect 的销毁函数每次都是先执行的，不过是异步的
+>
+> useLayoutEffect 也是每次先执行销毁函数，同步的
 
 ## 3. useContext
 
@@ -2955,6 +2969,55 @@ setState((state, props) => {}, callback)
 
 
 
+## API
+
+### 给children传值
+
+* 参考：https://zhuanlan.zhihu.com/p/94607846
+
+  官方：https://react.dev/reference/react/cloneElement#alternatives
+
+一共有三种方案：
+
+* cloneElement
+* renderProps
+* useContext
+
+### cloneElement —— 给传入children 传参
+
+* 参数：要复制的元素、传入的props、自定义children
+
+* 有的情况下需要拦截子组件并且传入参数，这时序可以使用 cloneElement 来实现。这是一个很常见的需求，在antd中广泛使用。
+
+​	因为这是一个过时的api，官方推荐使用 render props 的方式，==这种外翻的方式也就是render props的重要用处==
+
+```typescript
+// 测试 children 相关api
+import React, {FC, cloneElement, PropsWithChildren, ReactElement} from "react";
+
+// 测试给 children 中传入参数
+// 实际开发过程中不推荐使用 cloneElement 的方式，它已经是一个过时的api。推荐使用render props的方式
+export const ChildrenApi: FC<PropsWithChildren<{
+  children?: ReactElement;
+  renderChild: (props: any) => JSX.Element;
+}>> = ({renderChild}) => {
+
+
+  return <>{
+    // cloneElement(props.children, {test: 2})
+    renderChild({test: 222})
+  }</>;
+};
+```
+
+#### antd 的组件传参
+
+* antd 的formitem 组件是能够控制子组件的 props 的，使用的api就是 cloneElement
+
+  参见：https://github.com/ant-design/ant-design/blob/master/components/_util/reactNode.ts#L9
+
+
+
 # react 组件设计
 
 1. 官网
@@ -2984,6 +3047,14 @@ react最大的问题还是精确渲染的问题，父组件带动子组件进行
 
 * react 很多优化api，能做出性能很好的app；但是程序员用不好也能做出最差app
 
+## react devTool Profiler
+
+https://juejin.cn/post/7077091328420478989
+
+* 可以通过录制渲染来记录react组件渲染过程，统计渲染性能。
+
+具体使用查看 [profiler-Peformance.md](./principle/react/profiler-Peformance.md) 文档
+
 ## react 推荐性能检测工具
 
 https://create-react-app.dev/docs/measuring-performance/
@@ -2992,3 +3063,661 @@ https://juejin.cn/post/6930903996127248392
 
 https://blog.csdn.net/weixin_40906515/article/details/106394217?utm_medium=distribute.pc_relevant.none-task-blog-baidujs_title-9&spm=1001.2101.3001.4242
 
+
+
+# React18
+
+## Hooks
+
+### useDebugValue
+
+userDebugValue 能够让你给自定义的hook添加自定义的 label 显示在 devTools 工具中，方便做调试。
+
+#### 使用
+
+在你自定义的组件调用 useDebugValue 展示一个可读的 debug value，只需要调用一下这个方法传递一个值（一般是动态值）就可以。
+
+```typescript
+import React, { FC, useDebugValue, useState } from 'react';
+
+// 一个自定义的hook
+const useCustomHook = () => {
+  const [state, setState] = useState<number>(0);
+
+  useDebugValue(state > 4 ? 'large' : 'small');
+
+  return [
+    state,
+    setState,
+  ] as const;
+};
+
+export const Parent: FC = props => {
+  console.log('parent render');
+  const [state, setState] = useCustomHook();
+
+  return (
+      <div>
+        我是parent
+        <button onClick={() => {
+          setState(state + 1);
+        }}>增加</button>
+        <div>state: { state }</div>
+      </div>
+  );
+};
+```
+
+在 dev tools 展示如下的label：
+
+主要在该组件使用的 hooks 中显示。
+
+```tex
+hooks
+	CustomHook "large"
+	1State: 5
+```
+
+### useDeferredValue
+
+useDeferredValue 是一个 react hook 能够让你的异步更新UI的一部分；
+
+#### 使用
+
+* 传入一个state返回一个异步state，这个异步的state在更新之后将会放弃 stale 的state
+* 值的维度去异步，startTransition 是action的维度去异步
+
+#### caveats
+
+* 不会阻塞网络请求，而是延迟显示网络请求的结果（知道它们准备好之后）
+* 渲染结果会被缓存，用户输入上次的结果不会再次请求。
+
+#### 与 startTransition 区别
+
+* useDeferredValue 是UI层面的异步，更多的是数据层面的异步（值）。
+* startTransition 是action层面的不阻塞，更多的是动作层面的不阻塞UI。
+
+#### 与防抖和节流的区别
+
+> 与去抖或节流不同，它不需要选择任何固定延迟。如果用户的设备速度很快（例如功能强大的笔记本电脑），则延迟重新渲染几乎会立即发生并且不会引人注意。如果用户的设备速度很慢，列表将“滞后于”输入，与设备的速度成正比。
+>
+> 此外，与去抖动或节流不同，由 完成的延迟重新渲染`useDeferredValue`在默认情况下是可中断的。这意味着如果 React 正在重新渲染一个大列表，但用户再次击键，React 将放弃重新渲染，处理击键，然后再次开始在后台渲染。相比之下，去抖动和节流仍然会产生卡顿体验，因为它们是*阻塞的：*它们只是推迟渲染阻塞击键的时刻。
+
+* deferredValue 是react 内部的优化，也就是运行时的优化。防抖和节流还是会可能造成UI卡顿。
+* deferredValue 和用户的设备相关，如果用户的设备很快则渲染就很快。（也就是相当于做了不同设备的优化）防抖和节流不同的设备都是等待相同的时长。
+
+### useId
+
+* 生成唯一的id。只限于一个组件内多次调用。
+
+```typescript
+const id = useId()
+```
+
+### useImperativeHandle
+
+* 能够自定义导出的 ref 内容
+
+```typescript
+useImperativeHandle(ref, createHandle, dependencies?)
+```
+
+#### caveats
+
+* 不要过渡使用 useImperativeHandle
+
+### useLayoutEffect
+
+> pitfall
+>
+> useLayoutEffect 会损害页面性能，尽可能的使用 useEffect
+
+* useLayoutEffect 会在浏览器重绘之前执行（也就是 requrequestAnimationFrame 之前）
+
+#### 使用
+
+##### 1. 在屏幕渲染之前进行样式测量
+
+* 能够避免出现抖动。
+
+### useReducer
+
+
+
+### useSyncExternalStore
+
+useSyncExternalStore 是一个能够让你订阅外部store的react hook
+
+#### 使用
+
+##### 1. 订阅web api
+
+```typescript
+import React, { useSyncExternalStore } from 'react';
+
+// 使用 web api 的事件
+const onlineSubscribe = (callback: () => void) => {
+  window.addEventListener('online', callback);
+  window.addEventListener('offline', callback);
+
+  return () => {
+    window.removeEventListener('online', callback);
+    window.removeEventListener('offline', callback);
+  };
+};
+
+const onlineGetSnapshot = () => navigator.onLine;
+
+export const useOnline = () => {
+  const online = useSyncExternalStore(onlineSubscribe, onlineGetSnapshot);
+
+  return online;
+};
+```
+
+##### 2. 兼容服务端渲染
+
+```typescript
+// 第三个参数，支持服务端渲染的情况。固定返回true
+const getServerSnapshot = () => true;
+
+export const useOnline = () => {
+  const online = useSyncExternalStore(onlineSubscribe, onlineGetSnapshot, getServerSnapshot);
+
+  return online;
+};
+```
+
+### useTransition
+
+一个能让你不阻塞UI更新你的状态的react hook
+
+* startTransition 的 react hook 版本
+
+#### caveats
+
+* 是一个react hook 不能在组件外面调用，需要需要在其他地方调用，请使用 startTransition api
+
+* 与 useDeferredValue 联系
+
+  你能够使用这个钩子包含那些你能够获取 setState 函数的地方，如果一些 props 或则 自定义 hook 的值发生改变，请使用 useDeferredValue 进行值包装
+
+* 不要使用异步的更新，react会立马调用本次更新并添加 transition 标记
+
+* 
+
+## Components
+
+介绍一些官方提供的 component
+
+### Profiler
+
+提供了一种编程的方式测量 react tree 渲染性能的方法。
+
+* 针对react组件进行性能测试，主要针对使用 Chrome 发现性能问题之后，再采用这个组件针对的找出问题来源。
+
+#### caveats
+
+* 如果开启这个可能会造成性能损耗。
+
+#### react devtool profiler
+
+https://juejin.cn/post/7077091328420478989
+
+react dev tool 提供的一个利用 react profiler 特性进行的性能捕获。
+
+### StrictMode
+
+StrictMode 让你能够发现一些组件中常见的bug在开发环境的早期（不需要在线上出现）
+
+Strict 将确保以下行为在开发环境中：
+
+* 你的组件将会重新渲染额外的时间去查找不纯净渲染引起的bug
+* 您的组件将重新运行效果一段额外的时间，以查找由于缺少 effect 副作用清理而导致的错误。
+* 你的组件将会被检测是否使用了过期的API。
+
+### Suspense
+
+suspense 是一个 react 组件能够包裹其他可以发送异步请求的组件。
+
+* suspense 能够返回展示 fallback，也就意味着它能够不断地切换状态在 fallback 和 children 中切换。那也就意味着它能进行无限的状态叠加。
+
+#### 特性
+
+参考：https://prismic.io/blog/what-is-react-suspense
+
+* suspense 并不关心内部组件在干嘛，只需要它包含一个 Promise
+
+##### 不得不提及一下的 error boundary
+
+error boundary 能够捕获组件内部抛出的错误，但是抛出 Promise 在实际开发中并不是很常见。react 在抛出 Promise 的时候，能够由 Suspense 组件捕获，并在其状态改变之前一直展示 fallback.
+
+* 其内部实现都是使用的 try catch 捕获，因为在 js 中不仅能跑出错误实例，也可以直接抛出其他类型的实例。
+
+##### 抛出一个 Promise
+
+* suspense 的子组件可以抛出一个 Promise 对象，这个对象状态变化之后，suspense 会自动 re render 这个子组件！
+
+#### Suspense-enabled data - 请求兼容 
+
+参考：https://juejin.cn/post/7225178555827339324
+
+如果让请求的内容兼容Suspense，需要对请求过程进行改造。
+
+**Only Suspense-enabled data sources will activate the Suspense component**
+
+#### suspense 特性实例
+
+参考：[10 min understanding react Suspense](https://prismic.io/blog/what-is-react-suspense)
+
+* suspense 可以 throw 一个 promise 来让 fallback 捕获这个 promise，在 throw promise 期间不会释放当前组件状态，因此可以做状态缓存。
+
+  * 用此特性可以实现 vue keepalive 的效果，代码查看：`react/my-app/src/react-api/Suspense.tsx`
+
+  必须要收集 Promise 然后下次渲染释放 Promise，因为只要 Promise 状态发生改变，就会重新 render 这个组件，然后陷入无限执行 Promise 状态改变，无限循环的问题。
+
+  ```typescript
+  // return一个 pending 中的 promise，会触发 suspense 的 fallback，并且不会释放当前组件的内存。和swr的实现是一样的。
+  // 参考：https://prismic.io/blog/what-is-react-suspense
+  if (!props.visible) {
+    // 返回三种 promise 都会缓存组件并触发 fallback
+    // throw new Promise(res => { res('test') })
+    // throw Promise.reject('error')
+    // 一定要这个写，如果立马释放 Promise，该组件会立即刷新，然后会继续进入这段逻辑，出现无限刷新
+    throw new Promise(res => { ref.current = res })
+    // 直接抛出错误不能够被 fallback 捕获
+    throw new Error('error')
+  }
+  ```
+
+## 可以结合 Suspense 的API
+
+react18 提供了很多并行解决方案，都可以结合 Suspense 组件进行使用。
+
+* useDeferredValue 使用异步值
+* lazy
+* startTransition
+
+## apis
+
+### createContext
+
+* 创建一个上下文，能够在不同组件之间共享数据，不论组件层级多深
+
+#### 返回值
+
+返回一个 object 类型的数据，这个object包含一个 provider 和 consumer
+
+* provider 作为容器，向react component 传递 context
+* consumer 作为消费容器，不过已经舍弃。使用更现代的方式，useContext hook
+
+消费数据：
+
+* 使用 useContext 消费数据
+
+#### 实践
+
+* 主要是通过组件代码文件的形式，抽离出 context 相关的代码。
+
+  Caveats: 如果想要修改 context 传递的值，需要使用 setState 的方式，不能直接通过修改initValue的方式进行修改（react不会去render）
+
+```typescript
+// 测试 createContext
+import React, { FC, useState, useContext, createContext, useEffect } from 'react';
+
+const defaultValue = {
+  info: 'default message',
+};
+
+export const Context = createContext(defaultValue);
+
+const ChildComp: FC = props => {
+  const value = useContext(Context);
+
+  return (
+    <div>
+      我是子组件
+      <div>信息：{value.info}</div>
+    </div>
+  );
+};
+
+let initVal = {
+  info: 'test',
+};
+export const Parent: FC = props => {
+  const [value, setValue] = useState(defaultValue);
+
+  useEffect(() => {
+    // 不能通过直接修改值的方式render
+    initVal = {
+      info: 'new test',
+    };
+  }, []);
+
+  return (
+    <Context.Provider value={initVal}>
+      <div>
+        我是父组件
+        <button onClick={() => {
+          setValue({
+            info: 'new message',
+          });
+        }}>修改context</button>
+        <div>下面是子组件：</div>
+        <ChildComp />
+      </div>
+    </Context.Provider>
+  );
+};
+```
+
+#### context vs redux
+
+* 一般情况下， useReducer + createContext 能够替代 redux 使用
+* “如果使用了三个context，就需要考虑redux了”。复杂的项目还是需要使用redux来做状态管理，包含一些状态拆分、异步请求的能力；
+* middleware 系统是redux一个很强的扩展；如果context需要使用一些 logger 或者其他的middleware，则需要自己实现；
+
+#### context 应用
+
+* context 广泛应用于各种库的 Proivder
+
+### 特性
+
+#### 精确渲染
+
+* 完全无法精确渲染啊，路过的每个组件都会被 render，就是一个取代 props 的工具，除非路过的组件加了 memo。
+
+### forwardRef
+
+react传递数据都是向下的单向数据流，使用 前向引用 forwardRef 可以使得数据向上传递。
+
+#### 向上暴露内部的ref
+
+* 直接把 ref 转发给内部的元素
+
+#### 使用 imperative 自定义ref的内容
+
+
+
+### lazy
+
+* 主要是用来做懒加载的
+
+#### caveats
+
+* 不能把lazy写到 component 内部，会引起重渲染，进入死循环。
+* 获取到的组件会被缓存，不会重复加载，因此react lazy最多会被调用一次。
+
+### error boundary
+
+https://github.com/bvaughn/react-error-boundary
+
+一个可刷新的 error boundary
+
+```tsx
+// 官方实现的可刷新component
+const RenderError = ({ error, resetErrorBoundary }: any) => (
+  <div>
+    出错了
+    <button onClick={resetErrorBoundary}>点击刷新</button>
+  </div>
+);
+
+<ErrorBoundary
+  key={key}
+  // fallback={renderError()}
+  FallbackComponent={RenderError}
+  onError={() => {
+    console.log('出错了');
+  }}
+  >
+  <>
+  <Children2 />
+  {/* <Suspense fallback={<div>loading</div>}>
+              <MyLazyComp />
+            </Suspense> */}
+  </>
+</ErrorBoundary>
+```
+
+### memo
+
+
+
+### startTransition——过渡更新
+
+startTransition 可以让你不阻塞UI更新状态，（stringLiteral）就是不阻塞UI。
+
+* UI 渲染也分为紧急和较轻，这个API就是为了方便任务的划分UI渲染优先级。
+
+https://juejin.cn/post/6997016044447629349
+
+* 标记这次状态更新为transition（非紧急渲染），在切换tab和输入内容联想搜索的过程中非常有用
+
+#### 传统的方式
+
+传统的解决方案是`防抖`使用的是 setTimeout 延迟处理的方案，并没有中断执行的机制，也可能在timeout之后执行一些耗时的操作。
+
+* 也就是通过部分UI延迟渲染的方式进行优化，但是延迟后的callback执行还是可能阻塞紧急的UI渲染。
+
+#### 动机
+
+> 为了理解我们为什么需要这个功能，请记住，强迫昂贵的UI渲染立即完成会阻止较轻和较紧急的UI渲染及时渲染。这可能会使那些需要从紧急的UI渲染中获得即时响应的用户感到沮丧。
+
+* 用户的操作响应是第一位的，操作之后的更新可能是第二位的。
+* 防止昂贵的UI渲染被立即执行（比如appendChild）。UI渲染也分为紧急和较轻（优先级）。
+
+#### caveats
+
+* startTransition 不会提供任何方式去追踪 transition 在pending中。如果需要知道它是pending需要使用 useTransition hook。
+
+* callback 函数必须是同步的，react会立即执行这个函数把所有状态更新标记为 transition。
+
+* transition 的更新能被其他的更新中断。例如在过渡更新中更新图表，图表更新的过程中开始输入，react 将处理输入状态更新后才会重新启动图表组件上的渲染工作。
+
+  好像一个默认的优先级
+
+* 如果有多个正在进行的transition，react目前讲它们一起批处理，可能在未来版本中删除。
+
+
+
+# React-DOM 18 API
+
+https://react.dev/reference
+
+代码：project/webpack/basic/src/react-dom18
+
+## DOM-APIS
+
+主要是从 react-dom 中导出的。
+
+### createPortal
+
+* 把一个reactNode 添加到任意页面上存在的DOM下
+
+> *// 测试 createPortal*
+>
+> *// createPortal 能够在不同的DOM节点下渲染子组件*
+>
+> import React, { FC } from 'react';
+>
+> import { createRoot } from 'react-dom/client';
+>
+> import { createPortal } from 'react-dom';
+>
+> 
+>
+> import { App } from '../components/App';
+>
+> import { Children } from '../components/Children';
+>
+> 
+>
+> const rootDom = document.querySelector('#root')!;
+>
+> *// 可以添加到任意一个页面上存在的DOM下*
+>
+> *// 点击事件：1. 子组件不能通过 stopPropagation 来阻止 portal 事件执行*
+>
+> *// 2. reactNode 内部的事件符合预期*
+>
+> (document.querySelector('#root2')! as HTMLDivElement).onclick = () => {
+>
+>   console.log('portal dom 点击');
+>
+> };
+>
+> *// 虽然它会脱离react根节点，但是它返回的 jsx 一定要挂载到 react dom 中，这样才会有上下文*
+>
+> const portal = createPortal(<Children />, document.querySelector('#root2')!);
+>
+> const root = createRoot(rootDom);
+>
+> root.render(<App>{portal}</App>);
+
+#### caveats
+
+* 绑定事件问题
+
+  事件冒泡是通过react tree(也就是走的是合成事件)，而不是通过DOM tree。
+
+  * portal内的reactNode事件是代理到 portal 容器上的，不能通过 stopPropagation 来组织portal容器事件触发，只能手动移除！
+
+  * reactNode 内部的事件流转符合预期。
+
+* 必须注入运行时
+
+  不能脱离react运行时挂载，比如直接使用 createPortal api 是不被支持的，除非执行了 createRoot 注入了 react 运行时。
+
+  也就是说返回的jsx必须挂载到react jsx中，这样才会有上下文注入。
+
+#### 实践
+
+##### 1. 给第三方库加点react组件——逃脱react component 的限制
+
+* 主要是针对一些第三方库（不论什么框架），可以写一些react组件直接挂载到它的DOM下，降低程序员的心智负担。
+
+##### 2. 渲染一个 dialog 使用 portal——摆脱overflow:hidden的限制
+
+* 如果一个元素设置了 `overflow: hiddren;`，如果正常设置一个弹窗，超出的部分不能够展示
+
+  使用了 portal 可以让该 dialog 绑定到document上，只需要给它设置正确的样式即可。
+
+##### 3. 创建一个 hybrid app
+
+* 给其他的内容添加一些react组件
+
+### flushSync
+
+flushSync api 能够迫使react同步执行这个api提供的callback，它能使得DOM立即更新。
+
+* 尽量别使用，会对性能造成损耗！！！
+* 也就是说脱离批处理，单独优先处理。
+
+## Client APIS
+
+### createRoot
+
+```typescript
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+
+import { App } from '../components/App';
+
+const rootNode = document.querySelector('#root')!;
+// 和hydrateRoot有一些区别
+const root = createRoot(rootNode);
+
+root.render(<App />);
+```
+
+### hydrateRoot
+
+hydrateRoot 让你能够展示 React Component 在浏览器DOM node中，它的html由服务器生成通过`react-dom/server`
+
+```typescript
+const root = hydrateRoot(rootNode, reactNode, options?)
+```
+
+#### 注意 caveats
+
+* hydrateRoot 预期呈现的内容和服务端呈现的内容需要相同，如果不匹配需要开发者自己解决
+* hydrate过程是非常耗性能的（需要对DOM进行一个一个匹配）。在开发模式下，可能会报不匹配错误，但是大多数情况不会出现
+* 如果使用了框架，不需要你自己去手动调用 hydrateRoot
+* 如果你的app是客户端渲染的，而不是已经渲染的HTML，使用hydrateRoot不会起作用。应该直接使用客户端渲染APIcreateRoot() 方法
+
+#### root.render(reactNode)
+
+更新html中的 hydrate 的react组件，也就是可以通过这个进行根组件更新
+
+#### root.unmount()
+
+卸载react 根节点下的渲染树，react将不再管理根节点下的DOM，主要用于内存回收。
+
+### 实践
+
+#### 1. 替换整个 document
+
+只需要把 hydrateRoot 的container参数换成document就行
+
+#### 2. 关闭不可消除的hydration不匹配错误
+
+* 主要是发生在客户端和服务端得到不同结果的场景，只能针对单个元素的文本内容或者属性
+
+​	给单个元素添加 `suppressHydrationWarning={true}`
+
+#### 3. 客户端和服务端渲染不同的内容
+
+* 主要是利用 useEffect 在服务端不执行的情况
+
+```typescript
+import { useState, useEffect } from "react";
+
+export default function App() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return (
+    <h1>
+      {isClient ? 'Is Client' : 'Is Server'}
+    </h1>
+  );
+}
+```
+
+### hydration 过程
+
+* 主要是加载编译的脚本，执行脚本进入 hydrate 过程
+
+```typescript
+// 实现react hydration 过程
+// 如果在服务端渲染的场景这个组件会由服务端编译好直接返回编译好的脚本
+import React from 'react';
+// hydrateRoot 的包在 client 中
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
+
+import { App } from './App';
+
+const rootDom = document.querySelector('#root')!;
+console.log(rootDom, '---dom string');
+// step1: 先挂载server dom
+rootDom.innerHTML = renderToString(<App />);
+
+// 1s之后进行hydrate过程
+setTimeout(() => {
+  const root = hydrateRoot(rootDom, <App />);
+}, 1000);
+```
+
+## Server APIS
+
+### renderToString
+
+#### useEffect 不起作用
+
+* useEffect 在服务端渲染不会起作用，需要再hydration阶段后再客户端执行。

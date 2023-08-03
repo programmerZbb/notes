@@ -58,6 +58,88 @@ CSS 通用属性值： [`initial`](https://developer.mozilla.org/zh-CN/docs/Web/
 
 
 
+## css 取反色
+
+### 1. filter 直接使用 filter 属性
+
+https://developer.mozilla.org/en-US/docs/Web/CSS/filter-function/invert
+
+css 图片的 filter 属性能够修改图片的反色
+
+```css
+filter: invert(1);
+```
+
+能够把整个页面进行颜色反转，包括图片、文字颜色和背景
+
+#### 网站的图片灰色
+
+* 在一些重大的事件可能会把网站变成灰色，使用的也是 filter
+
+```css
+filter: grayscale(100%);
+```
+
+### 2. 业务自定义
+
+
+
+# var
+
+* 参考：https://developer.mozilla.org/zh-CN/docs/Web/CSS/var#%E5%B0%9D%E8%AF%95%E4%B8%80%E4%B8%8B
+
+var() css函数可以插入一个自定义属性（也被称为css变量）的值，用来代替非自定义属性中的值的任何部分。
+
+`var()` 函数不能作为属性名、选择器或者其他除了属性值之外的值。（这样做通常会产生无效的语法或者一个没有关联到变量的值。）
+
+## 语法
+
+* 函数参数第一个值是要替换的自定义属性名称；第二个参数是backup，如果第一个参数引用值无效，则使用第二个值
+
+> 可以使用多个回退值。自定义属性的回退值允许使用逗号。例如，`var(--foo, red, blue)` 将 `red, blue` 同时指定为回退值；即是说任何在第一个逗号之后到函数结尾前的值都会被考虑为回退值。
+
+## 用var实现主题效果
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+  <style>
+    :root {
+      --bg-color-1: red;
+      --bg-color-2: blue;
+    }
+    :root {
+      --bg-color: var(--bg-color-1);
+    }
+    .box {
+      width: 100px;
+      height: 100px;
+      background-color: var(--bg-color);
+    }
+    .dark {
+      --bg-color: var(--bg-color-2);
+    }
+  </style>
+</head>
+<body>
+  <div class="box"></div>
+  <button>按钮</button>
+  <script>
+    document.querySelector('button').onclick = () => {
+      document.documentElement.classList.add('dark')
+    }
+  </script>
+</body>
+</html>
+```
+
+
+
 # 可替换元素
 
 在 [CSS](https://developer.mozilla.org/zh-CN/docs/Web/CSS) 中，**可替换元素**（**replaced element**）的展现效果不是由 CSS 来控制的。这些元素是一种外部对象，它们外观的渲染，是独立于 CSS 的。
@@ -404,6 +486,186 @@ https://developer.mozilla.org/zh-CN/docs/Web/CSS/clip-path
 #### 什么情况下能影响 fixed 布局
 
 * 在父元素使用了 translate 样式后，子元素的 fixed 布局会失效。会相对于父元素布局
+
+
+
+# grid 布局
+
+参考：https://juejin.cn/post/7208484366955085883
+
+## 简介
+
+css 网格布局（又称网格和css网格），是一种基于二位网格的布局。
+
+## 术语
+
+### 容器
+
+grid 容器是指应用了 `display: grid` 的元素，它是所有网格项目的直接父元素。
+
+### 项目（grid items）
+
+指的是grid容器的直接子元素
+
+### 网格线（grid line）
+
+`网格线（Grid Lines）` 指的是构成网格结构的分界线。它们可以是垂直的（“列网格线”）或水平的（“行网格线”），并且位于行或列的任一侧。请看下图：
+
+![网格线的图示](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/5c40b759324a4344a2dd786d77f545d4~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp)
+
+### 单元格（grid cell）
+
+`单元格（Grid Cell）` 指的是相邻两行和相邻两列网格线之间的空间。它是网格的一个 "单元"。
+
+下面是行网格线1和2，列网格线2和3之间的网格单元：
+
+![网格单元的图示](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f6b17be8052947719b601d800618bc69~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp)
+
+### 网格轨道（Grid Tracks）
+
+`网格轨道（Grid Track）` 指的是两条相邻网格线之间的空间。你可以把它们看成是网格的列或行。
+
+![网格轨道的图示](https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e4413849f9f94eadb66ce8520875cdfd~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp)
+
+### 网格区域（Grid Area）
+
+`网格区域（Grid Area）` 指的是由四条网格线包围的总空间。一个网格区域可以由任何数量的网格单元组成。
+
+### gaps
+
+`网格间距（Gaps）` 指的是轨道之间的间隙。为了确定尺寸，这些东西就像普通的轨道一样。你不能在缝隙中放置内容，但你可以将网格项目跨越它。
+
+# Formatting context-格式化上下文
+
+https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Flow_Layout/Intro_to_formatting_contexts
+
+## 简介
+
+格式化上下文包括：
+
+* 块级格式化上下文 block formatting contexts
+* 内联格式化上下文 inline formatting contexts
+* 和灵活格式化上下文 flex formatting contexts
+
+本文主要是讨论它们的基本行为以及如何利用这些行为。
+
+==页面上所有的内容都是格式化上下文的一部分==，或者是一个以特定方式显示的区域。
+
+> **块格式上下文（BFC）**将根据块布局规则布局子元素，**灵活格式上下文 flex formatting context** 将其子元素布局为灵活项[flex items](https://developer.mozilla.org/zh-CN/docs/Glossary/Flex_Item)等。每个格式上下文在其上下文中都有特定的布局规则。
+
+* 内联格式化上下文和BFC应该是行为一致的。
+
+### 为什么叫上下文呢？
+
+* 相当于创建一个上下文，就像代码中的 `{}`，把代码中的内容捕获到当前上下文。bfc也是一样的，把内部的元素捕获到上下文中。（也就是当前盒子区域）
+
+## BFC
+
+> 文档最外层元素使用块布局规则或称为**初始块格式上下文**。这意味着`<html>`元素块中的每个元素都是按照正常流程遵循块和内联布局规则进行布局的。参与 BFC 的元素使用 CSS 框模型概述的规则，该模型定义了元素的边距、边框和填充如何与同一上下文中的其他块交互。
+
+* html 使用初始 BFC。html 内的元素应该按照BFC规则布局。
+
+> **块格式化上下文**（Block Formatting Context，BFC）是 Web 页面的可视 CSS 渲染的一部分，是块级盒子的布局过程发生的区域，也是浮动元素与其他元素交互的区域。
+
+* 块级盒子的布局过程发生的区域，盒模型 宽、高、边距等。
+* 浮动元素与其他元素交互的区域，主要是浮动元素怎么排列。
+
+
+
+### 创建BFC
+
+html 元素不是唯一能创建块级格式上下文的元素。任何==块级元素==都可以通过应用某些css属性来创建一个BFC
+
+* 根元素（`<html>`）
+
+- 浮动元素（[`float`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/float) 值不为 `none`）
+- 绝对定位元素（[`position`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/position) 值为 `absolute` 或 `fixed`）
+- 行内块元素（[`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display) 值为 `inline-block`）
+- 表格单元格（[`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display) 值为 `table-cell`，HTML 表格单元格默认值）
+- 表格标题（[`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display) 值为 `table-caption`，HTML 表格标题默认值）
+- 匿名表格单元格元素（[`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display) 值为 `table`、`table-row`、 `table-row-group`、`table-header-group`、`table-footer-group`（分别是 HTML table、tr、tbody、thead、tfoot 的默认值）或 `inline-table`）
+- [`overflow`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/overflow) 值不为 `visible`、`clip` 的块元素
+- [`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display) 值为 `flow-root` 的元素
+- [`contain`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/contain) 值为 `layout`、`content` 或 `paint` 的元素
+- 弹性元素（[`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display) 值为 `flex` 或 `inline-flex` 元素的直接子元素），如果它们本身既不是 [flex](https://developer.mozilla.org/zh-CN/docs/Glossary/Flex_Container)、[grid](https://developer.mozilla.org/zh-CN/docs/Glossary/Grid_Container) 也不是 [table](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Table) 容器
+- 网格元素（[`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display) 值为 `grid` 或 `inline-grid` 元素的直接子元素），如果它们本身既不是 [flex](https://developer.mozilla.org/zh-CN/docs/Glossary/Flex_Container)、[grid](https://developer.mozilla.org/zh-CN/docs/Glossary/Grid_Container) 也不是 [table](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Table) 容器
+- 多列容器（[`column-count`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/column-count) 或 [`column-width` (en-US)](https://developer.mozilla.org/en-US/docs/Web/CSS/column-width) 值不为 `auto`，包括`column-count` 为 `1`）
+- `column-span` 值为 `all` 的元素始终会创建一个新的 BFC，即使该元素没有包裹在一个多列容器中 ([规范变更](https://github.com/w3c/csswg-drafts/commit/a8634b96900279916bd6c505fda88dda71d8ec51), [Chrome bug](https://bugs.chromium.org/p/chromium/issues/detail?id=709362))
+
+常用：display: flow-root、overflow: hidden、position: `absolute` 或 `fixed`、浮动元素（[`float`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/float) 值不为 `none`）、flex、grid.
+
+### 行为描述
+
+格式化上下文影响布局，通常，我们会为定位和清除浮动创建新的BFC，而不是更改布局，具体原因：
+
+- 包含内部浮动
+
+- 排除外部浮动
+
+- 阻止 [外边距重叠](https://developer.mozilla.org/zh-CN/docs/Web/CSS/CSS_Box_Model/Mastering_margin_collapsing)
+
+  主要说的是垂直方向上的外边距塌陷问题。
+
+> **备注：** flex/grid 容器（[`display`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/display)：flex/grid/inline-flex/inline-grid）建立新的 flex/grid 格式上下文，除布局之外，它与块格式上下文类似。flex/grid 容器中没有可用的浮动子级，但排除外部浮动和阻止外边距重叠仍然有效。
+
+单纯的清除浮动只有清除浮动的效果，并没有实现BFC。
+
+#### felx 和 grid
+
+* 这两个布局不能包含浮动元素，但是能够排除外部的浮动元素和阻止外边距重叠。
+
+#### 脱离文档流
+
+脱离文档流的元素没有脱离 HTML 元素，因此需要开启一个 BFC，那么就不会脱离当前容器节点。
+
+* 怎么样捕获脱离文档流的元素，那就开启一个新的bfc
+
+  > 设置 `overflow: auto` 会自动创建包含浮动的新 BFC。现在，我们的 DIV 在布局中变成了一个迷你布局。任何子元素都将包含在其中。
+
+  * 相当于开始一个新的html标签（迷你版）
+
+#### 使用 `dispaly: flow-root`
+
+* 这个属性将无副作用的创建一个BFC区域，就像html标签一样！！！
+
+
+
+# 盒模型
+
+https://developer.mozilla.org/zh-CN/docs/Learn/CSS/Building_blocks/The_box_model
+
+> 在 CSS 中，所有的元素都被一个个的“盒子（box）”包围着，理解这些“盒子”的基本原理，是我们使用 CSS 实现准确布局、处理元素排列的关键。
+
+## 块级盒子
+
+块级盒子表现为
+
+- 盒子会在内联的方向上扩展并占据父容器在该方向上的所有可用空间，在绝大数情况下意味着盒子会和父容器一样宽
+- 每个盒子都会换行
+- [`width`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/width) 和 [`height`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/height) 属性可以发挥作用
+- 内边距（padding）, 外边距（margin）和 边框（border）会将其他元素从当前盒子周围“推开”
+
+## 内联盒子
+
+- 盒子不会产生换行。
+- [`width`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/width) 和 [`height`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/height) 属性将不起作用。
+- 垂直方向的内边距、外边距以及边框会被应用但是不会把其他处于 `inline` 状态的盒子推开。
+- 水平方向的内边距、外边距以及边框会被应用且会把其他处于 `inline` 状态的盒子推开。
+
+## 什么是css盒模型
+
+> 完整的 CSS 盒模型应用于块级盒子，内联盒子只使用盒模型中定义的部分内容。模型定义了盒的每个部分 —— margin, border, padding, and content —— 合在一起就可以创建我们在页面上看到的内容。为了增加一些额外的复杂性，有一个标准的和替代（IE）的盒模型。
+
+* 主要是规定 margin border padding content 的表现
+
+### 盒模型各个部分
+
+CSS 中组成一个块级盒子需要：
+
+- **Content box**: 这个区域是用来显示内容，大小可以通过设置 [`width`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/width) 和 [`height`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/height).
+- **Padding box**: 包围在内容区域外部的空白区域；大小通过 [`padding`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/padding) 相关属性设置。
+- **Border box**: 边框盒包裹内容和内边距。大小通过 [`border`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/border) 相关属性设置。
+- **Margin box**: 这是最外面的区域，是盒子和其他元素之间的空白区域。大小通过 [`margin`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/margin) 相关属性设置。
 
 # 工具
 

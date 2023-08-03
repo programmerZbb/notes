@@ -47,7 +47,14 @@
    T1(n)=O(n),T2(n)=O(n^2),则 T1(n)*T2(n)=O(n^3)
    ```
 
-   
+
+### 使用排列组合分析时间复杂度
+
+https://www.jianshu.com/p/68593ea7f8f0
+
+* 需要使用上述的排列组合公司。
+
+
 
 ## usually used complexity
 

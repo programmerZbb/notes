@@ -17,7 +17,7 @@
 
   > Nest 提供了一个开箱即用的应用程序架构，允许开发人员和团队创建高度可测试，可扩展，松散耦合且易于维护的应用程序。
 
-
+很多介绍nest的文档都说到了它的流行程度，我感觉这个不是主要原因，架构设计的成果和流行程度是有因果关系的。如果架构设计的好，大幅减轻开发人工的工作难度和增加企业项目的稳定性，那么它就会成为一个流行的框架。
 
 ## 平台
 
@@ -30,6 +30,145 @@
 ```typescript
 const app = await NestFactory.create<NestExpressApplication>(AppModule);
 ```
+
+### 怎么做到不依赖平台的？
+
+nest 实现了一个适配器（适配器模式），无论你用什么基础的node接口，都可以通过实现适配器来正常工作。
+
+## 接口通信
+
+### http 通信类型——对于后端来说
+
+对于后端开发来说，前端传递的参数分为以下几种。
+
+* 只是对于后端来说的处理方式，真正的http的content-type header更为丰富，参考：https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Basics_of_HTTP/MIME_types
+
+  而上述的 content-type 主要是后端可能返回的数据类型。
+
+5中常用的http传输类型：
+
+- url param
+- query
+- form-urlencoded
+- form-data
+- json
+
+真正对用的content-type其实只有三种：前端传递给后端的
+
+* application/json
+* application/x-www-for-urlencoded
+* multipart/form-data
+
+#### url param
+
+参数写在url中，相当于一个路径
+
+```tex
+http://baidu.com/person/1111
+```
+
+这里的 1111 就是路径中的参数（url param），服务端框架或者单页应用的路由都支持从 url 中取出参数。
+
+#### url queryString
+
+通过 url 中 ？后面的用 & 分隔的字符串传递数据。比如：
+
+```ht
+http://guang.zxg/person?name=guang&age=20
+```
+
+* 如上 name 和 age 就是参数
+
+非英文的字符和一些特殊的字符要经过编码，可以使用 encodeURIComponent api 来编码（主要是处理key和value）
+
+```html
+const query = "?name=" + encodeURIComponent('光') + "&age=" + encodeURIComponent(20)
+
+// ?name=%E5%85%89&age=20
+```
+
+* 避免和 url 中的一些特殊字符撞车
+
+或者直接使用 query-string 库来操作。
+
+也可以直接使用 URLSearchParams 来操作。
+
+#### form-urlencode
+
+> 直接用 form 表单提交数据就是这种，它和 query 字符串的方式的区别只是放在了 body 里，然后指定下 content-type 是 `application/x-www-form-urlencoded`。
+
+* form data 和 query string 非常像，最大的区别就是把 query string 放到了body里面
+
+客户端代码如下，需要设置body为序列化的字符串，content type 为 form
+
+```typescript
+fetch('http://127.0.0.1', {
+    method: 'POST',
+    body: 'test=2&test1=1',
+    headers: {
+        "Content-Type": 'application/x-www-form-urlencoded'
+    }
+})
+// 一般情况下都不会直接手写拼接的，使用 URLSearchParams 进行转义
+var urlencoded = new URLSearchParams();
+urlencoded.append("test", "111");
+fetch('http://127.0.0.1', {
+    method: 'POST',
+    body: urlencoded,
+    headers: {
+        "Content-Type": 'application/x-www-form-urlencoded'
+    }
+})
+```
+
+form 形式的query string也是需要进行编码的，所以也需要使用 query-string 进行编码。但是如果传递大量数据的话，比如上传文件就不合适了，因为 encode 一遍太慢了，这时候就需要使用 form-data 的方式了
+
+#### form-data
+
+> form data 不再是通过 & 分隔数据，而是用 --------- + 一串数字做为 boundary 分隔符。因为不是 url 的方式了，自然也不用再做 url encode。
+
+* 客户端在使用 fetch 发送 formdata 的时候默认就是 form-data content-type（因为form-urlencoded的形式需要传入一个querystring）
+
+  比如如下代码：
+  ```typescript
+  fetch('http://127.0.0.1', {
+      method: 'POST',
+      body: formdata,
+  })
+  ```
+
+格式：
+
+* 格式就是在 form-data 的 content-type 中规定一个二进制边界（boundary），然后在body中使用这个边界去隔离字段和值，并且值不需要进行编码。
+
+  分隔符在 content-type 中指示，因此一般都会拼接分割符。
+
+  ```html
+  Content-Type:
+  multipart/form-data; boundary=----WebKitFormBoundarypz4OsQgGhgEK3w6H
+  ```
+
+如下：
+
+```tex
+------WebKitFormBoundaryD6SYavLhMJgojcPd
+Content-Disposition: form-data; name="key1"
+
+测试2
+------WebKitFormBoundaryD6SYavLhMJgojcPd
+Content-Disposition: form-data; name="key3"
+
+测试3
+------WebKitFormBoundaryD6SYavLhMJgojcPd--
+```
+
+很明显，这种方式适合传输文件，而且可以传输多个文件。
+
+但是毕竟多了一些只是用来分隔的 boundary，所以请求体会增大。
+
+#### JSON 方式
+
+* 专门为 JSON 定制的传输方式，非常方便
 
 
 
@@ -170,13 +309,86 @@ export class TestController {
 
 
 
+## nest 处理常见的前端请求
+
+### url param
+
+```typescript
+@Get('/get/:id') // 测试 param
+public getInfo(
+  // param 测试
+  @Param() params, // 传入id锁定具体的字段
+  @Param('id') id, // 传入id锁定具体的字段
+  ): string {
+    return 'test info2';
+  }
+```
+
+### query string
+
+```typescript
+// query 测试
+@Query() query: CreateTestQueryDto,
+@Query('name') name: string,
+```
+
+### form-urlencoded 和 JSON
+
+* nest 会自动根据 content-type 处理这两种类型
+
+```typescript
+@Post('post')
+// 修改http code
+@HttpCode(200)
+@Header('Cache-Control', 'none')
+// @Redirect('https://www.baidu.com', 301)
+/**
+   * 获取body测试
+   * * body 可以获取 from 数据
+   * * 可以直接解析 JSON 数据
+   */
+public getData(@Body() body: CreateTestDto) {
+  console.log(body, '---body');
+  return 'body data';
+}
+```
+
+### form data
+
+参考：https://docs.nestjs.com/techniques/file-upload
+
+* 使用 FileFieldsInterceptor 会自动把数据注入到 body 中！
+
+```typescript
+@Post('form-data')
+// @UseInterceptors(FilesInterceptor('files'))
+@UseInterceptors(
+  FileFieldsInterceptor([
+    { name: 'key1', maxCount: 1 },
+    { name: 'key2', maxCount: 1 },
+  ]),
+)
+public getFormData(
+  @UploadedFiles() files: Array<Express.Multer.File>,
+  @Body() body,
+  ) {
+    console.log(files, '---files----', body);
+
+    return 'form-data';
+  }
+```
+
+
+
 ## 路由通配符
 
 * 和 express 一样，支持路由通配符
 
 路由路径 `'ab*cd'` 将匹配 `abcd` 、`ab_cd` 、`abecd` 等。字符 `?` 、`+` 、 `*` 以及 `()` 是它们的正则表达式对应项的子集。连字符（`-`） 和点（`.`）按字符串路径逐字解析。
 
+* 如果需要写正则，使用 `()` 就可以写
 
+参考：https://www.npmjs.com/package/path-to-regexp
 
 ## 下面都是 res 响应的设置，req 请求的获取使用上面的装饰器
 
@@ -207,6 +419,10 @@ public getData() {
 * nest 为我们设置了 httpCode 常量，HttpStatus
 * 在实际项目开发中可以直接复制参考！！
 
+```typescript
+import { HttpStatus } from '@nestjs/common' 
+```
+
 ## headers 
 
 * header设置使用 @Header 装饰器
@@ -223,7 +439,7 @@ public getData() {
 ## redirect
 
 * `@Redirect()` 装饰器有两个可选参数，`url` 和 `statusCode`。 如果省略，则 `statusCode` 默认为 `302`。
-* 也可以返回一个特定结构，动态修改重定向的内容
+* 也可以返回一个特定结构，动态修改重定向的内容。*只有在 redirect 场景下生效*
 
 ```typescript
 // post 请求默认201
@@ -288,7 +504,12 @@ public getInfo(@Req() req: Request, @Param('id') params): string {
 2. 这是完全有效的。此外，通过返回 RxJS [observable 流](http://reactivex.io/rxjs/class/es8/Observable.js~Observable.html)，Nest 路由处理程序将更加强大。 Nest 将自动订阅下面的源并获取最后发出的值（在流完成后）。
 
    ```typescript
-   
+   // 处理rxjs响应
+   @Get('rxjs')
+   public getRxjs() {
+     // 自动获取最新的值
+     return of(1, 2, 3);
+   }
    ```
 
 * todo 待尝试！记得学习 rxjs
@@ -358,6 +579,14 @@ Providers 是 Nest 的一个基本概念。
 
 这意味着对象可以彼此创建各种关系，并且“连接”对象实例的功能在很大程度上可以委托给 `Nest`运行时系统。（注入到controller构造函数中）
 
+## 名词
+
+repository: 存储库模式，一般都是 orm 中操作db的对象。https://juejin.cn/s/repository%E5%B1%82%E5%92%8Cdao%E7%9A%84%E5%8C%BA%E5%88%AB
+
+mvc分层：https://juejin.cn/post/6854573216002736141
+
+factory: 工厂模式，一般在 MVC 中用来不同的条件创建对象。
+
 ## 表现
 
 ==Provider 只是一个用 `@Injectable()` 装饰器注释的类。==
@@ -404,8 +633,6 @@ export class TestService {
 >
 > todo 怎么实现的呢？了解一下，通过添加元数据就能知道？
 
-* todo ts 私有的只读语法？？？也就是 construct 传入一个值就初始化了？
-
 ## 在 controller 中使用
 
 > `CatsService` 是通过类构造函数注入的。注意这里使用了私有的只读语法。这意味着我们已经在同一位置创建并初始化了 `catsService `成员。
@@ -428,13 +655,17 @@ Nest 是建立在强大的设计模式，通常称为依赖注入。我们建议
 
 * 为什么是一个单例，很多控制器都能共享吗？todo 待实验
 
-  他说的是一次请求实例化一个实例，因为js是单线程的，所以不会有多个线程共同操作实例
+  实例会在服务初始化的时候初始一次，以后都会共享这个单例，所有服务端的对象应该是无状态的，要用db去保存共享的状态。
 
 ### ==重点==
 
 * provider 能够注入到 controller 中使用，也能注入到 provider 中使用。
 
   因为 provider 可以跟随 module(载体) 到处传播，这才最大限度的发挥了 service 复用的能力！
+
+### 多个 controller 依赖同一个service
+
+* 如果存在多个 controller 依赖同一个 service 的情况，那么这个 service 会初始化多次。单例说的是在同一个 module 下，同一个 provider 只会被初始化一次！
 
 ## 作用域
 
@@ -487,6 +718,10 @@ class Controller {
 ## 全局 provider?
 
 * 没有全局的 provider，provider 必须依附于 module 才能导出传递
+
+## Injectable 装饰器
+
+* 这个装饰器不止在 provider 中使用，可以注入的类都可以使用。比如后期的自定义 pipe 等。
 
 # module
 
@@ -563,7 +798,8 @@ export class CoreModule {}
 
 * 有一些场景需要一个全局的module，很多模块都可能需要，例如：helper、数据库连接等等。
 * 使用 @Global 装饰器实现，不需要单独导入模块既能使用。
-* 全局 module 也需要注册一次，最好由根或核心模块注册。在 module 中使用 import 导入
+* 全局 module 也需要注册一次，最好由根或核心模块注册。在 module 中使用 import 导入。
+* 全局 module 需要导出提供的 provider，如果别的模块需要使用的话。
 
 > `@Global` 装饰器使模块成为全局作用域。 全局模块应该只注册一次，最好由根或核心模块注册。
 
@@ -605,6 +841,95 @@ export class DatabaseModule {
 
 
 
+# 其他装饰器
+
+## HostParam
+
+* 用于去域名部分的参数
+
+  Controller 可以指定访问的域名，结合域名中的变量来获取这个 HostParam
+
+```typescript
+@Controller({
+  host: ':host.0.0.1', // 指定访问的域名
+  path: 'basic',
+})
+
+// 获取
+@Get('get')
+getNamt(@HostParam() hostParam) {
+  return hostParam;
+}
+```
+
+
+
+# 路径相关设置
+
+## 全局前缀
+
+给所有的路径添加前缀
+
+```typescript
+// 路径相关
+app.setGlobalPrefix('api'); // 设置全局前缀
+```
+
+## 静态文件服务
+
+参考：https://docs.nestjs.com/recipes/serve-static
+
+```typescript
+// 实现一个静态服务器，参考：https://github.com/nestjs/nest/blob/master/sample/24-serve-static/src/app.module.ts
+import { Module } from '@nestjs/common';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
+
+console.log(join(__dirname, '../..', 'public'), '---0000');
+@Module({
+  imports: [
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '../..', 'public'),
+      exclude: ['/api/(.*)'],
+      // renderPath: 'static',
+      serveRoot: '/static', // 静态服务器前缀
+    }),
+  ],
+})
+export class StaticModule {}
+```
+
+## 静态模板引擎 - Model-View-Controller —— MVC
+
+参考：https://docs.nestjs.com/techniques/mvc
+
+引擎文档：https://github.com/pillarjs/hbs
+
+app 应用引擎：
+
+```typescript
+app.useStaticAssets(path.join(__dirname, '../public')); // 设置静态文件目录
+app.setBaseViewsDir(path.join(__dirname, '../views')); // 设置模板目录
+app.setViewEngine('hbs'); // 设置模板解析引擎
+```
+
+controller
+
+```typescript
+// 静态服务器不能写路由前缀。和你没关系吧
+@Controller('render')
+export class StaticController {
+  @Get('home')
+  @Render('index')
+  public get() {
+    // 返回的数据和模板中的字段对上
+    return { message: 'hello world' };
+  }
+}
+```
+
+
+
 # 中间件
 
 * 中间件是在路由处理之前调用的函数。中间件函数可以访问请求对象和响应对象，以及应用程序请求响应周期中的 next 中间件函数。（和express一样）
@@ -624,7 +949,7 @@ nest 中间件完全支持依赖注入，就想 provider 和 controller 一样�
 
 * 因为 mw 本身使用了 @Injectable 装饰了，因此可以在任何 module 的 provider 中使用。
 
-## 应用
+## 应用——消费中间件
 
 需要使用module 中的 config 方法去设置它，包含中间件的模块必须实现 NestModule
 
@@ -644,6 +969,13 @@ export class AppModule implements NestModule {
   两个参数必须都配置
 
 >我们还可以在配置中间件时将包含路由路径的对象和请求方法传递给`forRoutes()`方法。我们为之前在`CatsController`中定义的`/cats`路由处理程序设置了`LoggerMiddleware`。我们还可以在配置中间件时将包含路由路径的对象和请求方法传递给 `forRoutes()`方法，从而进一步将中间件限制为特定的请求方法。在下面的示例中，请注意我们导入了 `RequestMethod`来引用所需的请求方法类型。
+
+```typescript
+consumer.apply(FuncMiddleware).forRoutes({
+  path: 'decorator',
+  method: 1,
+});
+```
 
 ## 路由通配符
 
@@ -697,7 +1029,12 @@ async function bootstrap() {
 }
 ```
 
+* 另外，express很多的中间件都可以用全局中间件的方式添加
 
+## 按使用范围分类
+
+* 全局中间件
+* module 层面的中间件，但是可以限制 route。因此也就是路由层面的中间件。
 
 # 异常过滤器
 
@@ -814,13 +1151,15 @@ export class NestException extends HttpException {
 
 * 需要通过express的原生对象进行处理（req，res等）
 
+代码查看：exception -> http-exception.filter.ts
+
 ## ArgumentsHost
 
 * 是一个功能强大的应用程序对象
 
 > 让我们看一下该 `catch()` 方法的参数。该 `exception` 参数是当前正在处理的异常对象。该host参数是一个 `ArgumentsHost` 对象。 `ArgumentsHost` 是一个功能强大的实用程序对象，我们将在[应用上下文章节](https://docs.nestjs.cn/8/fundamentals?id=应用上下文) *中进一步进行研究。在此代码示例中，我们使用它来获取对 `Request` 和 `Response` 对象的引用，这些对象被传递给原始请求处理程序（在异常发生的控制器中）。在此代码示例中，我们使用了一些辅助方法 `ArgumentsHost` 来获取所需的 `Request` 和 `Response` 对象。`ArgumentsHost` 在[此处](https://docs.nestjs.cn/8/fundamentals?id=应用上下文)了解更多信息。
 
-todo 后期深入了解
+代码：`exception -> http-exception.filter.ts` 查看该对象用法。
 
 ## 绑定过滤器
 
@@ -869,7 +1208,9 @@ get() {}
 
 注意：目前还不能处理 Promise 错误
 
-## 定制异常
+## 定制全局异常
+
+也就是说业务定义的异常都是统一的格式。
 
 * 需要继承 baseException，具体啥作用？不太清楚
 
@@ -913,6 +1254,18 @@ const { httpAdapter } = app.get(HttpAdapterHost);
 
 Todo 了解 http adaptor
 
+## 其他业务定制异常
+
+### 未鉴权重定向到登录页
+
+* 只要抛出了未鉴权的错误，异常过滤器捕获这个错误，然后重定向到登录页。
+
+## 总结
+
+就是用来对异常进行定制的。
+
+
+
 # 管道
 
 ## 是什么
@@ -921,16 +1274,20 @@ Todo 了解 http adaptor
 
 > `PipeTransform<T, R>` 是一个通用接口，其中 `T` 表示 `value` 的类型，`R` 表示 `transform()` 方法的返回类型。
 
+* 一般用于参数验证
+
 ## 类型
 
-* 转换：将输入数据转换为所需的数据输出
-* 验证：对输入数据进行验证，如果验证成功继续传递；验证失败则抛出异常
+一般的 pipe 都要实现这两个方法
+
+* transform：将输入数据转换为所需的数据输出
+* validate：对输入数据进行验证，如果验证成功继续传递；验证失败则抛出异常
 
 验证和转换的效果，也就是在路由处理参数之前进行处理
 
 > 在这两种情况下, 管道 `参数(arguments)` 会由 [控制器(controllers)的路由处理程序](https://docs.nestjs.cn/8/controllers?id=路由参数) 进行处理. Nest 会在调用这个方法之前插入一个管道，管道会先拦截方法的调用参数,进行转换或是验证处理，然后用转换好或是验证好的参数调用原方法。
 
-管道中发生异常，controller不会继续执行任何方法，有异常处理函数或者应用于当前上下文的异常过滤器处理。
+管道中发生异常，controller不会继续执行任何方法，由异常处理函数或者应用于当前上下文的异常过滤器处理。
 
 ## 内置 pipe
 
@@ -947,13 +1304,45 @@ Todo 了解 http adaptor
 
 他们从 `@nestjs/common` 包中导出。
 
-## 为什么不用验证 中间件
+主要是以 `Parse*` 开头的 pipe
+
+### 为什么不用验证 中间件
 
 * 如果用一个中间件去验证所有路由的输入，是不合适的，他们没有共同的参数
 
   中间件适合验证那些公共的验证，比如登录啥的
 
 * 不建议直接在路由处理程序中进行参数校验，违反 SRP 单一职责
+
+## 绑定 pipe —— 简单试用
+
+主要分为官方封装和自定义pipe
+
+* 首先要查看是否存在官方提供的pipe，不要过度封装
+* 官方提供的 decorator 都支持传入 pipe
+
+```typescript
+// 测试pipe
+@Get('pipe')
+/**
+   * 1. 基础使用直接使用 ParseIntPipe
+   * 2. 可以世界实例一个 pipe，然后传入业务定义的参数
+   */
+public getPipe(
+  @Query(
+    'id',
+    new ParseIntPipe({
+      exceptionFactory: (err) => {
+        throw new BadRequestException('id必须为int');
+      },
+    }),
+    // new MyParseIntPipe('id必须为int'), // 就是简单的封装
+  )
+  id,
+) {
+  return `id是${id}`;
+}
+```
 
 ## 定义 pipe
 
@@ -980,6 +1369,10 @@ export interface ArgumentMetadata {
 | metatype | 属性的元类型，例如 `String`。 如果在函数签名中省略类型声明，或者使用原生 JavaScript，则为 `undefined`。 |
 | data     | 传递给装饰器的字符串，例如 `@Body('string')`。 如果您将括号留空，则为 `undefined`。 |
 
+### 使用 Injectable 
+
+* pipe 本质也是一个 service，也要使用 Injectable 进行装饰，使其变为可注入的。
+
 ### 返回值
 
 就像是前面说过的，`验证管道` 要么返回该值，要么抛出一个错误。
@@ -988,6 +1381,8 @@ export interface ArgumentMetadata {
 
 * 接口在编译的过程中会消失，建议使用类定义类型
 * 也就是使用 dto
+
+那么定义了 DTO 该怎么去验证呢？如下
 
 ## 使用 joi 做参数验证
 
@@ -1086,6 +1481,20 @@ export class ValidationPipe2 implements PipeTransform {
 }
 ```
 
+* DTO
+
+```typescript
+import { IsString, IsInt, IsNumberString } from 'class-validator';
+
+export class CreateObj2 {
+  @IsString()
+  name: string;
+
+  @IsNumberString()
+  age: number;
+}
+```
+
 * 注入
 
 ```typescript
@@ -1098,7 +1507,17 @@ public createDog(@Param() createDogDto: CreateDogDto): string {
 }
 ```
 
+* 上述代码已过时
 
+最新的验证方式已经换成了在参数装饰器中直接验证对应的参数
+
+```typescript
+// 验证 class
+@Get('class-pipe')
+public async getPipe3(@Query(new ClassValidationPipe()) query: CreateObj2) {
+  return query;
+}
+```
 
 ## 使用 pipe
 
@@ -1120,6 +1539,8 @@ public createDog(@Param() createDogDto: CreateDogDto): string {
 
   只对参数进行验证，参数层面的验证对验证一个指定的参数非常有用
 
+只有参数范围内的验证不需要使用 @UsePipes 装饰器
+
 ## 设置全局管道
 
 * 验证的 pipe 是可以全局使用的，只是传入的 dto 不一样，因此可以作为全局的管道使用
@@ -1131,6 +1552,23 @@ app.useGlobalPipes(new ValidationPipe2());
 ```
 
 * 使用了全局管道就不需要把每个参数进行单独的验证了
+
+### 全局的 pipe 依赖注入
+
+* 如果全局的pipe需要作为别的 provider 的依赖，可以在某个module中把他引入即可。
+* 如果 pipe 需要注入其他的service，则不能让用户手动的new，需要直接写一个类名，让 nest 自动的去注入。因此全局的 pipe (默认用new的方式使用) 想依赖注入一些数据，可以绑定到某个全局的 module 中，从而使得其可以注入依赖。
+
+### 开发实践
+
+* 在实际开发中，一般需要设置一个全局的验证 pipe，然后让装饰器参数的 DTO 进行参数验证。这样每个路由只需要设置自己的 DTO 即可！
+
+```typescript
+app.useGlobalPipes(
+  new ValidationPipe({
+    transform: true,
+  }),
+);
+```
 
 ## 使用 provider 传递 pipe
 
@@ -1163,6 +1601,45 @@ export class ParseIntPipe implements PipeTransform<string, number> {
 * 或者直接用pipe去数据库中查找一个实体。（一个异步的pipe）
 * ParseUUIDPipe 检验是否是 UUId 字符串
 
+### 使用 class-validator 对输入进行转换
+
+* 比如服务端需要一个number类型的参数，客户端通过http请求的数据一定是字符串的，怎么样又能通过验证又能进行转换呢？
+
+```typescript
+export class CreateObj2 {
+  @IsString()
+  name: string;
+
+  @IsInt()
+  // 对验证完成的值进行转换
+  @Transform(({ value }) => {
+    return Number(value);
+  })
+  // @IsNumberString() // 上述两种方式的转换能够把字符串变为数字，并且能够验证正确性
+  // @TransformString2Number()
+  age: number;
+}
+```
+
+* pipe实现: 主要是返回验证过的 obj
+
+```typescript
+// 支持异步
+async transform(value: any, metadata: ArgumentMetadata) {
+  const { metatype } = metadata;
+  if (metatype == null || !this.toValidate(metatype)) {
+    return value;
+  }
+  const obj = plainToInstance(metatype, value);
+  const errors = await validate(obj);
+  if (errors.length > 0) {
+    throw new BadRequestException('Bad Request');
+  }
+  // return value;
+  return obj; // 这样就拿到了转换后并经过验证的value了
+}
+```
+
 ## 对客户端参数进行验证和处理
 
 * 如上
@@ -1171,7 +1648,74 @@ export class ParseIntPipe implements PipeTransform<string, number> {
 
 * 官方提供了一些内置的验证管道，不需要重写。
 
+*官方实现的 pipe 功能非常丰富 ValidationPipe*
+
+参考：https://docs.nestjs.com/techniques/validation#using-the-built-in-validationpipe
+
 > `ValidationPipe` 需要同时安装 `class-validator` 和 `class-transformer` 包
+
+## class-validator
+
+### 与 class-transformer 合作
+
+class-transformer 就是把一个对象字面量转换为一个指定 class 类型的对象
+
+### 其他验证方式
+
+```typescript
+export class CreateObj2 {
+  @IsOptional() // 可选的
+  @IsString()
+  @Contains('test') // 必须包含test
+  name: string;
+
+  @IsInt()
+  // 数字范围
+  @Min(0)
+  @Max(20)
+  // 对验证完成的值进行转换
+  @Transform(({ value }) => {
+    return Number(value);
+  })
+  // @IsNumberString() // 上述两种方式的转换能够把字符串变为数字，并且能够验证正确性
+  // @TransformString2Number()
+  age: number;
+
+  @IsEmail(
+    {},
+    {
+      message(args) {
+        return '必须是email';
+      },
+    },
+  )
+  @Length(5, 10)
+  email: string;
+
+  @IsFQDN()
+  host: string;
+
+  @Length(6, 30)
+  @IsString()
+  // 不能为空
+  @IsNotEmpty()
+  // 增加校验规则
+  // /^[a-zA-Z0-9#$%_-]+$/
+  @Matches(/^[a-zA-Z0-9#$%_-]+$/, {
+    message: '用户名只能是字母、数字或者 #、$、%、_、- 这些字符',
+  })
+  name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @Length(6, 30)
+  password: string;
+  
+  // 自定义的验证方式，参考：https://github.com/typestack/class-validator#custom-validation-decorators
+}
+```
+
+
 
 # 守卫（guard）
 
@@ -1280,7 +1824,9 @@ export interface ExecutionContext extends ArgumentsHost {
 
   > 对于混合应用程序，`useGlobalGuards()` 方法不会为网关和微服务设置守卫。对于“标准”(非混合)微服务应用程序，`useGlobalGuards()`在全局安装守卫。
 
-## 反射器
+在实际的项目开发中，一般都是全局的鉴权守卫器！
+
+## 反射器——在 guard 和 interceptor 中都适用
 
 有一种场景，一个接口只对某些角色进行放开，路由对应不同的权限。（不同的路由提供不同的权限方案）
 
@@ -1288,7 +1834,7 @@ export interface ExecutionContext extends ArgumentsHost {
 
 那么久需要自定义元数据发挥作用的地方了（一种传递信息的方式，联系guard能够获取上下文信息）。nest 提供了通过 @SetMetadata() 装饰器将定制元数据附加到路由处理程序的能力，这些元数据提供了我们缺少的角色数据，而守卫需要这些数据来做出决策（路由对应什么角色）
 
-### @SetMetadata
+### ==@SetMetadata==
 
 ```typescript
 class Controller {
@@ -1421,7 +1967,11 @@ export class LoggingInterceptor implements NestInterceptor {
 * 异步调度事件
 * 计算时间戳
 
-主要是做一些统计的计算
+主要是做一些统计的计算，比如说统计每个接口的调用情况，打日志等。
+
+## nest 中抛出的异常
+
+* nest 抛出的异常都会由 nest 进行捕获，你不必多关心。只需要进行异常转换即可（装换为客户端可识别的http code）
 
 ## NestInterceptor 接口
 
@@ -1435,13 +1985,15 @@ export class LoggingInterceptor implements NestInterceptor {
 
 * 控制器范围
 * 方法范围
-* 全局范围
+* 全局范围: 全局范围的 interceptor 不能够依赖注入，因为实例比较早。
 
 ## 响应映射
 
 * 对影响的数据进行修改
 
-以下两个例子，一个是组装数据，另一个是转换数据
+以下两个例子，一个是组装数据，另一个是转换数据。
+
+应用场景：常用于成功的数据进行组装，返回固定类型的数据。
 
 ```typescript
 import {
@@ -1525,6 +2077,56 @@ export class CacheInterceptor implements NestInterceptor {
 
 TTl 详细：https://zhuanlan.zhihu.com/p/40372792
 
+## 提前处理数据提供给接口处理
+
+* 比如说处理上传文件的接口，需要给上下文注入一个 file 属性，那么这时候就可以使用 interceptor 进行拦截处理，并且注入。
+
+```typescript
+@Injectable()
+export class CustomInterceptor implements NestInterceptor<string, string> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<any>,
+  ): Observable<string> {
+    const name = context.getHandler().name;
+    const httpCtx = context.switchToHttp();
+    httpCtx.getRequest(); // 这样就能够获取上下文进行处理
+    console.log('before', name);
+
+    const now = Date.now();
+    return next
+      .handle()
+      .pipe(
+        tap(() => console.log(`after ${name}, time:${Date.now() - now}ms`)),
+      );
+  }
+}
+```
+
+## 全局的数据格式化
+
+在开发中我们一般会对成功或者失败的数据进行统一的格式处理。
+
+```typescript
+@Injectable()
+export class SuccessInterceptor implements NestInterceptor<string, string> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<any>,
+  ): Observable<any> {
+    const name = context.getHandler().name;
+
+    return next.handle().pipe(
+      map((data) => ({
+        code: 200,
+        success: true,
+        data,
+      })),
+    );
+  }
+}
+```
+
 ## 更多操作符
 
 * 比如统一的 timeout 设置。这个场景还挺合适的。
@@ -1560,6 +2162,23 @@ export class ExceptionInterceptor implements NestInterceptor {
 
 
 
+# nest 流程总结
+
+> guard、interceptor、middleware、pipe、filter 都是 Nest 的特殊 class，当你通过 @UseXxx 使用它们的时候，Nest 就会扫描到它们，创建对象它们的对象加到容器里，就已经可以注入依赖了。
+
+## 流程
+
+![img](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/24060e0f32204907887ede38c1aa018c~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
+
+## 能修改上下文或者给上下文注入数据的节点
+
+* guard 能够注入，验证通过之后注入，比如 `nest-basic/src/practice-login/guard/jwt.guard.ts`
+* interceptor 可以，这个就不用多说了，本身就能够对请求的前后进行拦截。比如：https://docs.nestjs.com/techniques/file-upload#basic-example 的 FileInterceptor
+* 也可以自定义一个参数装饰器 createParamDecorator，参数
+  * 方法装饰器是不能起到提取作用的
+
+
+
 # custom decorator
 
 ==这个是我们使用 nest 开发的重要封装区！！！==其他的地方封装的可能性较小
@@ -1574,7 +2193,7 @@ export class ExceptionInterceptor implements NestInterceptor {
 
 ### 自定义装饰器
 
-需要使用 createParamDecorator 函数
+需要使用 createParamDecorator 函数，可以方便的对上下文进行提取，方便controller使用。
 
 ```typescript
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
@@ -1588,9 +2207,24 @@ export const User = createParamDecorator(
 );
 ```
 
+## 方法和类装饰器
+
+* 简单来说就是把现有的装饰器进行封装的一个函数
+
+```typescript
+// 方法装饰器。非常简单，就是一个函数，返回原装饰器的值。
+import { SetMetadata } from '@nestjs/common';
+
+export const Roles_key = 'roles';
+
+export const Roles = (...roles: Array<string>) => SetMetadata(Roles_key, roles);
+```
+
 ## 传递数据
 
 * 自定义装饰器支持传递参数，会在 createParamDecorator 第一个参数体现
+
+参考：`parameter-decorator.ts`
 
 ## 使用管道
 
@@ -1766,7 +2400,7 @@ constructor(
 
 
 
-### 工厂 provider
+### 工厂 provider —— 动态 provider
 
 * 灵活性更大，不是一个固定的，可以在函数中有分支
 
@@ -1823,7 +2457,7 @@ const configFactory = {
   })
   ```
 
-### 异步的 provider
+### 异步的 provider —— useFactory 支持
 
 * 有的时候，比如在使用 sql 服务的时候，我们希望在连接完成之前不要提供服务
 
@@ -1856,6 +2490,59 @@ const configFactory = {
 * 说白了就是在 provider 注册阶段进行操作，不同的配置
 * 目标就是能把代码组织起来，把依赖注入这个路径走通，注入指定的 provider
 
+# 日志
+
+## 前言
+
+我们一般使用 console.log 进行日志打印，但是有一些弊端，没有日志分级能力，不能通过开关控制是否打印日志等。
+
+nest提供了打印日志的api
+
+## 简单试用
+
+```typescript
+// 测试日志
+@Get('logger')
+public getLogger() {
+  // 都是 message、context 的格式
+  // console.log(arguments.callee);
+  const context = BasicController.name;
+  this.logger.debug('debug', context);
+  this.logger.error('error', context);
+  this.logger.log('log', context);
+  this.logger.verbose('verbose', context);
+  this.logger.warn('warn', context);
+
+  return 'logger test';
+}
+```
+
+* 在控制台看到不同颜色的日志
+
+创建app时输出日志控制：
+
+```typescript
+const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+  abortOnError: false, // 创建失败抛出错误
+  // logger: false, // 控制是否开启日志
+  logger: ['error', 'warn'], // 控制日志级别
+});
+```
+
+## 自定义 logger
+
+感觉没啥用
+
+```typescript
+import { LoggerService, LogLevel } from '@nestjs/common';
+```
+
+## logger 依赖注入
+
+* todo 有需要参考： https://juejin.cn/book/7226988578700525605/section/7235205849751224380
+
+
+
 # 基本原理
 
 ## 动态模块
@@ -1864,6 +2551,10 @@ const configFactory = {
 
 * 模块定义了 provider 和 controller 这样的组件组，他们作为模块的一部分组合在模块中
 * 模块为这些组件提供了执行上下文或范围（也就是模块内的组件能够共享数据），也就是说，组件内的 provider 对模块其他成员可见（controller和provider均可导入）。当provider需要再模块外可见时，他需要从主机模块导出，然后导入主机模块到其消费模块
+
+#### 为什么需要动态模块
+
+* 模块的注入就是 imports 直接注入，实例化过程是不可控的，provider 的实例化过程我们已经可控了（useFacotry），那么模块的实例化过程变的可控就是我们需要掌握的动态模块！
 
 ### 主机模块
 
@@ -1887,10 +2578,52 @@ const configFactory = {
 
   ==环境变量就是浏览器环境下的 window==
 
+简单使用：
+
+```typescript
+@Module({
+  providers: [StaticProvider],
+})
+export class CustomDynamicModule {
+  static forRoot(): Promise<DynamicModule> {
+    const providers = getProviders(); // 动态创建一些 provider
+
+    return new Promise((res, rej) => {
+      res({
+        module: CustomDynamicModule,
+        providers,
+        exports: providers,
+        global: true,
+      });
+    });
+  }
+}
+```
+
+* *// 比普通的模块就多了一个 module 声明*
+
 ### 最佳实践
 
 * env 文件的 interfaces 要定义在同文件夹下
 * 常量要写在 constants.ts 中
+
+### 动态模块名称
+
+https://juejin.cn/book/7226988578700525605/section/7233227268666392634
+
+这里的 register 方法其实叫啥都行，但 nest 约定了 3 种方法名：
+
+- register
+- forRoot
+- forFeature
+
+我们约定它们分别用来做不同的事情：
+
+- register：用一次模块传一次配置，比如这次调用是 BbbModule.register({aaa:1})，下一次就是 BbbModule.register({aaa:2}) 了
+- forRoot：配置一次模块用多次，比如 XxxModule.forRoot({}) 一次，之后就一直用这个 Module，一般在 AppModule 里 import
+- forFeature：用了 forRoot 固定了整体模块，用于局部的时候，可能需要再传一些配置，比如用 forRoot 指定了数据库链接信息，再用 forFeature 指定某个模块访问哪个数据库和表。
+
+如上，一般情况下，这些动态生成的方法还会出现 `Async*` 版本。 
 
 ## 注入作用域
 
@@ -2017,6 +2750,10 @@ export class ConfigService {
 
 ## 循环依赖
 
+### nest 模块系统
+
+nest module 实现了一个模块系统使用的是 imports 和 exports。
+
 当两个类互相依赖时就会出现循环依赖. 例如，当 `A` 类需要 `B` 类，而 `B` 类也需要 `A` 类时，就会产生**循环依赖**。`Nest` 允许在提供者( `provider` )和模块( `module` )之间创建循环依赖关系.
 
 * nest 允许 provider 和 module 之间创建循环依赖，但是，尽量避免
@@ -2024,6 +2761,12 @@ export class ConfigService {
 > 建议尽可能避免循环依赖。但是有时候难以避免，Nest提供了两个方法来解决这个问题.本章中我们提供了两种技术，即`正向引用(forward reference)`和`模块引用(ModuleRef)`来从注入容器中获取一个提供者。
 
 ==如果循环引用不做处理，nest会报错！==
+
+### 传统的重构循环依赖
+
+参考：https://juejin.cn/post/7114134078676287495#heading-5
+
+就是找一个中间 module，同时依赖这两个 module，让其编译不报错。（也仅仅是编译不报错，如果执行有循环依赖，一定会报错！）
 
 ### 前向引用 （forward ref）
 
@@ -2067,6 +2810,8 @@ export class CommonModule {}
 
 * nest 提供了一个 ModuleRef 类来导航到内部的 provider 列表，并且使用注入令牌作为查找键名来获取一个引用
 * 可以用来动态处理 provider
+
+简而言之就是能够获取到当前module的实例，然后获取当前实例上挂载的provider，就算目标provider 没有挂载到当前 service 上，也能够获取到。
 
 ### 获取实例
 
@@ -2164,6 +2909,18 @@ export class CatsService implements OnModuleInit {
 
 * 不同类型的服务怎么实现通用的守卫、过滤器、拦截器
 * 本章包括`ArgumentsHost`和`ExecutionContext`两个类.
+
+### 前言
+
+> Nest 支持创建 HTTP 服务、WebSocket 服务，还有基于 TCP 通信的微服务。
+>
+> 这些不同类型的服务都需要 Guard、Interceptor、Exception Filter 功能。
+
+不同类型的服务能拿到的参数是不同的，比如http服务就能拿到 `request`、`response`对象；而 `ws` 服务就拿不到这俩对象。那么如何让 guard、interceptor、exception filter 跨多种上下文复用呢？
+
+* nest实现了 ArgumentsHost 了 ExecutionContext 类，来抹平不同服务之间的差异
+
+
 
 ### ArgumentsHost类
 
@@ -2280,9 +3037,11 @@ export interface RpcArgumentsHost {
 }
 ```
 
-### 执行上下文类
+### 执行上下文类——executionContext
 
 ExecutionContext 扩展了 ArgumentsHost, ==提供了额外的当前运行线程信息==
+
+![img](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1678748b78284271a2df863bdd62f113~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
 
 * nest 在需要的时候提供了一个`ExecutionContext`的实例
 
@@ -2313,6 +3072,11 @@ context.getClass().name; // 获取类名
 > 能同时获取当前类和处理方法的引用的能力提供了极大的灵活性。最重要的是，它给我们提供了通过`@SetMetadata()`装饰器来操作守卫或拦截器元数据的方法。
 
 * 参考下一节
+
+### 应用上下文总结
+
+* argumentsHost 就是node应用程序注入的上下文（req、res）的封装，兼容多种类型的应用程序（微服务、ws等）
+* executionContext 就是 argumentsHost 的扩展，进一步能够获取执行上下文的正在调用的方法名或者类名。
 
 ### 反射和元数据
 
@@ -2361,14 +3125,16 @@ const roles = this.reflector.get<string[]>('roles', context.getHandler());
 
 > `Reflector#get`方法允许通过传递两个参数简单获取元数据：一个元数据key和一个context(装饰器对象)来获取元数据。在本例中，指定的key是`roles`(向上指回`roles.decorator.ts`以及在此处调用的`SetMetadata()`方法)。context 由`context.getHandler()`提供,用于从当前路径处理程序中获取元数据，`getHandler()`给了我们一个到路径处理函数的引用。
 
-### 额外的两个快捷方法
+### 额外的两个快捷方法 —— 权限合并！
 
 ```typescript
+// 适合同一个角色
 const roles = this.reflector.getAllAndOverride<string[]>('roles', [
   context.getHandler(),
   context.getClass(),
 ]);
 
+// 适合检测多个权限
 const roles = this.reflector.getAllAndMerge<string[]>('roles', [
   context.getHandler(),
   context.getClass(),
@@ -2397,6 +3163,8 @@ const roles = this.reflector.getAllAndMerge<string[]>('roles', [
 
 如下图，标黑色的就是事件
 
+调用顺序就是 Controller + provider -> Moudle
+
 ![生命周期钩子](https://docs.nestjs.com/assets/lifecycle-events.png)
 
 
@@ -2411,7 +3179,7 @@ const roles = this.reflector.getAllAndMerge<string[]>('roles', [
 
 * 终止钩子调用的原因
 
-
+一共就五个钩子。
 
 | 生命周期钩子方法              | 生命周期时间触发钩子方法调用                                 |
 | :---------------------------- | :----------------------------------------------------------- |
@@ -2444,17 +3212,257 @@ export class UsersService implements OnModuleInit {
 
 OnMoudleInit 和 OnApplicationBootstrap 钩子允许你延迟应用程序初始化过程（返回一个`Promise`或在方法主体中将方法标记为`async`和`await`异步方法）
 
+* 用法：在退出程序的时候，与数据库断开连接，清理该清理的内存
+
 ```typescript
 async onModuleInit(): Promise<void> {
   await this.fetch();
 }
 ```
 
+### onModuleDestroy vs onApplicationShutdown
+
+onApplicationShutdown 是程序层面的钩子，能够监听到系统退出的事件，必须启用 `app.enableShutdownHooks()`。
+
+* 可以在拿到程序 pid 之后，使用 `kill -15 pid` 发送退出命令，然后就能监听到系统退出的事件。
+
+```typescript
+onModuleDestroy() {
+    console.log('onModuleDestroy run');
+}
+
+beforeApplicationShutdown(signal?: string | undefined) {
+    console.log('beforeApplicationShutdown', signal);
+}
+
+// 有信号参数。这些终止信号是别的进程传过来的，让它做一些销毁的事情，比如用 k8s 管理容器的时候，可以通过这个信号来通知它。
+onApplicationShutdown(signal?: string | undefined) {
+                      console.log('onApplicationShutdown', signal);
+ }
+```
+
 ## 测试
 
 自动化测试是成熟软件产品的重要组成部分！
 
+# nest 集成 typerom
+
+* typeORM 文档查看 `sql笔记`
+
+## 安装
+
+```bash
+$ npm install --save @nestjs/typeorm typeorm mysql2
+```
+
+## 实例一个ORM连接
+
+1. 全局module连接创建一个实例，连接数据库
+
+```typescript
+@Global()
+@Module({
+  imports: [
+    TypeOrmModule.forRoot({
+      type: 'mysql', // 数据库类型
+      host: '127.0.0.1',
+      port: 8091,
+      username: 'root',
+      password: 'qazplm',
+      database: 'nest',
+      synchronize: true, // 设置synchronize可确保每次运行应用程序时实体都将与数据库同步。
+      logging: true, // 打印sql语句
+      entities: [User],
+      migrations: [], // 是修改表结构之类的 sql，暂时用不到，就不展开了
+      subscribers: [], //  是一些 Entity 生命周期的订阅者，比如 insert、update、remove 前后，可以加入一些逻辑
+      poolSize: 10, // 连接池最大数量
+      connectorPackage: 'mysql2', // 驱动包
+      // 额外发送给驱动包的一些选项
+      extra: {
+        authPlugin: 'sha256_password',
+      },
+    }),
+  ],
+})
+```
+
+那么 typeOrm module 中的 service 也相应的变为了全局 service。
+
+* 从源码来看 typeOrmModule 确实是一个全局的 module
+
+2. 在 service 中注入 manager
+
+```typescript
+@Injectable()
+export class UserService {
+  // 注入manager
+  @InjectEntityManager()
+  private manager: EntityManager;
+
+  // 注入 repository
+  @InjectRepository(User)
+  private repository: Repository<User>;
+
+  // 注入dataSource
+  @InjectDataSource()
+  private dataSource: DataSource;
+
+  public async create(createUserDto: CreateUserDto) {
+    // void this.manager.save(User, createUserDto);
+    void this.repository.save(createUserDto);
+  }
+
+  public findAll() {
+    return this.manager.find(User);
+  }
+
+  public findOne(id: number) {
+    return this.manager.findOne(User, {
+      where: { id },
+    });
+  }
+
+  public async update(id: number, user: UserDto) {
+    // 没有 update，直接save的时候覆盖
+    await this.manager.save(User, {
+      id,
+      ...user,
+    });
+  }
+
+  public async delete(id: number) {
+    await this.manager.delete(User, id);
+  }
+}
+```
+
+3. 全局 module 导出这个 service，方便不同的 controller 可以注入
+
+​	需要自定义一个 Token 方便传播
+
+### 注入 ORM 依赖
+
+```typescript
+export class UserService {
+  // 注入manager
+  @InjectEntityManager()
+  private manager: EntityManager;
+
+  // 注入 repository
+  @InjectRepository(User)
+  private repository: Repository<User>;
+
+  // 注入dataSource
+  @InjectDataSource()
+  private dataSource: DataSource;
+}
+```
+
+* 如上有三种能力的注入
+
+### 直接使用 repository 
+
+* 只需要在 module 中引用，typeOrmModule.forFeature 
+
+```typescript
+TypeOrmModule.forFeature([User]),
+```
+
+# 实践
+
+## nest 实现登录鉴权
+
+代码参考：nest-basic -> practice-login
+
+## nest 实现基于角色权限控制
+
+### 目标
+
+![image.png](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/a363d08394dc4a5ab4a0d7d17aafc0c2~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
+
+### 分清两个单词
+
+* 身份验证通过之后需要做进一步的权限校验，也就是鉴权
+
+身份验证 -> authentication
+
+鉴权 -> authorization
+
+### 怎么分配呢？
+
+比如用户 1 有权限 A、B、C，用户 2 有权限 A，用户 3 有权限 A、B。
+
+这种记录每个用户有什么权限的方式，叫做访问控制表（Access Control List） —— ACL
+
+用户和权限是多对多关系，存储这种关系需要用户表、角色表、用户-角色的中间表。
+
+### ACL 表设计
+
+
+
+### 成熟的库
+
+参考：https://casbin.org/zh/docs/rbac
+
+
+
 # 安全
+
+## 历史
+
+### session
+
+出现的问题：
+
+* 安全性 CSRF
+* 分布式系统共享 session（一般用 Redis）
+* 跨域问题
+
+#### CSRF
+
+* cookie 保存登录状态，伪装的网站一个按钮进行操作
+
+#### 解决 CSRF 的传统方法
+
+session + 随机token（可能是前段的一个参数）
+
+### JWT
+
+![img](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/8b161071501442dfa83e639dac13a89b~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
+
+#### 存在的问题
+
+1. 安全性：可以被复制去伪造。
+
+   解决： jwt时效性、强制https
+
+2. 性能问题：
+
+   每次验证都需要解析对比
+
+3. 没法立即失效
+
+   session 因为是存在服务端的，那我们就可以随时让它失效，而 JWT 不是，因为是保存在客户端，那我们是没法手动让他失效的。
+
+   比如踢人、退出登录、改完密码下线这种功能就没法实现。
+
+   但也可以配合 redis 来解决，记录下每个 token 对应的生效状态，每次先去 redis 查下 jwt 是否是可用的，这样就可以让 jwt 失效。
+
+### 总结
+
+给 http 添加状态有两种方式：
+
+**session + cookie**：把状态数据保存到服务端，session id 放到 cookie 里返回，这样每次请求会带上 cookie ，通过 id 来查找到对应的 session。这种方案有 CSRF、分布式 session、跨域的问题。
+
+**jwt**：把状态保存在 json 格式的 token 里，放到 header 中，需要手动带上，没有 cookie + session 的那些问题，但是也有安全性、性能、没法手动控制失效的问题。
+
+上面这两种方案都不是完美的，但那些问题也都有解决方案。
+
+常用的方案基本是 session + redis、jwt + redis 这种。
+
+软件领域很多情况下都是这样的，某种方案都解决了一些问题，但也相应的带来了一些新的问题。没有银弹，还是要熟悉它们的特点，根据不同的需求灵活选用。
+
+> 没有银弹！
 
 ## 认证 authentication
 
@@ -2515,6 +3523,16 @@ passport功能单一，即只能做登录验证，确非常强大，支持本地
 $ npm install express-session
 ```
 
+然后就可以使用 Session 装饰器查看到 session 了
+
+![img](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1f8c71364e3849e3b6fd1b9b9dacaeea~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
+
+#### express-session 原理
+
+* 并没有使用算法，而是随机生成一个 id，保存这个id和信息的对应关系
+
+https://stackoverflow.com/questions/57132474/what-hashing-algorithm-does-express-session-use-for-session-id-cookie
+
 #### 步骤
 
 1. 配置 passport 策略
@@ -2523,6 +3541,20 @@ $ npm install express-session
 #### 示例
 
 * 查看some-practice
+
+```typescript
+// 测试session
+@Get('session')
+public getSession(@Session() session) {
+  if (session.count == null) {
+    session.count = 0;
+  }
+  session.count += 1;
+  return session;
+}
+```
+
+
 
 
 
@@ -2681,9 +3713,17 @@ export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 
 ## 加密和散列
 
+关键词：hash、散列、MD5
+
+https://zhuanlan.zhihu.com/p/37165658
+
 ### 哈希
 
-`哈希`是一个将给定值转换成另一个值的过程。哈希函数使用数学算法来创建一个新值。一旦哈希完成，是无法从输出值计算回输入值的。
+Hash: 剁碎、打乱
+
+参考：hash.md
+
+`哈希`是一个将给定值转换成另一个值的过程。哈希函数使用数学算法来创建一个新值。一旦哈希完成，是无法从输出值计算回输入值的。（https中也是hash算法吗？不是）
 
 * 将一个固定值转换成另一个值的过程，哈希函数使用数学算法来创建一个新的值，一旦哈希完成，是无法从输出值计算回输入值的。（单向的）
 
@@ -2703,7 +3743,316 @@ https://juejin.cn/post/6844903634094784520#heading-9
 
 * Todo
 
+# nest 操作数据库
 
+## node 操作 MySql 的方式
+
+目前在node中主要使用 mysql2 和 typeorm 两种方式来操作数据库。
+
+### ORM 
+
+参考：https://www.ruanyifeng.com/blog/2019/02/orm-tutorial.html
+
+> 面向对象编程把所有实体看成对象（object），关系型数据库则是采用实体之间的关系（relation）连接数据。很早就有人提出，关系也可以用对象表达，这样的话，就能使用面向对象编程，来操作关系型数据库。
+
+* 提供一种 Object <-> relation 的映射。
+
+> **简单说，ORM 就是通过实例对象的语法，完成关系型数据库的操作的技术，是"对象-关系映射"（Object/Relational Mapping） 的缩写。**
+
+* 方便使用面向对象的编程的方式进行sql调用
+
+  说白了就是一个转换层。
+
+更多参考：sql笔记.md
+
+# nest 微服务
+
+## 前言
+
+### 问题
+
+分布式系统中，服务之间相互依赖。
+
+> 微服务 A 依赖了微服务 B，写代码的时候 B 只有 3 个节点，但跑起来以后，某个节点挂掉了，并且还新增了几个微服务 B 的节点。
+>
+> 这时候微服务 A 怎么知道微服务 B 有哪些节点可用呢？
+
+这个时候就需要一个单独的服务来管理，这个服务就是注册中心。
+
+![img](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/3c180f988cb840288424905da566215b~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp?)
+
+### 流程
+
+> 微服务在启动的时候，向注册中心注册，销毁的时候向注册中心注销，并且定时发心跳包来汇报自己的状态。
+>
+> 在查找其他微服务的时候，去注册中心查一下这个服务的所有节点信息，然后再选一个来用，这个叫做服务发现。
+>
+> 这样微服务就可以动态的增删节点而不影响其他微服务了。
+
+* 服务注册：微服务在启动的时候向服务中心进行注册，销毁的时候向服务中心销毁，并定时发送心跳包来汇报状态。
+* 服务发现：查找其他微服务的时候，去注册中心查一下这个服务的节点信息，选一个来用。
+
+### 常见架构
+
+![img](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/f770edc3fd2141529e3577b6c688a6c1~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp?)
+
+
+
+注册中心都是集中式的、单例服务
+
+### 配置中心
+
+配置中心也是一个集中式的单例服务，和上述注册服务功能基本一致。
+
+## 选型
+
+可以做配置中心、注册中心的中间件还是挺多的，比如 nacos、apollo、etcd 等。
+
+接下来使用 etcd 来实现注册中心和配置中心。
+
+### Apollo —— java 常用，也是公司级常用
+
+参考：https://www.apolloconfig.com/#/zh/usage/apollo-user-guide
+
+### nacos —— 阿里企业级的配置中心
+
+* 如上两个都支持私有化部署
+
+## etcd
+
+它其实是一个 key-value 的存储服务。是 k8s 使用的服务注册和发现中间件，比较简单。
+
+参考：https://juejin.cn/post/7234060695254990909
+
+k8s 就是用它来做的注册中心、配置中心：
+
+![img](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/4f1d1abce9f145b7bd2701338ac460e6~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp?)
+
+### docker 安装
+
+```bash
+$ docker run -v /Users/zhangbinbinb28199/my-data/etcd/data/Etcd.conf.yml:/opt/bitnami/Etcd/conf/etcd.conf.yml --name=etcd-test -e ETCD_ROOT_PASSWORD=qazplm -p 8088:2379 -d bitnami/etcd
+```
+
+### ectdctl
+
+这个容器提供了 `etcdctl` 工具有以下基本操作
+
+```bash
+# 设置
+$ etcdctl put --user=root --password=qazplm key value111
+# 获取
+$ etcdctl get services.a 
+# 前缀获取
+$ etcdctl get --prefix services
+# 删除
+$ etcdctl del /servcies/a
+$ etcdctl del --prefix /services
+```
+
+这样的 key-value 用来存储 服务名-链接信息，那就是注册中心，用来存储配置信息，那就是配置中心。
+
+### node 中操作 etcd
+
+etcd 官方提供的 npm 包 etcd3
+
+安装
+
+```bash
+$ npm i etcd3
+```
+
+使用
+
+```typescript
+// ectd v3 api。用来操作 etcd 
+// etcd 包的操作逻辑就是：1. 执行动作；2. 传入key
+// 不能直接保存其他类型的数据，只能保存string类型
+```
+
+* 代码参考：etcd3.ts 
+
+
+
+# 消息队列
+
+## RabbitMQ
+
+### 削峰
+
+![img](https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e28327a1056a465ca536e4936352fad2~tplv-k3u1fbpfcp-zoom-in-crop-mark:1512:0:0:0.awebp?)
+
+
+
+# nest 微服务
+
+## 微服务启动
+
+参考：https://juejin.cn/post/7207637337571901495?searchId=202307160252443902ADA91576F12AFD7E
+
+启动微服务
+
+```typescript
+// 启动微服务
+const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+  AppModule,
+  {
+    transport: Transport.TCP,
+    options: {
+      port: 8095,
+    },
+  },
+);
+app.listen();
+```
+
+微服务路由（两种模式）：
+
+```typescript
+import { Controller, Get } from '@nestjs/common';
+import { MessagePattern, EventPattern } from '@nestjs/microservices';
+import { AppService } from './app.service';
+
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  // @Get()
+  // getHello(): string {
+  //   return this.appService.getHello();
+  // }
+
+  // 使用 MessagePattern 来声明处理啥消息。这种类型的消息需要返回一个计算值
+  @MessagePattern('sum')
+  public sum(numArr: Array<number>): number {
+    return numArr.reduce((total, item) => total + item, 0);
+  }
+
+  @EventPattern('log')
+  public log(text: string) {
+    console.log('日志：', text);
+  }
+}
+```
+
+其他服务调用这个微服务
+
+微服务注册：
+
+```typescript
+@Module({
+  imports: [
+    // 注册微服务
+    ClientsModule.register([
+      {
+        name: 'CALC_SERVICE',
+        transport: Transport.TCP,
+        options: {
+          port: 8095,
+        },
+      },
+    ]),
+  ],
+  controllers: [MicroController],
+})
+export class MicroServicesModule {}
+```
+
+注入调用：
+
+```typescript
+import { Controller, Get } from '@nestjs/common';
+import { MessagePattern, EventPattern } from '@nestjs/microservices';
+import { AppService } from './app.service';
+
+@Controller()
+export class AppController {
+  constructor(private readonly appService: AppService) {}
+
+  // @Get()
+  // getHello(): string {
+  //   return this.appService.getHello();
+  // }
+
+  // 使用 MessagePattern 来声明处理啥消息。这种类型的消息需要返回一个计算值
+  @MessagePattern('sum')
+  public sum(numArr: Array<number>): number {
+    return numArr.reduce((total, item) => total + item, 0);
+  }
+
+  @EventPattern('log')
+  public log(text: string) {
+    console.log('日志：', text);
+  }
+}
+```
+
+## grpc
+
+grpc 是一个现代的、开源的、高性能的RPC框架，可以在任何环境中执行。
+
+### 约束
+
+使用谷歌开源的 `protocol buffers` 协议作为约束
+
+### 安装
+
+```bash
+$ npm i --save @grpc/grpc-js @grpc/proto-loader
+```
+
+`@grpc/proto-loader` 包用来生成ts type 文件
+
+```bash
+$ npx proto-loader-gen-types --longs=String --enums=String --defaults --oneofs --grpcLib=@grpc/grpc-js --outDir=src/grpc/proto **/grpc.proto
+```
+
+### 为啥需要 protobuf
+
+http -> 文本协议
+
+太低效，需要一个二进制流协议，规定了buffer中每一段字节代表什么数据。
+
+比如说一段buffer第二个到第三个代表一个字段
+
+```typescript
+buffer.writeInt16LE(81, 1)
+```
+
+谷歌开发的 protocol buffer 就是一个序列化和结构化buffer的规范。
+
+* 也就是 client 端把一段信息按照指定的 schema 编码为二进制数据，然后服务端按照这个 schema 把二进制数据解析成响应的信息
+
+### tcp 粘包问题
+
+
+
+### grpc-web
+
+https://grpc.io/docs/platforms/web/basics/
+
+能够在浏览器端运行的 grpc 框架。
+
+### grpc ts约束
+
+* grpc 在nest中的使用需要生成 typescript 约束。
+
+  官网参考：https://github.com/stephenh/ts-proto/blob/main/NESTJS.markdown
+
+代码组织：
+
+参考：https://zhuanlan.zhihu.com/p/601604387
+
+nest项目：
+
+* 每个微服务有自己的 proto 目录，用来存放当前微服务的 protobuf 文件
+* 有一个集中式的 `proto-type` 文件来存放生成的 typescript 定义文件，代码中的逻辑都从这里引用。
+
+命令如下：
+
+```bash
+$ npx grpc_tools_node_protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/gen-code --ts_proto_opt=nestJs=true --proto_path=./src/micro-services/grpc grpc.proto
+```
 
 # nest 依赖注入原理
 
@@ -2725,6 +4074,37 @@ https://juejin.cn/post/6844903634094784520#heading-9
 
 
 
+# nest hybrid app
+
+既能提供http服务，也能提供 microservice
+
+参考：https://docs.nestjs.com/faq/hybrid-application
+
+```typescript
+// 创建一个混合的app，既能提供http服务，又能提供micro service
+// grpc 端口不能喝http端口相同
+const app = await NestFactory.create(AppModule);
+// 提供jwt认证微服务
+const jwtMicroService: MicroserviceOptions = {
+  transport: Transport.GRPC,
+  options: {
+    package: 'grpctest', // grpc 包名称
+    protoPath: join(__dirname, 'grpc/grpc.proto'), // 协议绝对路径
+    url: '127.0.0.1:8081', // 连接网址，默认 localhost:5000
+    // credentials: '', // 凭证
+    loader: {
+      includeDirs: [join(__dirname, 'grpc/grpc.proto')],
+    },
+  },
+};
+const microservices = app.connectMicroservice(jwtMicroService);
+
+await app.startAllMicroservices();
+app.listen(8082);
+```
+
+
+
 # https
 
 * todo
@@ -2736,6 +4116,8 @@ https://juejin.cn/post/6844903634094784520#heading-9
 ## 1. dto
 
 * 因为nest大量使用 metadata 元数据，如果使用 interface 去定义接口类型，会在编译阶段进行去除，引入nest推荐使用 class 去定义类型，这样就不会再编译阶段去除，能够完美支持 metadata 
+
+  主要是在 pipe 的时候使用了 DTO，需要再运行时进行计算（class-validator）
 
 ## 2. nest 是怎么实现返回同步和异步的都可以呢
 
@@ -2795,11 +4177,85 @@ token 是啥？
 
 * 在 nest 中 IOC容器指的是 providers 容器
 
+## DTO？各种数据模型
 
+参考：https://www.cnblogs.com/EasonJim/p/7967999.html
+
+> 分层领域模型规约：
+>
+> - DO（ Data Object）：与数据库表结构一一对应，通过DAO层向上传输数据源对象。
+> - DTO（ Data Transfer Object）：数据传输对象，Service或Manager向外传输的对象。
+> - BO（ Business Object）：业务对象。 由Service层输出的封装业务逻辑的对象。
+> - AO（ Application Object）：应用对象。 在Web层与Service层之间抽象的复用对象模型，极为贴近展示层，复用度不高。
+> - VO（ View Object）：显示层对象，通常是Web向模板渲染引擎层传输的对象。
+> - POJO（ Plain Ordinary Java Object）：在本手册中， POJO专指只有setter/getter/toString的简单类，包括DO/DTO/BO/VO等。
+> - Query：数据查询对象，各层接收上层的查询请求。 注意超过2个参数的查询封装，禁止使用Map类来传输。
+>
+> 领域模型命名规约：
+>
+> - 数据对象：xxxDO，xxx即为数据表名。
+> - 数据传输对象：xxxDTO，xxx为业务领域相关的名称。
+> - 展示对象：xxxVO，xxx一般为网页名称。
+> - POJO是DO/DTO/BO/VO的统称，禁止命名成xxxPOJO。
+
+常用：DO 对接数据库、VO 对接前端视图、DTO 对接接口（包括前端和其他服务）
 
 # 参考列表：
 
 1. [nestjs中文文档](https://docs.nestjs.cn/9/controllers)
+
+
+
+# 原理篇
+
+## IOC 解决了什么问题——为啥要选IOC
+
+https://juejin.cn/book/7226988578700525605/section/7226988493029146680
+
+* 单个依赖角度：试想一下入股依赖的对象构造函数的传参发生了变化，是否需要侵入当前对象进行修改呢？
+* 多个依赖：创建顺序需要一个一个写吗
+
+## AOP 架构
+
+JavaScript 是基于对象的，函数是第一公民，对于JavaScript来说 AOP 并不是什么难事，引入函数可以随意传播。
+
+* 各个框架中的 middleware 都能够解决 AOP 遇到的问题
+
+![img](https://p1-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/9f99087120e847eab901738bf8504d21~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
+
+> **AOP 的好处是可以把一些通用逻辑分离到切面中，保持业务逻辑的纯粹性，这样切面逻辑可以复用，还可以动态的增删。**
+
+### MVC
+
+> MVC 就是 Model、View Controller 的划分，请求先经过 Controller，然后调用 Model 层的 Service、Repository 完成业务逻辑，最后返回对应的 View。
+
+* 后端都是MVC架构，那么怎么能不嵌入业务代码就能插入一些公共的逻辑呢？这就是 AOP 要解决的问题！
+
+### nest 中的AOP
+
+而 Nest 实现 AOP 的方式更多，一共有五种，包括 Middleware、Guard、Pipe、Interceptor、ExceptionFilter
+
+### AOP架构的好处
+
+>  AOP 的架构方式，实现了松耦合、易于维护和扩展的架构。
+
+* 松耦合，易于维护，易于扩展
+
+## nest 依赖注入原理
+
+* 简单来说就是利用了typescript 的 metadata-reflect 方案，来收集依赖，在初始化的时候注入。
+
+  代码参考：typescript -> metadata.ts
+
+### 依赖对象的构造参数是怎么创建的
+
+* nest在收集到依赖项之后，初始化的时候构造函数的参数是怎么确定的呢？
+
+  这个不得不说到 typescript 的`'语言特性'`了，ts有一个配置项 `emitDecoratorMetadata`，会自动为函数添加相关元数据。比如：类型，参数类型，返回类型（这三个可以确定函数的签名！）
+
+![img](https://p6-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d14d5736bef144a9a6830c7626b15b9f~tplv-k3u1fbpfcp-zoom-in-crop-mark:3024:0:0:0.awebp?)
+
+这样在实例的时候就能够传入默认值了。
 
 
 

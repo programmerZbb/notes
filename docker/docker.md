@@ -157,6 +157,38 @@ docker 是 docker 镜像的运行环境，所以容器的概念也就比较好�
 
 * https://www.runoob.com/docker/centos-docker-install.html
 
+## mac 安装
+
+```bash
+brew install docker docker-compose
+```
+
+### docker desktop 收费问题
+
+* docker desktop 已经对大公司收费了，所以推荐使用其他平替方案。
+
+  比如使用
+
+  参考：
+
+  * https://juejin.cn/post/7223045442892234812
+  * https://juejin.cn/post/7124226938176012296
+  * github: https://github.com/abiosoft/colima
+
+### colima 
+
+#### 启用失败的问题
+
+参考：https://github.com/abiosoft/colima/issues/20
+
+#### 启动
+
+```bash
+$ colima start
+```
+
+
+
 ## 操作
 
 1. docker version
@@ -362,7 +394,17 @@ Step 4 : RUN useradd runoob
 
 [具体查看](##Dockerfile)
 
+#### 构建镜像并覆盖原镜像
 
+https://juejin.cn/s/docker%20build%20%E8%A6%86%E7%9B%96%E9%95%9C%E5%83%8F
+
+如果想要强制覆盖已有镜像，可以使用 `-f` 或者 `--force-rm` 选项。
+
+示例：
+
+```erlang
+docker build --force-rm -t myimage .
+```
 
 ### 容器操作
 
@@ -401,67 +443,69 @@ Step 4 : RUN useradd runoob
    docker run -itd --name web -P nginx
    ```
 
-   参数说明：
+### 启动容器参数总结
 
-   - **-i**: 交互式操作。
+参数说明：
 
-   - **-t**: 终端。
+- **-i**: 交互式操作。
 
-   - **--rm** : 关闭时自动删除容器
+- **-t**: 终端。
 
-   - **ubuntu**: ubuntu 镜像。
+- **--rm** : 关闭时自动删除容器
 
-   - **/bin/bash**：放在镜像名后的是命令，这里我们希望有个交互式 Shell，因此用的是 /bin/bash。
+- **ubuntu**: ubuntu 镜像。
 
-   - **-P:**将容器内部使用的网络端口随机映射到我们使用的主机上。
+- **/bin/bash**：放在镜像名后的是命令，这里我们希望有个交互式 Shell，因此用的是 /bin/bash。
 
-   - -p 绑定指定的端口
+- **-P:**将容器内部使用的网络端口随机映射到我们使用的主机上。
 
-     `-p 5000:5000`
+- -p 绑定指定的端口
 
-   - 启动 ==不进入容器==，加参数 -d
+  `-p 5000:5000`
 
-     想要进入容器需要使用指令 docker exec
+- -d 启动 ==不进入容器==，加参数 -d，也就是 daemon 守护进程启动
 
-   - `--name test-name ` 自定义启动容器的名字
+  想要进入容器需要使用指令 docker exec
 
-   - **-e username="ritchie":** 设置环境变量；
+- `--name test-name ` 自定义启动容器的名字
 
-     比如：MySQL docker 官方就要求设置超级管理员密码
+- **-e username="ritchie":** 设置环境变量；
 
-   - ***-v***: 将本地的目录挂载到容器中的目录
+  比如：MySQL docker 官方就要求设置超级管理员密码
 
-     ```bash
-     -v /usr/local/test:/usr/tmp/test
-     ```
-     
-     注意： 
-     
-     1. 右边的目录是绝对目录，不能使用根目录符号 `~`
-     2. 必须是目录拷贝，不能是单纯的文件
-     
-   - 如果后边再跟命令，就是要在容器中执行的命令
+- ***-v***: 将本地的目录挂载到容器中的目录
 
-     只是运行容器，并且执行后边的命令，然后会退出容器，输出执行的结果。
+  ```bash
+  -v /usr/local/test:/usr/tmp/test
+  ```
+  
+  注意： 
+  
+  1. 右边的目录是绝对目录，不能使用根目录符号 `~`
+  2. 必须是目录拷贝，不能是单纯的文件
+  
+- 如果后边再跟命令，就是要在容器中执行的命令
 
-   - 总结
+  只是运行容器，并且执行后边的命令，然后会退出容器，输出执行的结果。
 
-     * 一个 `-` 后面跟 `key=value`
-     * 两个 `-` 后面跟 `value`
+- 总结
 
-   退出终端（容器父进程）
+  * 一个 `-` 后面跟 `key=value`
+  * 两个 `-` 后面跟 `value`
 
-   `exit`
+退出终端（容器父进程）
 
-   注意：
+`exit`
 
-   在run一个容器的时候，如果没有找到该镜像，就会去远端仓库拉取该镜像。
+注意：
 
-   更多参考：https://www.runoob.com/docker/docker-run-command.html
+在run一个容器的时候，如果没有找到该镜像，就会去远端仓库拉取该镜像。
 
-   
+更多参考：https://www.runoob.com/docker/docker-run-command.html
 
-6. 启动已停止运行的容器
+
+
+1. 启动已停止运行的容器
 
    * 查看所有启动过的容器，查看历史记录。`docker container ls` (等于 `docker ps`，不加 `-a`)查看的是正在启动的容器。
 
@@ -476,6 +520,7 @@ Step 4 : RUN useradd runoob
      ```shell
      docker start b750bbbcfd88 
      ```
+
 > 重启之后的进程并不是并不是继承当前终端（不像直接启动容器，继承当前终端），如果想直接 kill 这个进程，需要先使用 `docker container top 容器id`找到进程号，然后执行 `kill -9 进程号`清理该进程。
 
 7. 停止一个容器
@@ -771,6 +816,10 @@ $ docker build -t nginx:v3 .
 
 ## 指令详解
 
+### FROM
+
+基于一个基础的镜像来修改
+
 ### MAINTAINER 
 
 MAINTAINER      Fisher "fisher@sudops.com"
@@ -928,7 +977,10 @@ VOLUME <路径>
 EXPOSE <端口1> [<端口2>...]
 ```
 
+### 命令总结
 
+* RUN 命令，也就是docker内部的命令
+* CMD 命令，在启动容器的时候执行的命令
 
 ## ==使用 dockerfile 的一个例子==
 
@@ -1000,7 +1052,7 @@ CMD [ "node", "src/index.js" ]
   docker run -itd --name cicd -p 8082:80 zbb/testcicd:v1 && echo '上线完成'
   ```
 
-  
+* 建议在 dockerfile 中写 VOLUME，防止出现run的时候没有指定数据卷而出现的数据丢失情况。
 
 ### 打包
 
@@ -1018,7 +1070,55 @@ docker build 打包。（生产镜像）
 
 * 采用run 命令
 
+以下命令使用 ubuntu 镜像启动一个容器，参数为以命令行模式进入该容器：
 
+```bash
+$ docker run -it ubuntu /bin/bash
+```
+
+### 为什么要用 daemon off
+
+> docker 容器默认会把容器内部第一个进程，也就是pid=1的程序作为docker容器是否正在运行的依据，如果docker 容器pid挂了，那么docker容器便会直接退出。
+>
+> https://segmentfault.com/a/1190000009583997
+
+* Nginx 会在后台运行，bash 结束后就会退出，不能卡住进程。所以pid为1的进程（bash）退出之后，容器也就结束了
+* npm run start 等前端方式，不会结束进程，则不用使用 daemon off
+
+## 更新
+
+```bash
+$ docker update <container id>
+```
+
+## 重启容器
+
+```bash
+$ docker restart <容器 ID>
+```
+
+### docker 自动重启--restart
+
+* 参考：https://blog.csdn.net/yaomingyang/article/details/103480946
+
+–restart参数有三个可选值：no,on-failure,always
+
+- no为默认值，表示容器退出时，docker不自动重启容器
+- on-failure表示，若容器的退出状态非0，则docker自动重启容器，还可以指定重启次数，若超过指定次数未能启动容器则放弃
+
+- always表示只要容器退出，则docker将自动重启容器
+
+1. 运行时设置
+
+   ```bash
+   $ docker run <镜像名> --restart=always
+   ```
+
+2. 已经启动的容器设置重启
+
+   ```bash
+   $ docker update --restart=always <continer id>
+   ```
 
 ## .dockerignore
 
@@ -1030,7 +1130,37 @@ docker build 打包。（生产镜像）
 
 * 每一行一层，相当于一个步骤
 
+### 步骤
 
+1. 创建 dockerfile 
+2. 先build成一个镜像
+3. 然后运行这个镜像。这个时候指定运行的端口映射
+
+以上步骤是必须的
+
+### dockerfile 优化
+
+#### 关于分层
+
+Dockerfile 的指令每执行一次都会在 docker 上新建一层。所以过多无意义的层，会造成镜像膨胀过大。
+
+```bash
+FROM centos
+RUN **yum** -y **install** **wget**
+RUN **wget** -O redis.tar.gz "http://download.redis.io/releases/redis-5.0.3.tar.gz"
+RUN **tar** -xvf redis.tar.gz
+```
+
+以上执行会创建 3 层镜像。可简化为以下格式：
+
+```bash
+FROM centos
+RUN **yum** -y **install** **wget** \
+  **&&** **wget** -O redis.tar.gz "http://download.redis.io/releases/redis-5.0.3.tar.gz" \
+  **&&** **tar** -xvf redis.tar.gz
+```
+
+如上，以 **&&** 符号连接命令，这样执行后，只会创建 1 层镜像。 
 
 ## docker 其他操作
 
@@ -1112,6 +1242,16 @@ docker compose 是docker的独立产品，需要安装 docker compose
      centos:7 
      ```
 
+### 注意
+
+* mac 数据卷不能使用相对路径和绝对路径，都容易出错！！！！
+
+  建议使用当前路径。
+
+  ```bash
+  $ docker run -v data:/var/lib/mysql --name=mysql-test2 -p 8091:3306 -e MYSQL_ROOT_PASSWORD=qazplm -d mysql
+  ```
+
 ### 数据卷容器
 
 多个容器进行数据交换：方法
@@ -1144,6 +1284,113 @@ docker compose 是docker的独立产品，需要安装 docker compose
 
    * 这样 c1 和 c2 中也会存在 /volume 目录
 
+# docker 缓存相关
+
+* 参考https://blog.51cto.com/u_1472521/5981360
+
+# docker 桥接网络
+
+## docker 网络模式
+
+### network_mode
+
+参考：https://www.runoob.com/docker/docker-compose.html
+
+设置网络模式。
+
+```
+network_mode: "bridge"
+network_mode: "host"
+network_mode: "none"
+network_mode: "service:[service name]"
+network_mode: "container:[container name/id]"
+```
+
+## 容器间访问
+
+第一种方式如上所述 [docker 容器怎么访问宿主机](###docker 容器怎么访问宿主机)
+
+第二种方式就是桥接网络了
+
+### 桥接网络的方式
+
+1. 创建一个网络
+
+   ```bash
+   # 创建名为 common-network 的网络
+   $ docker network create common-network
+   # 查看网络列表
+   $ docker network ls
+   ```
+
+2. 容器运行的时候指定 network
+
+   ```bash
+   # 运行MySQL指定network就行不需要指定port了，让network代理
+   $ docker run -v /Users/zhangbinbinb28199/my-data/mysql/data:/var/lib/mysql --user 501:501 --name mysql-test --network common-network -e MYSQL_ROOT_PASSWORD=qazplm -d mysql
+   # 运行 Redis
+   $ docker run -v /Users/zhangbinbinb28199/my-data/redis/data:/data --name=redis-test1 --user=1000:1000 --network common-network -d redis redis-server --requirepass qazplm
+   # 运行api 服务，需要对外指定port，方便外部访问，也需要指定network
+   $ docker run --name=nest-test -p 3000:3000 -e NODE_ENV=production --network common-network -d nest-test
+   ```
+
+### docker compose 桥接
+
+就是把run时候的参数翻译到 yaml 文件中
+
+* 新建一个networks，命名为 common-network，模式为 bridge
+* 也可以不指定 network，docker compose 回默认给其中的 service 创建一个 network
+
+```yaml
+# version 是指定 docker-compose.yml 的版本，因为不同版本配置不同
+version: '3.8'
+services:
+  nest-test:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    depends_on:
+      - mysql-service
+      - redis-service
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=production
+    # 配置重启
+    restart: on-failure
+    networks:
+      - common-network
+  # docker run -v data:/var/lib/mysql --name=mysql-test2 -p 8091:3306 -e MYSQL_ROOT_PASSWORD=qazplm -d mysql
+  mysql-service:
+    image: mysql
+    # ports:
+    #   - '8091:3306'
+    networks:
+      - common-network
+    volumes:
+      # - 'data:/var/lib/mysql'
+      - /Users/zhangbinbinb28199/my-data/mysql/data:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=qazplm
+    user: '1000:1000'
+  # docker run -v /Users/zhangbinbinb28199/my-data/redis/data:/data --name=redis-test1 --user=1000:1000 -p 8096:6379 -d redis redis-server --requirepass qazplm
+  redis-service:
+    image: redis
+    # ports:
+    #   - 8093:6379
+    volumes:
+      - /Users/zhangbinbinb28199/my-data/redis/data:/data
+    user: '1000:1000'
+    command: 'redis-server --requirepass qazplm'
+    networks:
+      - common-network
+networks:
+  common-network:
+    driver: bridge
+```
+
+
+
 
 
 # docker 服务编排
@@ -1156,9 +1403,13 @@ docker compose 是docker的独立产品，需要安装 docker compose
 
 ## docker compose
 
-* docker compose 是一个编排多容器分布式部署的工具，提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。使用步骤：
+* docker compose 是一个编排多容器分布式部署的工具。通过compose，你可以使用 YML 文件来配置应用程序需要的所有应用。然后，使用一个命令就可以从YML文件配置中创建并启动所有服务。提供命令集管理容器化应用的完整开发周期，包括服务构建，启动和停止。使用步骤：
   1. 使用 dockerfile 定义运行环境镜像
-  2. 使用 docker-compose.yml 定义组成应用的各服务
+  
+     两种模式：要不使用 dockerfile 的方式启动，要么直接使用已有的镜像启动；
+  
+  2. 使用 docker-compose.yml 定义组成应用的各服务，这样它们可以在隔离环境中一起运行。
+  
   3. 运行 docker-compose up 启动应用
 
 https://www.runoob.com/docker/docker-compose.html
@@ -1188,6 +1439,8 @@ services:
 ```
 
 * 并行的一个关系，每个容器之间
+* 容器下面就是一些启动时要输入的命令
+* 主要是加了 depends_on 字段，组织依赖关系！
 
 3. 在 `/nginx/conf.d` 目录下编写 nginx 配置文件
 
@@ -1198,6 +1451,169 @@ services:
 5. 测试访问
 
    
+
+### 创建简单的 yml 文件
+
+* 创建一个名为 docker-compose.yml 的文件
+
+  ```yaml
+  # yaml 配置
+  version: '3'
+  version: '0.1'
+  services:
+    nest-test:
+      build:
+        context: ./
+        dockerfile: ./Dockerfile
+      depends_on:
+        - mysql-service
+        - redis-service
+      ports:
+        - '3000:3000'
+      environment:
+        - NODE_ENV=production
+    # docker run -v data:/var/lib/mysql --name=mysql-test2 -p 8091:3306 -e MYSQL_ROOT_PASSWORD=qazplm -d mysql
+    mysql-service:
+      image: mysql
+      ports:
+        - '8091:3306'
+      volumes:
+        # - 'data:/var/lib/mysql'
+        - /Users/zhangbinbinb28199/my-data/mysql/data:/var/lib/mysql
+      environment:
+        - MYSQL_ROOT_PASSWORD=qazplm
+      user: '1000:1000'
+    # docker run -v /Users/zhangbinbinb28199/my-data/redis/data:/data --name=redis-test1 --user=1000:1000 -p 8096:6379 -d redis redis-server --requirepass qazplm
+    redis-service:
+      image: redis
+      ports:
+        - 8093:6379
+      volumes:
+        - /Users/zhangbinbinb28199/my-data/redis/data:/data
+      user: '1000:1000'
+      command: 'redis-server --requirepass qazplm'
+  ```
+
+  Web 项目的dockerfile就在当前目录下，redis 就是一个权限的镜像
+
+* 主要就是 version 和 services 两个字段
+
+  * Services 中是每个镜像的配置
+
+### 命令
+
+#### depends_on
+
+设置依赖关系，这样就可能控制启动的先后顺序
+
+- docker-compose up ：以依赖性顺序启动服务。在以下示例中，先启动 db 和 redis ，才会启动 web。
+- docker-compose up SERVICE ：自动包含 SERVICE 的依赖项。在以下示例中，docker-compose up web 还将创建并启动 db 和 redis。
+- docker-compose stop ：按依赖关系顺序停止服务。在以下示例中，web 在 db 和 redis 之前停止。
+
+```
+version: "3.7"
+services:
+  web:
+    build: .
+    depends_on:
+      - db
+      - redis
+  redis:
+    image: redis
+  db:
+    image: postgres
+```
+
+注意：web 服务不会等待 redis db 完全启动 之后才启动。
+
+#### restart
+
+- no：是默认的重启策略，在任何情况下都不会重启容器。
+- always：容器总是重新启动。
+- on-failure：在容器非正常退出时（退出状态非0），才会重启容器。
+- unless-stopped：在容器退出时总是重启容器，但是不考虑在Docker守护进程启动时就已经停止了的容器
+
+```
+restart: "no"
+restart: always
+restart: on-failure
+restart: unless-stopped
+```
+
+注：swarm 集群模式，请改用 restart_policy。
+
+#### volumes
+
+将主机的数据卷或着文件挂载到容器里。
+
+```yaml
+version: "3.7"
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - "/localhost/postgres.sock:/var/run/postgres/postgres.sock"
+      - "/localhost/data:/var/lib/postgresql/data"
+```
+
+### 思考
+
+docker compose 更适合单机服务编排，如果分布式系统可能还是需要 k8s 去管理！
+
+## docker nginx
+
+### nginx 容器访问主机IP
+
+参考：https://github.com/zhangyu921/blog/issues/8
+
+* 使用这种方式就不需要设置端口了，直接就能当成外部的Nginx运行
+
+### 我的网站Nginx配置
+
+```bash
+sudo docker run --name nginx -v /home/lighthouse/info/nginx/nginx.conf:/etc/nginx/nginx.conf:ro -v /home/lighthouse/.acme.sh/programmerzbb.icu_ecc/programmerzbb.icu.cer:/cert/nginx.cert:ro -v /home/lighthouse/.acme.sh/programmerzbb.icu_ecc/programmerzbb.icu.key:/cert/nginx.key:ro --network host -d nginx
+```
+
+* 包含https的配置，Nginx.conf 的配置
+
+* `--network host` 可以访问本地 IP，Nginx直接代理了本地网络了，不需要IP配置
+
+## docker network
+
+### docker 容器怎么访问宿主机
+
+参考：https://zhuanlan.zhihu.com/p/500672080
+
+docker network 模式：
+
+docker 容器运行有三种网络配置：host， bridge，none，默认是bridge， 
+
+* none表示容器无法使用网络，
+* bridge 需要用-p 参数把端口映射出来。
+* 如果用host，即表示宿主机与容器共用网络，那么容器的localhost 就是 宿主机的localhost。
+
+#### 使用固定的IP
+
+* 172.17.0.1/16 docker分配的子网
+
+* host.docker.internal 
+
+  比如：
+
+  ```text
+  curl http://host.docker.internal:8000
+  curl http://gateway.docker.internal:8000
+  ```
+
+# my website
+
+## next项目
+
+docker配置参考：https://juejin.cn/post/7085176928465846308#heading-3
+
+### 注意点：
+
+1. 覆盖掉原来的镜像
 
 
 

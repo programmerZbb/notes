@@ -98,6 +98,14 @@ console.log(`script loaded correctly, window.FB has been populated`)
  />
 ```
 
+
+
+## svg 处理
+
+* 和常规的svg处理是一样的，采用了SVGR进行配置
+
+​	参考：https://react-svgr.com/docs/next/
+
 ## 样式
 
 ### 全局样式
@@ -156,9 +164,19 @@ export default function Card() {
 }
 ```
 
+### 自定义 document
+
+使用自定义 document 能够更新 html和 body 标签。如果想要覆盖默认的 document，需要在文件系统 `pages/_document` 文件
+
+* 参考：https://nextjs.org/docs/pages/building-your-application/routing/custom-document
+
 ## 预渲染和数据获取
 
 ### **hydration**
+
+* 原意：水合、水合作用
+
+为啥用这个词呢？刚下载的html只有UI结构，框架绑定的事件并没有绑定。hydration过程就像注水一样，让页面丰满起来。
 
 ### 预渲染形式
 
@@ -467,6 +485,42 @@ next 提供了一个预览模式去解决这个问题，它利用了 api routes�
 ### api route 能直接部署吗？不需要鉴权啥的？
 
 * 尤其是和 serverless 什么关系
+
+
+
+## 导出静态html
+
+https://nextjs.org/docs/advanced-features/static-html-export
+
+`next export` 允许你导出你的nextjs应用通过html，可以不通过nodejs渲染。
+
+```json
+{
+  "build:html": "next build && next export"
+}
+```
+
+> 注意：必须在本地启动node服务的情况下，才能导出html。也就是 `npm run start`，再执行 html export。
+
+### 如果是 server side render 会发生什么
+
+* 用 `getServerSideProps` 尝试一下
+
+  不能导出使用 `getServerSideProps` 生命周期的页面！
+
+* https://nextjs.org/docs/messages/gssp-export
+
+
+
+## api
+
+### public directory
+
+* 使用import引入静态文件
+
+  ```typescript
+  import { ReactComponent as Svg } from 'public/my-logo.svg'
+  ```
 
 
 

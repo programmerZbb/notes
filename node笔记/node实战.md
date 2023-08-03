@@ -729,6 +729,8 @@ nodejs 线上运行：
 
 ## 8.5 redis 使用
 
+官方参考：https://redis.io/docs/getting-started/installation/install-redis-on-mac-os/
+
 ### 1.安装
 
 参考：

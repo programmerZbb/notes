@@ -849,7 +849,27 @@ https://webpack.docschina.org/guides/asset-modules/
 
 * svg 用内联的
 
+#### 处理SVG
 
+* 推荐使用 svgr 工具进行处理，参考：https://react-svgr.com/docs/webpack/
+
+  安装：npm install --save-dev @svgr/webpack
+
+```typescript
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.svg$/i,
+        issuer: /\.[jt]sx?$/,
+        use: ['@svgr/webpack'],
+      },
+    ],
+  },
+}
+```
+
+react 中 svg 的处理也是用这种方式
 
 ### 解析字体
 
@@ -1469,10 +1489,47 @@ webpack有两种source map 方案，一种是 devtool ，另一种是 source map
 
 
 
+## 代码类型
+
+[代码类型](##webpack代码类型)
+
+### runtime 和 manifest
+
+#### runtime
+
+> runtime，以及伴随的 manifest 数据，主要是指：在浏览器运行过程中，webpack 用来连接模块化应用程序所需的所有代码。它包含：在模块交互时，连接模块所需的加载和解析逻辑。包括：已经加载到浏览器中的连接模块逻辑，以及尚未加载模块的延迟加载逻辑。
+
+* 主要是webpack组织代码的运行时
+
+#### manifest
+
+> 一旦你的应用在浏览器中以 `index.html` 文件的形式被打开，一些 bundle 和应用需要的各种资源都需要用某种方式被加载与链接起来。在经过打包、压缩、为延迟加载而拆分为细小的 chunk 这些 webpack [`优化`](https://www.webpackjs.com/configuration/optimization/) 之后，你精心安排的 `/src` 目录的文件结构都已经不再存在。所以 webpack 如何管理所有所需模块之间的交互呢？这就是 manifest 数据用途的由来……
+>
+> 当 compiler 开始执行、解析和映射应用程序时，它会保留所有模块的详细要点。这个数据集合称为 "manifest"，当完成打包并发送到浏览器时，runtime 会通过 manifest 来解析和加载模块。无论你选择哪种 [模块语法](https://www.webpackjs.com/api/module-methods)，那些 `import` 或 `require` 语句现在都已经转换为 `__webpack_require__` 方法，此方法指向模块标识符(module identifier)。通过使用 manifest 中的数据，runtime 将能够检索这些标识符，找出每个标识符背后对应的模块。
+
+* Runtime 根据manifest保存的数据组织代码，manifest主要用来保存compiler解析代码时模块的详细要点。
+* runtime通过manifest来解析和加载模块。
+
+> 你可能会很感兴趣，webpack 和 webpack 插件似乎“知道”应该生成哪些文件。答案是，webpack 通过 manifest，可以追踪所有模块到输出 bundle 之间的映射。如果你想要知道如何以其他方式来控制 webpack [`输出`](https://www.webpackjs.com/configuration/output)，了解 manifest 是个好的开始。
+
+* Webpack 通过 manifest 追踪到 bundle 之间的映射
+
 ## 提取页面公共资源
 
 * 公共模块的重复引用
 * 公共资源的重复加载
+
+### webpack代码类型
+
+> 在使用 webpack 构建的典型应用程序或站点中，有三种主要的代码类型：
+>
+> 1. 你或你的团队编写的源码。
+> 2. 你的源码会依赖的任何第三方的 library 或 "vendor" 代码。
+> 3. webpack 的 runtime 和 **manifest**，管理所有模块的交互。
+
+* 源码
+* library 或者 vendor 第三方代码
+* webpack 的 runtime 和 manifest，管理所有模块的交互
 
 ### 基础库的分离
 
@@ -2118,6 +2175,8 @@ module.exports = {
 ````
 
 ### 各种模块
+
+https://juejin.cn/post/6977604469794013197#heading-9
 
 - `amd` – 异步模块定义，用于像RequireJS这样的模块加载器
 - `cjs` – CommonJS，适用于 Node 和 Browserify/Webpack
@@ -3611,6 +3670,7 @@ const loader: LoaderDefinitionFunction = function(source) { // 必须加类型
         },
     }
 
+    // js 安全字符串
     const json = JSON.stringify(source)
         .replace(/\u2028/g, '\\u2028')
         .replace(/\u2029/g, '\\u2029')
@@ -3752,6 +3812,14 @@ console.log(content, new RawSource(content))
 https://webpack.docschina.org/plugins/define-plugin/
 
 * todo
+
+## webpack 循环依赖问题
+
+如果出现了循环依赖，还是会出现依赖 undefined 的问题。只是webpack会解决循环依赖的依赖问题。
+
+### 检测循环依赖plugin
+
+https://github.com/aackerman/circular-dependency-plugin
 
 
 
