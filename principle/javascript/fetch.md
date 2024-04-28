@@ -65,6 +65,7 @@ response 对象包含一些静态属性，如下：
 这就是说，即使服务器返回的状态码是 4xx 或 5xx，`fetch()`也不会报错（即 Promise 不会变为 `rejected`状态）。
 
 * 主要是根据 fetch api是否会变为 rejected 的状态
+* 跨域和网络错误都会请求失败，但是跨域不会告诉js失败的原因。
 
 只有通过`Response.status`属性，得到 HTTP 回应的真实状态码，才能判断请求是否成功。请看下面的例子。
 

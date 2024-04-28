@@ -667,6 +667,57 @@ CSS 中组成一个块级盒子需要：
 - **Border box**: 边框盒包裹内容和内边距。大小通过 [`border`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/border) 相关属性设置。
 - **Margin box**: 这是最外面的区域，是盒子和其他元素之间的空白区域。大小通过 [`margin`](https://developer.mozilla.org/zh-CN/docs/Web/CSS/margin) 相关属性设置。
 
+# 查询类
+
+## 容器查询
+
+非常好用的单个容器宽高响应式布局方案
+
+容器查询长度单位包括：
+
+- `cqw`：查询容器宽度的 1%
+- `cqh`：查询容器高度的 1%
+- `cqi`：查询容器行向尺寸的 1%
+- `cqb`：查询容器块尺寸的 1%
+- `cqmin`：`cqi` 和 `cqb` 中较小的值
+- `cqmax`：`cqi` 和 `cqb` 中较大的值
+
+还可以和 max 函数匹配以达到最佳实用路径。
+
+```css
+font-size: max(1.5rem, 2cqw);
+```
+
+## 媒体查询
+
+
+
+# css 动画相关
+
+## GPU 加速动画
+
+* 参考：浏览器工作原理和实践.md，具体涉及到渲染线程相关的知识。
+
+## css 动画与 JavaScript 动画性能
+
+参考：https://developer.mozilla.org/zh-CN/docs/Web/Performance/CSS_JavaScript_animation_performance
+
+### requestAnimationFrame
+
+* 提供了一种 js 代码制作动画的高效方式。
+
+总得来说使用 css 动画比 js 动画性能更好，更不宜收到 js 线程的阻塞。
+
+### will-change
+
+https://developer.mozilla.org/zh-CN/docs/Web/CSS/will-change
+
+[CSS](https://developer.mozilla.org/zh-CN/docs/Web/CSS) 属性 `will-change` 为 web 开发者提供了一种告知浏览器该元素会有哪些变化的方法，这样浏览器可以在元素属性真正发生变化之前提前做好对应的优化准备工作。这种优化可以将一部分复杂的计算工作提前准备好，使页面的反应更为快速灵敏。
+
+* 也可以开启 GPU 加速
+
+
+
 # 工具
 
 ## scss

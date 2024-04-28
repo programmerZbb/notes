@@ -1122,6 +1122,26 @@ bundle.js 构建输出的文件
 
 
 
+### 增量编译
+
+* 借用 webpack 文件指纹来实现增量编译，充分利用webpack 的 cache。
+
+#### 采用正确的文件指纹
+
+* js 等静态文件采用 chunkhash 的方式，css 文件一般采用 contenthash 的方式
+
+为什么js要使用 chunkhash 呢？而其他文件要使用 contenthash 呢？
+
+* 得益于 splitChunk 能力，会把多个js文件打包成为一个chunk；而其他文件会形成单独的文件，所以使用 contenthash 更好。
+
+#### 锁定模块id
+
+*使用和模块名称相通的模块名称，防止webpack采用自增id出现模块id不稳定的情况*
+
+* 不采用自增id，而是采用模块名hash的方式组织module，使得模块引用更稳定
+
+
+
 ### 代码压缩
 
 分为：
@@ -1479,6 +1499,14 @@ module: 包含loader 的sourcemap.
 
 * 打包后没有source map 单独文件，用 eval 包裹，有一个代码url
 
+- **eval**：浏览器 devtool 支持通过 sourceUrl 来把 eval 的内容单独生成文件，还可以进一步通过 sourceMappingUrl 来映射回源码，webpack 利用这个特性来简化了 sourcemap 的处理，可以直接从模块开始映射，不用从 bundle 级别。
+- **cheap**：只映射到源代码的某一行，不精确到列，可以提升 sourcemap 生成速度
+- **source-map**：生成 sourcemap 文件，可以配置 inline，会以 dataURL 的方式内联，可以配置 hidden，只生成 sourcemap，不和生成的文件关联
+- **nosources**：不生成 sourceContent 内容，可以减小 sourcemap 文件的大小
+- **module**： sourcemap 生成时会关联每一步 loader 生成的 sourcemap，可以映射回最初的源码
+
+理解了这些基础配置项，根据 ^(inline-|hidden-|eval-)?(nosources-)?(cheap-(module-)?)?source-map$ 的规律来进行组合，就可以实现各种需求下的 sourcemap 配置。
+
 #### 注意
 
 webpack有两种source map 方案，一种是 devtool ，另一种是 source map loader（配置更全）。但是不能两种混用。
@@ -1552,7 +1580,9 @@ webpack有两种source map 方案，一种是 devtool ，另一种是 source map
 }
 ```
 
+#### externals
 
+Webpack5 已经集成了 externals，只需要配置 externals，并且在静态资源首页头部引入该 externals 即可，参考webpack关于react的externals配置。
 
 ### splitchunks
 
@@ -2185,7 +2215,7 @@ https://juejin.cn/post/6977604469794013197#heading-9
 - `umd` – 通用模块定义，以`amd`，`cjs` 和 `iife` 为一体
 - `system` - SystemJS 加载器格式
 
-
+参考：https://juejin.cn/post/6959360215674257415?searchId=202402281039285C9E8E9A94BCD9C4188C#heading-5
 
 ### 设置入口文件
 
@@ -2376,6 +2406,8 @@ https://juejin.cn/post/6844903825216651271
 * 展示一大堆日志，很多并不需要开发者关注
 
 ### 统计信息 stats
+
+> `stats` 选项让你更精确地控制 bundle 信息该怎么显示。 如果你不希望使用 `quiet` 或 `noInfo` 这样的不显示信息，而是又不想得到全部的信息，只是想要获取某部分 bundle 的信息，使用 stats 选项是比较好的折衷方式。
 
 https://webpack.docschina.org/configuration/stats/#root
 
@@ -3530,6 +3562,28 @@ todo: 抄一下他的 logger 怎么封装的
 
 
 
+## manifast
+
+官方定义：https://webpack.docschina.org/concepts/manifest#manifest
+
+* 也就是webpack 用来组织代码的
+
+Webpack 打包后的代码：
+
+1. 你或你的团队编写的源码。
+2. 你的源码会依赖的任何第三方的 library 或 "vendor" 代码。
+3. webpack 的 runtime 和 **manifest**，管理所有模块的交互。
+
+### dll 中的 manifast
+
+dll 打包也会打出一个 manifast，方便 dll reference 进行查找（打过的文件不用再打包）
+
+### 独立打包 manifast
+
+*// 作用：提供一份打包清单，方便在做 ssr 的时候进行内容查找。查看https://juejin.cn/s/webpack-manifest-plugin%E4%BD%9C%E7%94%A8*
+
+import { WebpackManifestPlugin } from 'webpack-manifest-plugin';
+
 ## 写一个简易的 webpack 
 
 ### ast 基础知识
@@ -4062,4 +4116,17 @@ tsconfig
   "extends": "@test/config/ts-browser"
 }
 ```
+
+# 编译相关&webpack优化相关
+
+## AOT & JIT
+
+https://juejin.cn/post/7282666367240503296?searchId=202311231104453EC70A1DF9951AA100ED
+
+AOT（Ahead-of-Time Compilation）和 JIT（Just-in-Time Compilation）
+
+> AOT（Ahead-of-Time Compilation）和 JIT（Just-in-Time Compilation）是两种不同的编译方式，用于将高级语言代码转换为机器码以便执行。
+
+- **AOT**: AOT 编译是在程序运行之前将整个源代码或字节码文件一次性地编译成本地机器码。这意味着在程序运行时不需要再进行额外的编译工作，直接执行已经编译好的机器码。
+- **JIT**: JIT 编译是在程序运行过程中动态地将热点代码（频繁执行的代码）从字节码即时编译成本地机器码。JIT 编译器会根据实际的执行情况来选择需要编译的代码，并且可以根据优化策略对代码进行优化。
 

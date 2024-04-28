@@ -16,6 +16,14 @@
 
 ![img](https://static001.geekbang.org/infoq/bb/bbd00915f97bcbb32c113844818e95b3.png)
 
+### 特点
+
+* 不需要事先创建好数据库和集合，然后插入数据
+* 不需要预先定义好集合中字段的类型和长度
+* 同一个集合中的数据也不需要有相同的结构等等
+
+更加灵活，可以让开发者更加专注于业务逻辑的实现，而不需哟关注数据库的细节，可以大大提高开发的效率。
+
 ## 快速查询聚合方法
 
 * 英文：https://docs.mongodb.com/manual/reference/operator/aggregation/sort/#-sort-operator-and-memory
@@ -125,3 +133,19 @@ get 某个字段：https://docs.mongodb.com/manual/reference/operator/aggregatio
 ## 数据结构
 
 ![img](https://static001.geekbang.org/infoq/26/2619c14f2c3055c56ca0b986a31cfee9.png)
+
+## 文档型数据库
+
+* 文档是一个非常重要的概念，类似于 MySQL 中的 row
+
+参考：https://www.bilibili.com/video/BV16u4y1y7Fm/?spm_id_from=333.788.recommend_more_video.3&vd_source=2fabd0267018a76cc44ae9345564dfb9
+
+### BSON
+
+* 准确来说：document 采用 binary json 来存储数据，是一种二进制的json格式，比普通的 json 可以更高效的存储和传输数据。
+
+
+
+## 操作
+
+* 不需要事先创建集合和字段类型，直接插入 json 即可。

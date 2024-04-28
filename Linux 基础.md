@@ -769,6 +769,26 @@ https://zhuanlan.zhihu.com/p/352642228
    grep -v test *test*
    ```
 
+#### 搜索错误日志
+
+==搜索错误日志==：一般情况下，需要查询指定错误的调用栈，也就是需要往后查询几行，可以使用
+
+* -A 9 表示匹配行后的9行输出
+* -B 9 前9行
+* -C 前后的9行都输出
+* -i 忽略大小写
+
+```shell
+$ tail -f constructor-tree.ts | grep -A 2 -i 'export const constructorTree'
+# 查询 constructor-tree.ts 文件中的 export const constructorTree 以及后2 行
+```
+
+##### 时间范围
+
+可以使用正则表达式来实现，
+
+
+
 ### 6. 终端操作
 
 * 结束终端
@@ -3479,4 +3499,12 @@ $ export TEST=VALUE
    $ source  ~/.bashrc
    ```
 
-   
+
+## shell 退出
+
+`set -e`
+
+> 需要注意的是，开启"错误即退出"模式的影响范围是当前Shell脚本，而不是整个Shell会话。如果你只想在特定的代码段中开启该模式，可以使用`set -e`开启，然后使用`set +e`关闭。
+
+- [x] 测试
+- [ ] 测试2

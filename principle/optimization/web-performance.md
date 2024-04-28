@@ -73,6 +73,12 @@ observer.observe({ type: "longtask", buffered: true });
 
 # 相关指标和其测量工具
 
+## 参考
+
+参考：https://web.dev/articles/rail?hl=zh-cn#chrome-devtools
+
+介绍了各种指标和工具的使用。
+
 ## 指标
 
 参考：https://juejin.cn/post/7253828299939184697
@@ -95,12 +101,48 @@ TTI 并不是标准的web性能指标，是利用 [long task api](https://develo
 
 >**RAIL** 是一种以**用户为中心**的性能模型，它提供了一种考虑性能的结构。该模型将用户体验分解到按键操作（例如，点击、滚动、加载）中，帮助您为每个操作定义性能目标。
 
+* 以用户为中心的性能模型。
+
 RAIL 分为四个部分：
 
-* response
-* Animation
-* idle
-* Loading
+* response：50ms响应处理时间
+* Animation：10ms生成一帧，60fps
+* idle: 尽可能长的空闲时间
+* Loading：5s 内实现互动。
 
 RAIL 代表 Web 应用生命周期的四个不同方面：响应、动画、空闲和加载。用户对这些上下文分别有不同的性能期望，因此，性能目标是根据上下文以及[用户如何感知延迟的用户体验研究](https://www.nngroup.com/articles/response-times-3-important-limits/)来定义的。
+
+
+
+## lighthouse 工具
+
+* lighthouse 就是按照 RAIL 标准（最佳实践）对当前页面性能进行测量的工具，提供了一种最佳实践。如果你的业务不认可这种最佳实践，可以用 performance进行自定义测量。
+
+
+
+## memory 工具 —— 解决内存问题
+
+参考：https://developer.chrome.com/docs/devtools/memory-problems?hl=zh-cn
+
+
+
+# web vitals 
+
+> “网页指标”是 Google 的一项计划，旨在针对网页质量信号提供统一指南，这些信号对于提供出色的网页用户体验至关重要。它的目标是简化各种可用的性能测量工具，并帮助网站所有者专注于最重要的指标，即**核心网页指标**。
+
+* google 提供的一些列指标，相比 RAIL模型 更具象一些。
+
+* 也就是核心网页指标，这其中还有 3 个核心的，叫做 web core vitals。
+
+## core vitals
+
+从一系列指标中选出了三个核心指标：LCP、FID、CLS，分别衡量加载性能、交互性能、视觉稳定性。
+
+### LCP
+
+Largest Contentful Paint，最大的内容（文字/图片）渲染的时间。
+
+计算方式是从网页开始渲染到渲染完成，每次渲染内容都对比下大小，如果是更大的内容，就更新下 LCP 的值
+
+* 主要衡量加载性能
 

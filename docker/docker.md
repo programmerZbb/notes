@@ -1571,7 +1571,12 @@ docker compose 更适合单机服务编排，如果分布式系统可能还是�
 ### 我的网站Nginx配置
 
 ```bash
-sudo docker run --name nginx -v /home/lighthouse/info/nginx/nginx.conf:/etc/nginx/nginx.conf:ro -v /home/lighthouse/.acme.sh/programmerzbb.icu_ecc/programmerzbb.icu.cer:/cert/nginx.cert:ro -v /home/lighthouse/.acme.sh/programmerzbb.icu_ecc/programmerzbb.icu.key:/cert/nginx.key:ro --network host -d nginx
+sudo docker run --name nginx -v /home/lighthouse/info/nginx/nginx.conf:/etc/nginx/nginx.conf \
+-v /home/lighthouse/info/nginx/conf.d:/etc/nginx/conf.d \
+-v /home/lighthouse/info/nginx/logs:/var/log/nginx \
+-v /home/lighthouse/.acme.sh/programmerzbb.icu_ecc/programmerzbb.icu.cer:/cert/nginx.cert:ro \
+-v /home/lighthouse/.acme.sh/programmerzbb.icu_ecc/programmerzbb.icu.key:/cert/nginx.key:ro \
+--network host -d nginx
 ```
 
 * 包含https的配置，Nginx.conf 的配置
@@ -1604,6 +1609,24 @@ docker 容器运行有三种网络配置：host， bridge，none，默认是brid
   curl http://host.docker.internal:8000
   curl http://gateway.docker.internal:8000
   ```
+
+​	注意：在Linux下，这种情况搞不定，参考：https://stackoverflow.com/questions/74796374/mediasoup-error-when-running-observertc-example-getaddrinfo-enotfound-host-doc
+
+​	Linux 下可以使用以下
+
+```text
+# 第一种方式
+In linux Use localhost in host mode or 172.18.0.1 for bridge mode.
+# 第二种方式
+extra_hosts:
+     - "host.docker.internal:host-gateway"
+```
+
+* 相关讨论：https://stackoverflow.com/questions/48546124/what-is-linux-equivalent-of-host-docker-internal
+
+## docker componse 缓存
+
+* 如果docker compose中的service已经创建了镜像，导致不能重新构建。可以直接删除镜像，重新打包。
 
 # my website
 

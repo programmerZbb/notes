@@ -1,6 +1,9 @@
 # 阅读
 
 * https://www.ory.sh/docs/oauth2-oidc/overview/oauth2-concepts#oauth-20-scope-permission
+* https://www.ruanyifeng.com/blog/2019/04/oauth-grant-types.html
+* https://xie.infoq.cn/article/41ac7535056b5000f8e3870cf
+* 微软文档：https://learn.microsoft.com/zh-cn/windows-server/identity/ad-fs/overview/ad-fs-openid-connect-oauth-flows-scenarios
 
 ## OAuth2
 
@@ -14,11 +17,22 @@ OAhuth 是一个关于授权（authorization）的开放网络标准，在全世
 
 本文对OAuth2.0设计思路和运行流程进行解析，主要参考资料是 [RFC 6749](http://www.rfcreader.com/#rfc6749)
 
+### RFC 6749
+
+> OAuth 引入了一个授权层，用来分离两种不同的角色：客户端和资源所有者。......资源所有者同意以后，资源服务器可以向客户端颁发令牌。客户端通过令牌，去请求数据。
+
 ### 应用场景
 
 一个第三方网站需要访问当前网站的信息，但是需要用户授权，怎么获得用户的授权就是 OAuth2.0的目标。
 
 * 第三方网站不能获取用户的账密去登录
+
+### 四种流程
+
+1. Authorization Code：授权码模式，因为需要在各个节点往返三次，俗称 3 leg。
+2. Implicit：隐式授权，相对于授权码模式做了简化。
+3. Resource Owner Password Credentials：密码认证模式。
+4. Client Credentials：客户端认证模式。
 
 ### 名词
 
@@ -74,6 +88,8 @@ OAhuth 是一个关于授权（authorization）的开放网络标准，在全世
 必须通过用户的授权，也就是用户点击确认（非常重要）
 
 ### 授权码模式（常用）
+
+> 这种方式是最常用的流程，安全性也最高，它适用于那些有后端的 Web 应用。授权码通过前端传送，令牌则是储存在后端，而且所有与资源服务器的通信都在后端完成。这样的前后端分离，可以避免令牌泄漏。
 
 > 授权码模式（authorization code）是功能最完整、流程最严密的授权模式。它的特点就是通过客户端的后台服务器，与"服务提供商"的认证服务器进行互动。
 
@@ -234,6 +250,10 @@ E步骤中，认证服务器发送的HTTP回复，包含以下参数：
 ## access token vs refresh token
 
 
+
+## 与 cookie
+
+由于 Cookie 容易被 CSRF 攻击，不建议采用 cookie 的方式传输 token。尽量不要用 URI 参数的方法，因为浏览器历史记录、服务器日志等可能泄露 URI 上的机密信息。
 
 # OpenID connect(OIDC)
 

@@ -186,7 +186,7 @@ set
 
 
 
-## Object.prototype.valueOf
+## Object.prototype.valueOf——数值计算的场景
 
 JavaScript 调用 `valueOf` 方法将对象转换为原始值。原始值也就是能参与计算的值。你很少需要自己调用 `valueOf` 方法；==当遇到要预期的原始值的对象时==，JavaScript 会==自动调用==它。
 
@@ -196,13 +196,15 @@ JavaScript 调用 `valueOf` 方法将对象转换为原始值。原始值也就�
 >
 > let o = {}
 
+### 面试题——函数计算的场景
+
 * 是一个函数，返回这个对象参与计算时的值
 
-* 如果是一个函数，在 valueOf 没有重写的情况下，默认会调用 toString() 方法进行计算。
+* 如果是一个函数，在 valueOf 没有重写的情况下，默认会调用 toString() 方法进行计算。——==计算的场景！！！==
 
    valueOf > toString
 
-## Object.prototype.toString()
+## Object.prototype.toString()——进行文本表示的时候
 
 **`toString()`** 方法返回一个表示该对象的字符串。
 
@@ -210,7 +212,14 @@ JavaScript 调用 `valueOf` 方法将对象转换为原始值。原始值也就�
 
 * 如果没部署，则调用 Object.prototype.toString，返回一个 [object *type*] 字符串
 
+比如：
 
+```typescript
+let obj = {
+	test: 'aaa'
+}
+`${obj}` // 文本表示的场景，会调用 toString 方法
+```
 
 ## Object.setPropertyOf
 
@@ -342,6 +351,26 @@ https://www.jianshu.com/p/e375ba1cfc47
   * object 打印类型
   * function 打印 源码
 
+
+
+# 模块
+
+## import
+
+### 元信息
+
+https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Operators/import.meta
+
+关键字 `import.meta`，注意是一个关键字，并不是一个对象的属性。可以作为代码组织时，根据query进行定制，做为 location.href 和 nodejs process.env 的补充。
+
+* 试想一种情况：需要再引入js文件并执行里面代码的时候添加参数，那么 import.meta 就是一种非常好的方式。
+
+* 获取绝对路径：import.meta 返回的是该模块的绝对路径（网络路径），那么就可以根据这个路径获得静态资源的路径。
+
+  参考：https://cn.vitejs.dev/guide/assets.html#new-url-url-import-meta-url
+
+
+
 # Reflect
 
 ## 简介
@@ -377,6 +406,7 @@ https://www.jianshu.com/p/e375ba1cfc47
 
    * 也就是 proxy 定义 handle 的方法，都能用 Reflect 调用
    * ==这proxy一一对应这个才是最重要的！==
+   * 防止重复调用这个方法造成循环调用。
 
 ## 总结
 
@@ -439,9 +469,9 @@ https://www.jianshu.com/p/e375ba1cfc47
 
 * 与 encodeURI 的区别
 
-  encodeURI()不会对本身属于URI的[特殊字符](https://www.zhihu.com/search?q=特殊字符&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"article"%2C"sourceId"%3A"135882275"})进行编码
+  encodeURI()不会对本身属于URI的[特殊字符](https://www.zhihu.com/search?q=特殊字符&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"article"%2C"sourceId"%3A"135882275"})进行编码，比如说 = # 等，因此不建议直接对参数数据进行转义，如果是一个完整的 url 可以试试；
 
-  encodeURIComponent()则会对他发现的任何[非标准字符](https://www.zhihu.com/search?q=非标准字符&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"article"%2C"sourceId"%3A"135882275"})（字母或数字为标准字符）进行编码
+  encodeURIComponent()则会对他发现的任何[非标准字符](https://www.zhihu.com/search?q=非标准字符&search_source=Entity&hybrid_search_source=Entity&hybrid_search_extra={"sourceType"%3A"article"%2C"sourceId"%3A"135882275"})（字母或数字为标准字符）进行编码，它针对的是对url中的参数进行细致化的转义，如果直接对完整的url进行转义，那么就会把原有的 `= #` 等有意义的字符给转义掉。
 
 ### decodeURIComponent
 
@@ -520,6 +550,18 @@ JS的内存空间分为栈(stack)、堆(heap)、池(一般也会归类为栈中)
 
 * const 关键字保存的是该变量的地址。对于基础数据类型，保存的就是该值；对于引用数据类型，保存着就是引用类型的地址。
 
+## 堆内存
+
+> 编程语言中的堆内存是一种用于动态分配和管理内存的内存区域。堆内存通常用于存储动态分配的数据结构，例如对象、数组和其他复杂数据类型。
+
+* 一种用于动态分配和管理内存的内存区域，动态的，也就是能够根据对象的创建进行动态申请。
+
+* 我们平时所说的 GC 也就是对 堆内存 进行垃圾回收。
+
+### 与栈内存
+
+> 堆内存通常是在运行时动态分配的，它的大小可以根据程序的需要动态扩展或收缩。由于堆内存的动态性和灵活性，它通常用于存储在程序运行时无法确定大小和生命周期的数据，而栈内存一般用于存储具有确定生命周期和大小的数据。
+
 # JavaScript 内存管理
 
 像C语言这样的底层语言一般都有底层的内存管理接口，比如 `malloc()`和`free()`。相反，JavaScript是在创建变量（对象，字符串等）时自动进行了分配内存，并且在不使用它们时“自动”释放。 释放的过程称为垃圾回收。这个“自动”是混乱的根源，并让JavaScript（和其他高级语言）开发者错误的感觉他们可以不关心内存管理。 
@@ -551,6 +593,10 @@ https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Memory_Management
 如上文所述自动寻找是否一些内存“不再需要”的问题是无法判定的。因此，垃圾回收实现只能有限制的解决一般问题。本节将解释必要的概念，了解主要的垃圾回收算法和它们的局限性。
 
 * 回收也是先回收 函数执行玩的局部变量。
+
+
+
+==接下来是集中垃圾回收方式！并不是js引擎全部采用！！！==
 
 ### [引用计数垃圾收集](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Memory_Management#引用计数垃圾收集)
 
@@ -618,6 +664,25 @@ https://zhuanlan.zhihu.com/p/352323793
 
 申请 -> 使用 -> 释放
 
+### 函数调用栈
+
+#### 栈帧
+
+```js
+function doSomething() {
+    return doSomethingElse();
+}
+```
+
+ES5中在执行 doSomethingElse 函数的时候会新增一个栈帧，doSomething对应的栈帧会被保留在内存中，当存在循环调用时就容易出现程序问题，比如栈溢出等不可预期的错误。
+
+> https://juejin.cn/post/6972036399503507487
+
+#### es6 的 tail call 尾调用优化
+
+* https://www.ruanyifeng.com/blog/2015/04/tail-call.html
+* https://juejin.cn/post/6972036399503507487
+
 ### 全停顿
 
 在介绍垃圾回收算法之前，我们先了解一下「**全停顿**」。垃圾回收算法在执行前，需要将应用逻辑暂停，执行完垃圾回收后再执行应用逻辑，这种行为称为 「**全停顿**」（`Stop The World`）。例如，如果一次GC需要50ms，应用逻辑就会暂停50ms。
@@ -643,6 +708,8 @@ JavaScript中会被判定为垃圾的情形如下：
 - 标记清除
 - 标记整理
 - 分代回收
+
+js 引擎并不一定使用如上一种，而是采用标记-清除算法。
 
 ### 引用计数
 
@@ -695,8 +762,25 @@ JavaScript中会被判定为垃圾的情形如下：
 
 ## v8引擎垃圾回收策略——==分代回收==
 
+### 简介
+
+> 由于不同的对象，其生存周期长短不一，一种垃圾回收算法不能完全应对所有情况，所以 v8 的垃圾回收策略采用了更高效的**分代式垃圾回收机制**。即：按对象的存储时间将内存的垃圾回收进行不同的分代，然后**分别对不同分代的内存使用更适合其特征的 GC 算法**。
+
+==针对不同类型的对象，针对其生存周期长短，v8 采用了更高效的分代式垃圾回收机制。==
+
 - 采用==分代回收==的思想；
 - 内存分为新生代、老生代；
+
+V8 将内存设置为了 2 个分代，V8 堆的整体大小就是这 2 个分代所用的内存之和，在启动时候可以通过下面的参数设置其大小：
+
+- 新生代：存储的是存活时间较短的对象，存储在 V8 的小空间中（16M 或者 32M）。
+  - `--max-new-space-size` 参数用来设置新生代空间的最大值，单位为 KB，在 64 位中占据 32M，32 位占据 16M。
+- 老生代：存储的是长期活动的对象。
+  - `--max-old-space-size` 参数用来设置老生代空间的最大值，单位为 MB，在 64 位中占据 1400M，32 位占据 700M。
+
+V8 中主要使用的策略与算法有：分代回收、空间复制、标记清除、标记整理、标记增量。
+
+
 
 针对不同对象采用不同算法：
 （1）新生代：对象的存活时间较短。新生对象或只经过一次垃圾回收的对象。
@@ -716,6 +800,12 @@ JavaScript中会被判定为垃圾的情形如下：
 
 > 这个是v8引擎的回收策略，和具体的算法没关系。先分为新生代和老生代，也就是 GC 算法中的分代回收。
 
+### Chrome 何时触发垃圾回收
+
+比如，根据 V8 团队 2016 年的一篇博文的说法:
+
+“在一次完整的垃圾回收之后，V8 的堆增长策略会根据活跃对象的数量外加一些余量来确定何时再次垃 圾回收。”
+
 ### 回收新生代对象
 
 回收新生代对象主要采用**复制算法**（`Scavenge 算法`）加标记整理算法。而`Scavenge 算法`的具体实现，主要采用了`Cheney算法`。
@@ -732,6 +822,7 @@ JavaScript中会被判定为垃圾的情形如下：
 
 * 也就是新生代才会使用 from to 转换的方式
 * from to 转换，并且伴随着晋升老生代
+* 很像一个筛子反复的筛选
 
 ### 对象晋升机制
 
@@ -1708,6 +1799,22 @@ await 可以跟着一个 promise 实例，返回的值就是其中断值。如�
 
 * 典型应用：rxjs
 
+
+
+# 消息
+
+## PostMessage
+
+* 一般用于跨线程或者进程通信
+
+## 专用信道 messageChannel
+
+* 一般用于创建一个专用信道，把广播或者多播转换为一个专门的信道！
+
+  ==这也是跨进程通用解决方案！==
+
+
+
 # 浏览器相关
 
 ## 浏览器线程和阻塞
@@ -2306,6 +2413,8 @@ var aBlob = new Blob( array, options );
 
 - *array* 是一个由[`ArrayBuffer`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer), [`ArrayBufferView`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypedArray), [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob), [`DOMString`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/String) 等对象构成的 [`Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array) ，或者其他类似对象的混合体，它将会被放进 [`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)。DOMStrings 会被编码为 UTF-8。
 
+  注意：arraybufferview 也能被创建
+
 - options
 
   是一个可选的
@@ -2407,6 +2516,16 @@ reader.readAsText(blob)
 [`FileReader.readAsText()`](https://developer.mozilla.org/zh-CN/docs/Web/API/FileReader/readAsText)
 
 开始读取指定的[`Blob`](https://developer.mozilla.org/zh-CN/docs/Web/API/Blob)中的内容。一旦完成，`result`属性中将包含一个字符串以表示所读取的文件内容。
+
+#### 将图片文件转换为base64
+
+如上 fileReader 的 readAsObjectUrl 方法能够将文件转换为 URL 格式的 base64 字符串，而 URL.createObjectUrl 是转换为一个 blob url。
+
+* 那是不是意味着能够使用 fileReader 将字符转换为 base64 呢？
+
+#### 将字符串转换为base64
+
+* 如上
 
 ### 2. 使用 Response 对象
 
@@ -2543,7 +2662,7 @@ File 对象时特殊类型的 Blob，且可以用在任意 Blob 类型的 contex
 
 ## 特点
 
-**`ArrayBuffer`** 对象用来表示==通用的、固定长度==的==原始二进制数据==缓冲区。
+**`ArrayBuffer`** 对象用来表示==通用的、固定长度==的==原始二进制数据==缓冲区，也就是初始化了一段区域，那么就需要传入该区域的长度。
 
 * 也就是一开始实例化就需要固定长度
 * 原始的二进制数据缓存区
@@ -2556,13 +2675,13 @@ File 对象时特殊类型的 Blob，且可以用在任意 Blob 类型的 contex
 
 ==一定要注意：每一项都是一个字节，位数是固定的，不会因为存储的字符需要多个字节表示就存在一项存储多个字节的情况！！！==
 
-### 不能直接操作
+### ==不能直接操作==
 
 > 你不能直接操作 `ArrayBuffer` 中的内容；而是要通过[类型化数组对象](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypedArray)或 [`DataView`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/DataView) 对象来操作，它们会将缓冲区中的数据表示为特定的格式，并通过这些格式来读写缓冲区的内容。
 
 * arraybuffer 是一个原始数据类型的缓存区，不能直接操作。需要通过类型化数组对象和 DataView 对象来操作。
 
-### 构造函数
+### ==构造函数==
 
 * 需要传入长度，在实例化的时候固定长度
 
@@ -2570,7 +2689,7 @@ File 对象时特殊类型的 Blob，且可以用在任意 Blob 类型的 contex
 
 * ArrayBuffer.isView() 能够获取参数是不是一个视图
 
-## TypedArray——JavaScript类型化数组
+## TypedArray——JavaScript类型化数组——把数组类型化了
 
 > 一个 ***TypedArray\*** 对象描述了底层[二进制数据缓冲区](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer)的类数组视图。没有称为 `TypedArray` 的全局属性，也没有直接可用的 `TypedArray` 构造函数。
 
@@ -2584,6 +2703,11 @@ File 对象时特殊类型的 Blob，且可以用在任意 Blob 类型的 contex
 
 * 类型化数组需要新开辟一个内存空间，然后再进行读取和写入
 
+### 理解一下
+
+* ArrayBuffer 本身是创建了一段内存区域
+* 如果想对其进行读写，需要再创建一个类型化的数组
+
 ### 为什么出现
 
 背景：
@@ -2591,11 +2715,12 @@ File 对象时特殊类型的 Blob，且可以用在任意 Blob 类型的 contex
 > [`Array`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Array) 存储的对象能动态增多和减少，并且可以存储任何 JavaScript 值。JavaScript 引擎会做一些内部优化，以便对数组的操作可以很快。然而，随着 Web 应用程序变得越来越强大，尤其一些新增加的功能例如：音频视频编辑、访问 WebSockets 的原始数据等，很明显有些时候如果使用 JavaScript 代码可以快速方便地通过类型化数组来操作原始的二进制数据将会非常有帮助。JavaScript 类型化数组中的每一个元素都是原始二进制值，而二进制值采用多种支持的格式之一（从 8 位整数到 64 位浮点数）。
 
 * 随着web技术的发展，程序变得强大，需要访问一些原始的二进制数据（音视频、websocket的socket buffer），所以出现了类型化数组
+* 二进制编码为可操作字符，然后再解码回去，很消耗性能
 
 ### 不是普通的数组
 
 * 使用 Array.isArray 返回false
-* 不是所有的方法都能使用，比如扩展数组长度的方法。pop push 等
+* 不是所有的方法都能使用，比如扩展数组长度的方法。pop push 等，内存不可动态扩展。
 
 ### 抽象的对象
 
@@ -2624,6 +2749,8 @@ File 对象时特殊类型的 Blob，且可以用在任意 Blob 类型的 contex
 ```typescript
 Uint8Array.from({length:2})
 ```
+
+* 没有像普通数组那种字面量实例方法
 
 ### 缓冲和视图：类型数组的架构
 
@@ -2735,6 +2862,8 @@ Float64Array(); // 对应64位
 
 注意：==静态方法是除了构造函数外，另一种创建类型化数组实例对象的方式。==
 
+==和普通的数组一样，有这三种方式进行实例的创建，除了没有字面量表示方法。==
+
 ### 实例方法
 
 * buffer
@@ -2743,7 +2872,9 @@ Float64Array(); // 对应64位
 
 ### 怎么样理解 8 16 32 呢？
 
-他们都是位数和进制没有啥关系！！！
+==说白了就是没一项的容量不一样，用数字表示==
+
+他们都是位数和进制没有啥关系！！！在使用的时候，每一项都是10进制，如果要进行二进制计算，需要转换为二进制。
 
 * 他们表示数组每一个元素的字节长度。比如说一个长度为2的arrayBuffer是不能赋值给 `Uint32Array` 的，因为32位的数组每一项至少存4个字节，长度为2的arrayBuffer字节不够
 
@@ -2766,6 +2897,10 @@ Float64Array(); // 对应64位
 ```typescript
 new Uint8Array(view32.buffer)
 ```
+
+* 转换的计算规则：把对应的二进制进行合并
+
+  比如：Int8Array -> [127, 127, 0, 0] 转换为 16 位的 -> [32639, 0]，前两位二进制合并为8位加8位：`0111111101111111` 转换为10进制就是 32639。
 
 ### 同一个数据不通的视图
 
@@ -3042,7 +3177,10 @@ https://juejin.cn/post/6867878663115767822#heading-4
 
 是一种编码规范，有自己的编码集，会把目标编码成正常的asc2码返回内的编码（a-z,A-Z）等。不会出现平台兼容不足。（比如在html中<>是有语义的）
 
+* 一共有64个字符，加上 = 补齐末尾的符号，一共65个
+
 * 是一个二进制变成可打印字符的方案
+* 每一个字符之间的分割由原编码考虑，base64 不管，只是够 6 个bit就编码
 
 ## 为什么要编码
 
@@ -3123,6 +3261,14 @@ ClipboardEvent.clipboradData
 * 使用 clipboard api 进行复制粘贴操作：
 
   参考：https://www.zhihu.com/search?type=content&q=ClipboardItem
+
+
+
+# 浏览器事件
+
+## stopImmediatePropagation
+
+[`Event`](https://developer.mozilla.org/zh-CN/docs/Web/API/Event) 接口的 **`stopImmediatePropagation()`** 方法阻止监听同一事件的其他事件监听器被调用。
 
 
 
@@ -3591,7 +3737,15 @@ window.addEventListener('popstate', function(event) {
 
 
 
+## JavaScript中的数字
+
+### 0.1 + 0.2 != 0.3 和 IEEE-754 标准
+
+https://juejin.cn/post/6940405970954616839
+
 ## 位操作符
+
+https://juejin.cn/post/6942291040044843038
 
 ### 按位非（~）
 
@@ -3802,6 +3956,8 @@ str.match(/test\/str\/(.+)\/index/)
 
 #### replace 方法
 
+不会改变原值的方法。
+
 * 奇淫技巧todo
 
 ```tsx
@@ -3809,7 +3965,7 @@ str.match(/test\/str\/(.+)\/index/)
 // 188-8888-8888，一个括号匹配一个，同上
 ```
 
-
+使用 $1 这种方式，相当于是匹配，直接返回 pattern 匹配的字符串，而不是替换，不会改变原值。
 
 #### 转义符号
 
@@ -3872,6 +4028,20 @@ str.match(/test\/str\/(.+)\/index/)
 * JavaScript 是词法作用域，与之对立的是动态作用域，问题来源：https://github.com/MuYunyun/blog/issues/2
 
   todo了解
+
+
+
+## js 表达式和运算符
+
+### 加法
+
+* 如果有一方是字符串，另一方则会被转换为字符串，并且它们连接起来
+* 如果双方都是 [BigInt](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/BigInt)，则执行 BigInt 加法。如果一方是 BigInt 而另一方不是，会抛出 [`TypeError`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/TypeError)。
+* 否则，双方都会被[转换为数字](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Number#number_强制转换)，执行数字加法。
+
+### 转换为数字
+
+相当于直接调用 `Number()`
 
 
 
@@ -4133,6 +4303,35 @@ todo 单独一章去学习
   * 全局只能执行一次，没有暴露全局属性，不能再调用第二次。作为一个全局注入的场景非常有用。
 
   例子：typescript 在运行时注入的 `reflect-metadata`
+
+
+
+## 复制图片上传的服务器处理&复制图片到粘贴板
+
+https://www.zhangxinxu.com/wordpress/2023/09/js-copy-image-clipboard/
+
+* 主要难点是浏览器不支持复制 JPG 图片到粘贴板
+  * 可以通过 canvas 进行复制
+  * 使用 fileReader 转换为 base64 图片
+* 构造 clipboardItem 对象
+
+### canvas 复制图片
+
+```typescript
+/**
+ * 主要是canvas绘制图片
+ */
+declare let img: HTMLImageElement
+const canvas = document.createElement('canvas')
+canvas.width = 100
+canvas.height = 100
+const context = canvas.getContext('2d')!
+context.drawImage(img, 0, 0, 100, 200)
+// 把canvas读取为 blob
+canvas.toBlob(blob => {
+  // 当成 Blob 对象进行处理
+})
+```
 
 
 

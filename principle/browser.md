@@ -251,7 +251,7 @@ element.onclick = function() {
 
 事件==冒泡和捕捉是两种机制==，主要描述当在一个元素上有两个相同类型的事件处理器被激活会发生什么。
 
-* 说白了就是两种不同的机制。
+* 说白了就是两种不同的机制，也就是提供了一种能力，让用户去进行哪个阶段触发这个事件。
 
 当一个事件发生在具有父元素的元素上(例如，在我们的例子中是`<video>`元素)时，现代浏览器运行两个不同的阶段 - 捕获阶段和冒泡阶段。 在捕获阶段：
 
@@ -268,6 +268,10 @@ element.onclick = function() {
 ==在现代浏览器中，默认情况下，所有事件处理程序都在冒泡阶段进行注册。==
 
 
+
+### stopImmediatePropagation
+
+[`Event`](https://developer.mozilla.org/zh-CN/docs/Web/API/Event) 接口的 **`stopImmediatePropagation()`** 方法阻止监听同一事件的其他事件监听器被调用。
 
 ### ==preventDefault——重要==
 
@@ -1077,7 +1081,7 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/BroadcastChannel
 
 
 
-## inserAdjacentHTML
+## inserAdjacentHTML —— 增
 
 > **`insertAdjacentHTML()`** 方法将指定的文本解析为 [`Element`](https://developer.mozilla.org/zh-CN/docs/Web/API/Element) 元素，并将结果节点插入到 DOM 树中的指定位置。它不会重新解析它正在使用的元素，因此它不会破坏元素内的现有元素。这避免了额外的序列化步骤，使其比直接使用 innerHTML 操作更快。
 
@@ -1095,6 +1099,30 @@ https://developer.mozilla.org/zh-CN/docs/Web/API/BroadcastChannel
 第二个参数：
 
 html 字符串，能够直接解析
+
+## remove —— 删
+
+
+
+## 改
+
+* innerHtml
+
+* replaceWith
+
+* replaceChild
+
+  这个能修改指定的 child
+
+* replaceChildren 替换所有的节点
+
+* insertAdjacntHtml
+
+  这个后面的参数能跟一个 html 字符串，不需要我们自己创建 node
+
+## 查
+
+* querySelector
 
 # DOM
 
@@ -1145,6 +1173,48 @@ Web components 的一个重要属性是封装——可以将标记结构、样�
 * shadow 内部能够获取外部的 dom
 
 ## webComponent
+
+
+
+## Children 和 childNodes
+
+* 两个属性都能作为遍历子节点的入口，区别就是 childNodes 能够获取到 文本节点、注释节点和 CDATA 节点 节点，children 属性会放弃 text 节点。
+  * 在一些提取句子的场景，需要使用到 childNodes 去对节点进行操作
+* children 返回的是一个 htmlCollection 对象
+* childNodes 返回的是一个 Node 对象
+
+### nodeValue
+
+返回内容
+
+* 对于文档节点：返回 null
+* 对于文本节点、注释节点和 CDATA 节点，`nodeValue` 返回该节点的文本内容。
+
+### nodeType
+
+这个属性是 Node 节点返回节点类型的属性，能够判断节点类型，而不是直接使用 tagName 属性。
+
+* 因为有的节点类型是没有 tagName 的，比如 text 节点就没有 tagName 或者 nodeName。
+
+
+
+## cloneNode
+
+能够很方便的堆 Node type 的节点进行克隆，并返回克隆后的节点。
+
+## 解析 HTML
+
+方法1：
+
+* 创建一个 div 元素
+* innerHtml设置为改html字符串
+
+方法2：使用 webApi DOMParser 构造函数，不是很方便，推荐使用上一种方式
+
+```typescript
+const parser = new DOMParser()
+parser.parseFromString('<div>222</div>', 'text/html')
+```
 
 
 

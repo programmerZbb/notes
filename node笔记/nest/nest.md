@@ -1715,6 +1715,30 @@ export class CreateObj2 {
 }
 ```
 
+* 验证数组
+
+```typescript
+export class AddDto {
+  // @IsNotEmpty()
+  // @IsNumberString()
+  // uid: number;
+
+  // 验证数组，主要是组合验证
+  // @IsArray()
+  // 验证数字数组，只能用这一种方式
+  @IsNotEmpty()
+  // 加上这个就表示数组 each: true
+  @IsNumber({ allowNaN: false, allowInfinity: false }, { each: true })
+  // 如上表示数组，这个要求必须有一个元素
+  @ArrayMinSize(1)
+  // @Type(() => Number)
+  // @ValidateNested({ each: true })
+  permissionId: Array<number>;
+}
+```
+
+* 最次也是使用自定义验证的方式进行验证。
+
 
 
 # 守卫（guard）
@@ -1822,9 +1846,31 @@ export interface ExecutionContext extends ArgumentsHost {
 
   使用 app.useGlobalGuards()。每个控制器和每个路由处理程序都会应用。
 
+  也可以使用 `APP_GUARD` 去实现同样的能力
+  
   > 对于混合应用程序，`useGlobalGuards()` 方法不会为网关和微服务设置守卫。对于“标准”(非混合)微服务应用程序，`useGlobalGuards()`在全局安装守卫。
 
 在实际的项目开发中，一般都是全局的鉴权守卫器！
+
+### 绑定一个需要引用其他service的guard
+
+一般场景下 guard 需要引用其他的service（比如说rpc服务）进行验证，因此需要注册一个全局的guard，并且能够使用其他服务，可以使用如下方式
+
+参考：https://stackoverflow.com/questions/52862644/inject-service-into-guard-in-nest-js
+
+```typescript
+@Module({
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtGuard,
+    },
+  ],
+})
+```
+
+* 这样 jwtGuard 就是一个全局的守卫了，注意 jwtGuard 依赖的service需要是一个全局的 module
 
 ## 反射器——在 guard 和 interceptor 中都适用
 
@@ -2540,6 +2586,16 @@ import { LoggerService, LogLevel } from '@nestjs/common';
 ## logger 依赖注入
 
 * todo 有需要参考： https://juejin.cn/book/7226988578700525605/section/7235205849751224380
+
+## winston
+
+服务端需要通过日志来排查问题，需要搜索、分析日志等能力。
+
+### 分级
+
+而且打印的日志需要分级别，比如有的是错误的日志，有的只是普通日志，需要能够过滤不同级别的日志。
+
+此外，打印的日志需要带上时间戳，所在的代码位置等信息。
 
 
 
@@ -3872,7 +3928,11 @@ $ npm i etcd3
 
 * 代码参考：etcd3.ts 
 
+### 负载均衡相关
 
+阅读：https://developer.aliyun.com/article/939559
+
+> *etcd并没有一个好的负载均衡策略，需要自己实现。后期可能需要使用其他的发现注册服务，比如Eureka等*
 
 # 消息队列
 
@@ -3889,6 +3949,12 @@ $ npm i etcd3
 ## 微服务启动
 
 参考：https://juejin.cn/post/7207637337571901495?searchId=202307160252443902ADA91576F12AFD7E
+
+### 安装
+
+```bash
+$ npm i @nestjs/microservices
+```
 
 启动微服务
 
@@ -4054,7 +4120,44 @@ nest项目：
 $ npx grpc_tools_node_protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --ts_proto_out=./src/gen-code --ts_proto_opt=nestJs=true --proto_path=./src/micro-services/grpc grpc.proto
 ```
 
+### grpc 异常处理
+
+grpc 在nest中会使用 rxjs 来进行处理，因此它的异常处理需要结合rxjs进行处理，参考 `blog-backend/src/modules/oauth/oauth.controller.ts`
+
+```typescript
+@Get('oauth')
+  public async testOauth(@Query('token') token: string) {
+    // rxjs失败处理，必须如下，要不然没法结束，参考：https://stackoverflow.com/questions/72152120/how-to-handle-rpcexception-in-nestjs
+    // 不能通过一般的try方式捕获这种错误
+    return this.oauthService.verifyToken(token).pipe(
+      catchError((error) => {
+        console.log(error, '--000');
+        // grpc 返回的错误格式，参考：https://blog.csdn.net/u012107512/article/details/80095625
+        /**
+         *  code: 4,
+            details: 'token失效！',
+         */
+        return throwError(() => new UnauthorizedException('token失效！'));
+      }),
+    );
+    // return this.oauthService.getHero();
+  }
+```
+
+Grpc 返回固定的异常格式，并且不能进行扩展（也就是异常filter进行扩展将会变得没用），如果需要进行异常处理，可以对code进行扩展
+
+```typescript
+{
+  code: 4,
+  details: 'token失效！',
+}
+```
+
+
+
 # nest 依赖注入原理
+
+在 nest 中很少看到需要进行收到实例的代码，一般都是 IOC 容器自动实现。
 
 ## 元数据
 
@@ -4071,6 +4174,14 @@ $ npx grpc_tools_node_protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto --
   通过获取类型来实现依赖注入
 
 * 元数据 实现
+
+## DI
+
+IOC是 oop(面向对象设计)的一种设计模式，DI 只是 IOC 的一种实现方式
+
+## Reflect & Metadata 
+
+* 这个才是核心，不过目前使用的是 `reflect-metadata` 这个 polyfill，语言阶段的提案还在审理过程。
 
 
 
@@ -4102,6 +4213,40 @@ const microservices = app.connectMicroservice(jwtMicroService);
 await app.startAllMicroservices();
 app.listen(8082);
 ```
+
+
+
+# nest rxjs 使用总结
+
+## 错误处理
+
+rxjs 中的错误不能够使用使用 try catch 的方式进行捕获，需要使用 `catchError ` 操作符进行捕获
+
+```typescript
+import { of, map, catchError, from, throwError } from 'rxjs'
+
+of(1, 2, 3, 4, 5)
+  .pipe(
+    map(n => {
+      if (n === 4) {
+        throw new Error('test')
+      }
+      return n
+    }),
+    // Observable 的错误处理需要使用 catchError 来捕获
+    catchError(err => {
+      // 需要返回一个 observable，如果直接返回的普通类型，会使用from进行转换
+      // return of('test')
+      return throwError(() => ({
+        err,
+      }))
+      // return from('test')
+    }),
+  )
+  .subscribe(x => console.log(x))
+```
+
+* 因此在开发nest时，处理异常一定要注意异常的类型，如果是observable，要使用上述的方式。
 
 
 
@@ -4175,6 +4320,8 @@ token 是啥？
 
 ## 4. IOC 容器
 
+inversion of control
+
 * 在 nest 中 IOC容器指的是 providers 容器
 
 ## DTO？各种数据模型
@@ -4199,6 +4346,14 @@ token 是啥？
 > - POJO是DO/DTO/BO/VO的统称，禁止命名成xxxPOJO。
 
 常用：DO 对接数据库、VO 对接前端视图、DTO 对接接口（包括前端和其他服务）
+
+## 线程池
+
+* 线程池参数配置经验，主要看服务是偏计算还是偏IO服务的呢？
+  - CPU密集型：corePoolSize = CPU核数 + 1
+  - IO密集型：corePoolSize = CPU核数 * 2
+
+
 
 # 参考列表：
 

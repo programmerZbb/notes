@@ -1185,6 +1185,12 @@ https://juejin.cn/post/6844903537252515848#heading-3
 
 
 
+## MySQL 读写分离
+
+读写分离
+
+
+
 # node 操作 MySQL
 
 ## mysql2

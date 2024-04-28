@@ -1,5 +1,7 @@
 # 跨页面通信方案
 
+参考：https://juejin.cn/post/7009951023343091719
+
 ## 1. 同源页面间的通信
 
 ### 1.1 broadcast channel
@@ -50,3 +52,4 @@ window.addEventListener('storage', function (e) {
 * 一般建议使用 iframe 作为 bridge
   * iframe 间符合同源策略，可以使用localstorage或者broadcastChannel进行通信
   * 页面与 iframe 可以直接使用 postMessage 进行通信
+

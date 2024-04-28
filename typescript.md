@@ -3430,9 +3430,24 @@ declare function PromiseAll<T extends Array<any>>(promises: readonly [...T]): Pr
 }>
 ```
 
+#### 加可选&减可选 `+?` `-?`
 
+一般用在给转录一个类型的时候控制其中的可选类型的。
 
-
+```typescript
+type IType = {
+    name?: string;
+    age: number;
+}
+// 把所有的子元素变为可选的
+let o: {
+    [K in keyof IType]+?: string;
+}
+// 把所有子元素变为不可选的
+let o1: {
+    [K in keyof IType]-?: string;
+}
+```
 
 ### 类型逻辑
 
@@ -3891,6 +3906,12 @@ https://www.dengwb.com/typescript/configuration/file-options.html
 参考：https://segmentfault.com/a/1190000018249137
 
 [esModuleInterop做了什么](https://zhuanlan.zhihu.com/p/148081795)
+
+## 模块化相关
+
+在配置文件中如果配置了 `"module": "ESNext", `，那么ts-node 会默认按照 esm 的方式对文件进行解析，相应的 package.json 中的 module 也需要配置为 `"type": "module"`，要不然会运行报错！
+
+* tsconfig 中的 `"module": "ESNext", ` 和 package.json 中的 `type` 字段是相辅相成的，需要进行匹配！！！
 
 ## ts 编译选项
 

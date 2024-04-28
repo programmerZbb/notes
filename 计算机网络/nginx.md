@@ -693,6 +693,14 @@ location /api-test {
 
 * 只要在启动 Nginx 容器的时候让它完全代理网络就可以达到防火墙的目的
 
+## nginx 静态资源压缩
+
+参考：https://cloud.tencent.com/developer/article/1696134
+
+### 抽成公共配置
+
+参考：https://serverfault.com/questions/373578/how-can-i-configure-nginx-locations-to-share-common-configuration-options
+
 
 
 # Nginx 高可用
@@ -712,3 +720,11 @@ location /api-test {
 ## keepalived 
 
 https://zhuanlan.zhihu.com/p/566166393
+
+
+
+# nginx 问题记录
+
+## docker 重启Nginx端口被占用
+
+参考：https://stackoverflow.com/questions/42303401/nginx-will-not-start-address-already-in-use
