@@ -926,6 +926,8 @@ jQuery("#foo")
 
 ## 什么是声明文件
 
+声明文件的扩展参考：https://ts.xcatliu.com/basics/declaration-files.html#umd-%E5%BA%93
+
 通常我们会把声明语句放到一个单独的文件（`jQuery.d.ts`）中，这就是声明文件：
 
 ```ts
@@ -970,6 +972,111 @@ https://ts.xcatliu.com/basics/declaration-files.html
 - `interface` 和 `type` 声明全局类型
 
 ***缺失***
+
+### 声明 namespace
+
+`namespace` 被淘汰了，但是在声明文件中，`declare namespace` 还是比较常用的，它用来表示全局变量是一个对象，包含很多子属性。
+
+* 如果多个对象嵌套呢？
+
+```typescript
+// src/jQuery.d.ts
+
+declare namespace jQuery {
+    function ajax(url: string, settings?: any): void;
+    const version: number;
+    class Event {
+        blur(eventType: EventType): void
+    }
+    enum EventType {
+        CustomClick
+    }
+  // 又来一个嵌套对象
+  	namespace fn {
+        function extend(object: any): void;
+    }
+}
+```
+
+#### namespace 重要作用：防止类型命名冲突
+
+暴露在最外层的 `interface` 或 `type` 会作为全局类型作用于整个项目中，我们应该尽可能的减少全局变量或全局类型的数量。故最好将他们放到 `namespace` 下[13](https://github.com/xcatliu/typescript-tutorial/tree/master/examples/declaration-files/13-avoid-name-conflict)：
+
+```ts
+// src/jQuery.d.ts
+
+declare namespace jQuery {
+    interface AjaxSettings {
+        method?: 'GET' | 'POST'
+        data?: any;
+    }
+    function ajax(url: string, settings?: AjaxSettings): void;
+}
+```
+
+* 相当于是只针对于类型的模块，而不影响运行时
+
+### 直接扩展全局变量
+
+如果需要对已有的全局变量进行扩展，可以使用 interface 的扩展能力。
+
+* 比如对全局的 String 对象进行扩展
+
+```typescript
+interface String {
+    prependHello(): string;
+}
+
+'foo'.prependHello();
+```
+
+#### interface 的扩展能力
+
+如果对一个存在的类型再进行 interface 扩展，会把两个类型进行合并，而不是重叠。
+
+### 在 npm 包或 UMD 库中扩展全局变量
+
+使用 `declare global` 可以在 npm 包或者 UMD 库的声明文件中扩展全局变量的类型[25](https://github.com/xcatliu/typescript-tutorial/tree/master/examples/declaration-files/25-declare-global)：
+
+```ts
+// types/foo/index.d.ts
+
+declare global {
+    interface String {
+        prependHello(): string;
+    }
+}
+
+export {};
+```
+
+* 声明全局声明文件之后就能在任何模块中直接使用这些声明的类型
+
+### 插件模块
+
+使用 `declare module` 对插件模块进行类型扩展。
+
+```ts
+import * as moment from 'moment';
+
+declare module 'moment' {
+    export function foo(): moment.CalendarKey;
+}
+```
+
+也常见于对 scss 等没有模块化的工具进行类型定义。
+
+### reference —— 三斜线指令
+
+普通的全局变量定义类型的方式，不能使用 import 的方式引入其他的类型，否则会把这个类型模块变成npm 包或 UMD 库，需要使用 import 的方式使用，这是不合理的（比如 jQuery），因此提供了 reference 的方式，方便全局声明的类型文件引入其他类型定义文件的类型。
+
+```ts
+// types/jquery-plugin/index.d.ts
+
+/// <reference types="jquery" />
+
+declare function foo(options: JQuery.AjaxSettings): string;
+```
 
 ## 内置对象
 
@@ -1852,6 +1959,11 @@ console.log(Reflect.getMetadata("meta:class", MetaData));
 
 * 如上所述，就能拿到 construct 函数的参数类型（比如说是一个具体的类），就可以实现依赖注入了，把这个类的实例传给该组件。
 
+## 思考：普通的react项目一定要使用到装饰器和元数据吗？
+
+* 普通的 react 项目一般都是函数式编程的场景，并没有直接使用面向对象那种写法，所以根本用不到装饰器。因为装饰器和元数据这一套本身就是针对面向对象设计的，因此普通的react项目可能永远用不到这一套。
+* 在服务端开发的场景，比如 nest 项目中可能会遇到，毕竟面向对象开发是企业家开发范式，更健壮。而装饰器这种切片编程的思想能够很好的解决面向对象中一些公共方法提取的难度。
+
 
 
 # ts 的类型检查机制
@@ -2465,6 +2577,10 @@ export var Test;
 * 命名空间就是一个对象，可以在一个模块内多次使用；如果一个文件内就一个命名空间，建议直接导出模块。使用者会重新命名的。
 
 * 模块是对外的。
+
+### 思考：命名空间还有使用的价值吗？
+
+必须有，它是类型层面的聚合。比如说有两个相同命名的类型，为了避免类型冲突，可以加入命名空间。而如果为了使得类型独立，使用了对象获取其他js的方式去避免类型冲突，是完全没有必要的，这样会带来运行时的拖累。因此，如果单纯是类型的冲突，可以使用命名空间来独立类型。
 
 ## 6. 声明合并
 
@@ -3922,6 +4038,13 @@ https://www.dengwb.com/typescript/configuration/compiler-options.html
 ## ts 异常提示问题
 
 https://www.dengwb.com/typescript/configuration/vscode-compiler.html
+
+## ts 怎么引入某些类型文件？或者给当前js代码引入类型文件？
+
+> 假如仍然无法解析，那么可以检查下 `tsconfig.json` 中的 `files`、`include` 和 `exclude` 配置，确保其包含了 `jQuery.d.ts` 文件。
+
+* 主要设置三个字段：files、include、exclude
+* 还有一个 paths 字段，用来查找一些 alias 的方式引入本地代码的类型
 
 ## ts 不同文件命名冲突
 

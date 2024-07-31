@@ -1294,6 +1294,8 @@ docker compose 是docker的独立产品，需要安装 docker compose
 
 ### network_mode
 
+参考：https://www.cnblogs.com/liugp/p/16328904.html
+
 参考：https://www.runoob.com/docker/docker-compose.html
 
 设置网络模式。
@@ -1335,6 +1337,10 @@ network_mode: "container:[container name/id]"
    ```
 
 ### docker compose 桥接
+
+> 当Docker server启动时，会在主机上创建一个名为**docker0的虚拟网桥**，此主机上启动的Docker容器会连接到这个虚拟网桥上。**虚拟网桥的工作方式和物理交换机类似，这样主机上的所有容器就通过交换机连在了一个二层网络中**。
+
+* 主机上创建一个名为 docker0 的虚拟网桥
 
 就是把run时候的参数翻译到 yaml 文件中
 
@@ -1582,6 +1588,8 @@ sudo docker run --name nginx -v /home/lighthouse/info/nginx/nginx.conf:/etc/ngin
 * 包含https的配置，Nginx.conf 的配置
 
 * `--network host` 可以访问本地 IP，Nginx直接代理了本地网络了，不需要IP配置
+
+  也就是 docker 的 network 的 host 模式。
 
 ## docker network
 

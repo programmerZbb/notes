@@ -120,7 +120,7 @@ TCP连接的新建成本很高，因为需要客户端和服务器三次握手�
 - 引入内容协商机制，包括语言、编码、类型等。并允许客户端和服务器之间约定以最合适的内容进行交换。
 - 凭借 [`Host`](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Host) 标头，能够使不同域名配置在同一个 IP 地址的服务器上。
 
-## 持久链接
+## 持久链接 —— http 长连接
 
 1.1 版的最大变化，就是引入了持久连接（persistent connection），==即TCP连接默认不关闭==，可以被多个请求复用，不用声明`Connection: keep-alive`。（默认的）
 
@@ -275,7 +275,7 @@ HTTP/2 允许服务器未经请求，主动向客户端发送资源，这叫做�
 
 https://www.ruanyifeng.com/blog/2016/08/migrate-from-http-to-https.html
 
-上一篇文章我介绍了 [HTTP/2 协议](https://www.ruanyifeng.com/blog/2016/08/http.html) ，它只有在 HTTPS 环境才会生效。
+上一篇文章我介绍了 [HTTP/2 协议](https://www.ruanyifeng.com/blog/2016/08/http.html) ，它只有在 HTTPS 环境才会生效。（必须使用https才能使用http2）
 
 为了升级到 HTTP/2 协议，必须先启用 HTTPS。如果你不了解 HTTPS 协议（学名 TLS 协议），可以参考我以前的文章。
 
@@ -560,7 +560,7 @@ HTTP 响应状态代码指示特定 [HTTP](https://developer.mozilla.org/zh-cn/H
 
   就是网关层错误，网关的下一层错误
 
-  此错误响应表明服务器作为网关需要得到一个处理这个请求的响应，但是得到一个错误的响应。也就是真正的服务器出错了
+  502Bad Gateway是超文本传输协议 (HTTP) 规定的一种状态码，表示一台充当网关或代理的服务器和在和另一台服务器通信时，接收到了无效或错误的响应。这种错误表明服务器之间的通信存在问题，可能导致互联网服务中断。
 
 * 503
 
@@ -942,9 +942,9 @@ https://www.zhihu.com/question/28617156/answer/2059783991
 
 客户端向服务器发送支持的SSL/TSL的协议版本号，以及客户端支持的加密方法，和一个客户端生成的随机数
 
-服务器确认协议版本和加密方法，向客户端发送一个由服务器生成的随机数，以及数字证书
+服务器确认协议版本和加密方法，向客户端发送一个由服务器生成的随机数，以及数字证书（前两步仅仅是为了获取证书）
 
-客户端验证证书是否有效，有效则从证书中取出公钥，生成一个随机数，然后用公钥加密这个随机数，发给服务器
+客户端验证证书是否有效，有效则从证书中取出公钥，生成一个随机数，然后用公钥加密这个随机数，发给服务器（这一步是最重要的，用公钥加密随机数）
 
 服务器用私钥解密，获取发来的随机数
 
@@ -1153,6 +1153,12 @@ acme.sh --issue -d programmerzbb.icu -d www.programmerzbb.icu  --dns dns_dp --fo
 
 * http caching 标准中，有两种不同的类型缓存：私有缓存和共享缓存
 
+```js
+// 私有和公共缓存，能否被中间代理缓存
+Cache-Control: private
+Cache-Control: public
+```
+
 ### 私有缓存
 
 > 私有缓存是绑定到特定客户端的缓存——通常是浏览器缓存。由于存储的响应不与其他客户端共享，因此私有缓存可以存储该用户的个性化响应。
@@ -1173,6 +1179,13 @@ Cache-Control: private
 
 * 发起请求前浏览器会在缓存中查找该请求的结果以及缓存标识，发起请求前找缓存
 * 每次拿到返回请求结果都会将该结果和缓存标识存入到浏览器缓存中。请求后保存缓存
+
+## 浏览器三级缓存
+
+1. 先在内存中查找,如果有,直接加载。
+2. 如果内存中不存在,则在硬盘中查找,如果有直接加载。
+3. 如果硬盘中也没有,那么就进行网络请求。
+4. 请求获取的资源缓存到硬盘和内存。
 
 ## 缓存规则
 
@@ -1355,6 +1368,23 @@ Etg / If-none-match 的优先级高于 last-modified / If-modified-since。
 > 
 >
 > 分布式系统尽量关闭掉ETag(每台机器生成的ETag都会不一样）；
+
+## form memory cache vs from disk cache
+
+参考：https://stackoverflow.com/questions/44596937/chrome-memory-cache-vs-disk-cache
+
+> "Memory Cache" stores and loads resources to and from Memory (RAM). So this is much faster, but it is non-persistent. Content is available until you close the browser.
+
+* memory cache 有点快，不过就是不可持久化，关闭就失效了
+
+什么时候保存到 disk？什么时候保存到 memory 呢？
+
+* 很简单，在命中http强缓存的前提下：
+
+  * 如果第一次进入，会从 disk cache 中拿到缓存的数据
+  * 如果是第二次刷新，浏览器加速会从 memory 中拿到缓存数据
+
+  具体的 disk -> memory cache 的策略不太清楚，不过较大的文件有可能被缓存到 memory 中。
 
 ## 浏览器开启 disable cache或者强制请求
 
@@ -1761,6 +1791,42 @@ Csp 内容安全策略是一个额外的安全层，用于检测并削弱某些�
 ## 使用 CSP
 
 > 配置内容安全策略涉及到添加 [`Content-Security-Policy`](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Content-Security-Policy) HTTP 标头到一个页面，并配置相应的值，以控制用户代理（浏览器等）可以为该页面获取哪些资源。比如一个可以上传文件和显示图片页面，应该允许图片来自任何地方，但限制表单的 action 属性只可以赋值为指定的端点。一个经过恰当设计的内容安全策略应该可以有效的保护页面免受跨站脚本攻击。本文阐述如何恰当的构造这样的标头，并提供了一些例子。
+
+# http 长连接和 tcp 长连接
+
+参考：https://mp.weixin.qq.com/s/6Az2B2gUJYW7od4cLDqOxg
+
+http 长连接：
+
+* 由应用层实现，http 开启 `Connection: keep-alive` 即可，客户端多个http可以走同一个通道，不过存在队头堵塞情况，看起来没有保活机制。
+
+  怎么断开？（如何避免浪费资源）
+
+  web 服务软件一般都会提供 keepalive_timeout 参数，用来指定 HTTP 长连接的超时时间。
+
+  比如设置了 HTTP 长连接的超时时间是 60 秒，web 服务软件就会启动一个定时器，如果客户端在完后一个 HTTP 请求后，在 60 秒内都没有再发起新的请求，定时器的时间一到，就会触发回调函数来释放该连接。
+
+  * web 服务器设置了一个 keepalive-timeout 参数，如果到时之后没有收到请求，服务端调用回调函数来释放这个连接。
+
+tcp 的keepalive：
+
+* 由内核实现和保持，应用层一般不需要直接操作。
+
+保活机制：如果两端的 TCP 连接一直没有数据交互，达到了触发 TCP 保活机制的条件，那么内核里的 TCP 协议栈就会发送探测报文。
+
+- 如果对端程序是正常工作的。当 TCP 保活的探测报文发送给对端, 对端会正常响应，这样TCP 保活时间会被重置，等待下一个 TCP 保活时间的到来。
+
+- 如果对端主机崩溃，或对端由于其他原因导致报文不可达。当 TCP 保活的探测报文发送给对端后，石沉大海，没有响应，连续几次，达到保活探测次数后，TCP 会报告该 TCP 连接已经死亡。
+
+  探测包 + 重试次数，如果没响应，那就就会断开。
+
+  所以，TCP 保活机制可以在双方没有数据交互的情况，通过探测报文，来确定对方的 TCP 连接是否存活，这个工作是在内核完成的。
+
+  注意，应用程序若想使用 TCP 保活机制需要通过 socket 接口设置 SO_KEEPALIVE 选项才能够生效，如果没有设置，那么就无法使用 TCP 保活机制。
+
+TCP keepalive 是在没有主动断开 TCP 连接的情况下，用来保活的；
+
+http keepalive 是应用层用来服用TCP连接的。
 
 # HTTP认证
 

@@ -95,6 +95,8 @@ TTI 是一种非标准化的 web 性能进度指标。定义是最后一个长�
 
 TTI 并不是标准的web性能指标，是利用 [long task api](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceLongTaskTiming) 的信息而派生出来的。
 
+* 注：这个指标已经被 FID 取代了
+
 ## RAIL模型
 
 [使用 RAIL 模型衡量性能](https://web.dev/rail/#response)
@@ -146,3 +148,20 @@ Largest Contentful Paint，最大的内容（文字/图片）渲染的时间。
 
 * 主要衡量加载性能
 
+### FMP
+
+加一个FMP，主要用来衡量首页渲染性能的
+
+### 首屏时间计算
+
+FMP（First Meaningful Paint）是指主要内容出现在屏幕上所需的时间。
+
+参考：https://juejin.cn/post/6950930422763094029?from=search-suggest
+
+自己实现的一种通用的 FMP 测量工具，代码参考：calculate-FMP.ts
+
+有个和我类似的实现参考：https://chenng.cn/posts/MutationObserver%E8%AE%A1%E7%AE%97FMP/
+
+### 其他指标的计算
+
+Chrome 提供了一个库：`web-vitals` 能够用来测量对应的标准指标。

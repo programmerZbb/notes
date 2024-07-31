@@ -497,12 +497,13 @@ Signature 部分是对前两部分的签名，防止数据篡改。
 > HMACSHA256(
 >   base64UrlEncode(header) + "." +
 >   base64UrlEncode(payload),
->   secret)
+>   secret) === sign
 > ```
 
 算出签名以后，把 Header、Payload、Signature 三个部分拼成一个字符串，每个部分之间用"点"（`.`）分隔，就可以返回给用户。
 
 * 应该是一个对称加密，不是非对称加密的签名，要不然太浪费时间
+* 这样计算之后，任何一个部分都不能被修改了，如果header被修改，那么整个jwt对比将会失效。
 
 ## Base64URL
 

@@ -56,7 +56,7 @@ nest 实现了一个适配器（适配器模式），无论你用什么基础的
 真正对用的content-type其实只有三种：前端传递给后端的
 
 * application/json
-* application/x-www-for-urlencoded
+* application/x-www-form-urlencoded
 * multipart/form-data
 
 #### url param

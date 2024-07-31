@@ -341,6 +341,8 @@ https://theanarkh.github.io/understand-nodejs/chapter03-%E4%BA%8B%E4%BB%B6%E5%BE
 >
 > 有个游乐园中过山车的比喻很好：消息队列将你排在队列的后面（在所有其他人的后面），你不得不等待你的回合，而工作队列则是快速通道票，这样你就可以在完成上一次乘车后立即乘坐另一趟车。
 
+* 会在每一个阶段完成时检查执行，而浏览器会在一个宏任务快执行完成时检查执行。
+
 ## 事件循环简介
 
 * 参考： https://theanarkh.github.io/understand-nodejs/chapter03-%E4%BA%8B%E4%BB%B6%E5%BE%AA%E7%8E%AF/
@@ -4041,7 +4043,7 @@ todo
 >
 >   就是导入的模块名不能再赋值给其他值，防止 tree shaking 出错，保证这个值的唯一性。commonjs 就可以使用 let a = require('a') 这样修改这个值。
 
-### node中的两种模块
+### node中的两种模块——只针对node
 
 * node 中 .mjs 后缀名表示使用 es6 模块
 
@@ -4059,6 +4061,10 @@ todo
 
    设置为 module 则使用 es module 解析
 
+> 总结为一句话：`.mjs`文件总是以 ES6 模块加载，`.cjs`文件总是以 CommonJS 模块加载，`.js`文件的加载取决于`package.json`里面`type`字段的设置。
+>
+> 注意，ES6 模块与 CommonJS 模块尽量不要混用。`require`命令不能加载`.mjs`文件，会报错，只有`import`命令才可以加载`.mjs`文件。反过来，`.mjs`文件里面也不能使用`require`命令，必须使用`import`。
+
 ### 在 commonjs 中加载 es6 模块
 
 CommonJS 的`require()`命令不能加载 ES6 模块，会报错，只能使用`import()`这个方法加载。
@@ -4074,6 +4080,7 @@ CommonJS 的`require()`命令不能加载 ES6 模块，会报错，只能使用`
 `require()`不支持 ES6 模块的一个原因是，它是同步加载，而 ES6 模块内部可以使用顶层`await`命令，导致无法被同步加载。
 
 * 使用 async 函数，执行一个动态 import 方法
+* 一定要注意这个，esm 中顶层可以使用 async
 
 ### esm 中加载 commonjs 模块
 
@@ -4090,6 +4097,8 @@ import { method } from 'commonjs-package';
 * commonjs 是挂载到一个对象上的。
 
   > 这是因为 ES6 模块需要支持静态代码分析，而 CommonJS 模块的输出接口是`module.exports`，是一个对象，无法被静态分析，所以只能整体加载。
+  >
+  > 这也是esm tree shaking 的原理之一。
 
 加载单一的输出项，可以写成下面这样。
 
@@ -4883,6 +4892,39 @@ https://segmentfault.com/q/1010000019365121
 ## mac 安装
 
 https://redis.io/docs/getting-started/installation/install-redis-on-mac-os/
+
+
+
+# 缓存
+
+## 布隆过滤器
+
+* 一种判断是否在某个集合中的算法，可以准确判断不在集合中或者可能在集合中（hash碰撞了）
+
+用途：
+
+* 垃圾邮件
+* 爬虫
+* 防止缓存穿透
+  * 因为查询存在的id，才会缓存到Redis中，如果一直请求不存在的id，那么就会一直向数据库发送请求，这是不合理的。加一层布隆过滤器，能把不存在的id挡道外面。
+
+## 缓存雪崩
+
+* 电商网站会设置一些热点数据，可能会设置同一个过期时间，当触达过期时间的时候，开始了秒杀操作，那么可能造成所有的请求打到数据库上。
+
+避免：Redis 过期时间设置为随机的。
+
+个人感觉，先压测有一个基本预期，然后做好负载均衡，然后对请求进行限频（逻辑层面上）。
+
+## 缓存穿透
+
+* 访问了缓存中不存在的数据
+* 解决：加布隆过滤器
+
+## 缓存击穿
+
+* 某一个热点数据缓存失效导致，类似于缓存雪崩
+* 解决：设置热点永不过期
 
 
 

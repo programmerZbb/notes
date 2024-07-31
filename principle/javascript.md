@@ -636,6 +636,13 @@ window.onload = function(){
 
 ### [标记-清除算法](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Memory_Management#标记-清除算法)
 
+> 在 JavaScript 中，一般认为以下内存需要垃圾回收：
+>
+> - 对象不再被引用
+> - 对象不能从根（全局执行上下文）上访问到，即是不可达对象
+
+* ==这也是指导手动垃圾回收的方案==
+
 这个算法把“对象是否不再需要”简化定义为“对象是否可以获得”。
 
 > 对象是否不在需要 -> 引用计数，简化为对象是否可以获得。
@@ -1158,7 +1165,7 @@ interface Iterable {
 1. https://www.zhihu.com/question/23374078
 2. http://www.ruanyifeng.com/blog/2007/10/ascii_unicode_and_utf-8.html?20110621174302
 
-# JavaScript 上下文
+# JavaScript 上下文&静态作用域
 
 ## 1. 变量提升
 
@@ -1171,6 +1178,10 @@ interface Iterable {
 > 这个堆栈是“后进先出”的数据结构，最后产生的上下文环境首先执行完成，退出堆栈，然后再执行完成它下层的上下文，直至所有代码执行完成，堆栈清空
 >
 > ————https://es6.ruanyifeng.com/?search=%E4%B8%8A%E4%B8%8B%E6%96%87&x=0&y=0#docs/generator#Generator-%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87
+
+## 深入理解上下文
+
+https://www.cnblogs.com/TomXu/archive/2012/01/12/2308594.html
 
 
 
@@ -1454,6 +1465,18 @@ MessagePort还有两个方法：`close`和`onmessageerror`。
 
 
 
+### BroadcastChannel —— 广播通道
+
+参考：https://developer.mozilla.org/zh-CN/docs/Web/API/BroadcastChannel
+
+> **`BroadcastChannel`** 接口代理了一个命名频道，可以让指定 [origin](https://developer.mozilla.org/zh-CN/docs/Glossary/Origin) 下的任意 [browsing context](https://developer.mozilla.org/zh-CN/docs/Glossary/Browsing_context) 来订阅它。它允许同源的不同浏览器窗口，Tab 页，frame 或者 iframe 下的不同文档之间相互通信。通过触发一个 [`message`](https://developer.mozilla.org/zh-CN/docs/Web/API/BroadcastChannel/message_event) 事件，消息可以广播到所有监听了该频道的 `BroadcastChannel` 对象。
+
+* 提供了一个可向同域不同窗口进行广播的频道。
+
+使用：
+
+只需要两个tab使用实例 BroadcastChannel 时候传入同样的key即可实现广播。
+
 ## settimeout、 requestAnimationFrame、 requestIdleCallback、messageChannel
 
 * messageChennel 是宏任务！
@@ -1488,7 +1511,7 @@ MessagePort还有两个方法：`close`和`onmessageerror`。
 
 ## 微任务
 
-* mutationObserver、queueMicrotask
+* mutationObserver、queueMicrotask，就没有几个是微任务
 
 |                                                 | 浏览器 | nodejs |
 | ----------------------------------------------- | ------ | ------ |
@@ -1565,7 +1588,14 @@ setTimeout(() => {
 
 html内容加载完成之后才会执行，也就是 script 的加载和执行（延后执行），不会再阻塞页面的执行了。
 
+* 并行下载；延后执行；
+* async 并行下载，只要下载完立马执行；
+
 ### async
+
+* 立马请求里面的资源，请求完成之后立马执行。相当于执行变成异步的了，加载资源并不会阻塞渲染，但是脚本的执行可能会在渲染过程中，执行时刻不确定，执行顺序不确定。
+
+* 多个带有async属性的脚本标签之间的执行顺序是不确定的。因此，如果一个脚本依赖于另一个脚本加载完成后才能执行，就不能使用async属性。
 
 > 对于普通脚本，如果存在 `async` 属性，那么普通脚本会被并行请求，并尽快解析和执行。 对于[模块脚本](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Modules)，如果存在 `async` 属性，那么脚本及其所有依赖都会在延缓队列中执行，因此它们会被并行请求，并尽快解析和执行。该属性能够消除解析阻塞的 Javascript。解析阻塞的 Javascript 会导致浏览器必须加载并且执行脚本，之后才能继续解析。
 
@@ -1575,6 +1605,35 @@ https://developer.mozilla.org/zh-CN/docs/Games/Techniques/Async_scripts
 
 参考：https://juejin.cn/post/7236383034559905849
 
+==执行顺序的区别==：
+
+如果有多个`defer`脚本，会按照它们在页面出现的顺序加载，而多个`async`脚本是不能保证加载顺序的。
+
+### preload
+
+用于不阻塞加载资源，上面两个是不阻塞加载js
+
+* 不会阻塞html解析
+* 需要使用link标签来实现
+
+```html
+<link rel="preload" href="./index.css" as="style">
+```
+
+> 指定页面很快就需要的资源，这些资源是你希望在页面生命周期的早期就开始加载的，早于浏览器的主要渲染机制启动。这可以确保它们更早可用，并且不太可能阻塞页面的渲染，从而提高性能。
+
+### DOMContentLoaded
+
+它仅在脚本下载且执行结束后才会被触发，也就是HTML（包含其属性）加载完之后才会执行，它不会等待图片、子框架和异步脚本等其他内容完成加载。
+
+这个事件实在 HTML 解析完成之后触发的，所以会在defer加载完之后执行，async 的脚本加载则不会阻塞这个事件的触发。
+
+### Load 事件
+
+这个事件会在所有资源请求完成之后执行。
+
+**`load`** 事件在整个页面及所有依赖资源如样式表和图片都已完成加载时触发。
+
 ## css 阻塞页面渲染
 
 script 阻塞的是html解析，css阻塞页面渲染（没有样式）
@@ -1583,6 +1642,48 @@ script 阻塞的是html解析，css阻塞页面渲染（没有样式）
 
 * 看来页面上获取资源的标签都能阻塞HTML的解析
 * 那也就是说静态资源的获取都会阻塞HTML的解析
+
+代码参考：static-server.ts
+
+## 预解析 DNS
+
+DNS 解析过程：
+
+参考：https://juejin.cn/post/7065238621866950693
+
+- 浏览器缓存
+
+- 系统缓存，系统host，也就是我们常修改的host文件。
+
+- 路由器缓存
+
+- ISP(运营商)DNS缓存
+
+  四个缓存都没命中，那么开始递归查询。
+
+- 根域名服务器
+
+- 顶级域名服务器
+
+- 主域名服务器
+
+浏览器DNS预解析设置，在head中设置：
+
+```html
+<link rel="dns-prefetch" href="//baidu.com">
+```
+
+* rel 设置为 dns-prefetch，href接 需要解析的域名（可以是完整域名）
+* 需要注意的是，`dns-prefetch` 仅对跨域域上的 DNS 查找有效，因此请避免使用它来指向相同域。也就是说尽量用于设置非当前域名的场景。
+
+> 浏览器缓存——》系统hosts文件——》本地DNS解析器缓存——》本地域名服务器（本地配置区域资源、本地域名服务器缓存)——》根域名服务器——》主域名服务器——》下一级域名域名服务器 客户端——》本地域名服务器（递归查询) 本地域名服务器—》DNS服务器的交互查询是迭代查询
+>
+> 
+>
+> 作者：林小鹿
+> 链接：https://juejin.cn/post/7065238621866950693
+> 来源：稀土掘金
+> 著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
 
 ## 通过 performance 工具查看浏览器渲染流程
 
@@ -2125,7 +2226,53 @@ new boundFunc()
 
 * 在 es5 中 undefined 是可以修改的，因此建议和 `void(0)` 进行比较。
 
+> 在 JavaScript 中，null 和 undefined 是两种不同的数据类型，它们之间有一些区别：
+>
+> 
+>
+> \1. **undefined：** 在 JavaScript 中，undefined 表示一个变量已经声明但尚未赋值，或者对象属性不存在。当一个变量被声明但没有被赋值时，它的默认值就是 undefined。同样，当你尝试访问一个对象中不存在的属性时，返回的值也是 undefined。
+>
+> 
+>
+> \```javascript
+>
+> let x;
+>
+> console.log(x); // 输出: undefined
+>
+> 
+>
+> const obj = {};
+>
+> console.log(obj.foo); // 输出: undefined
+>
+> \```
+>
+> 
+>
+> \2. **null：** null 表示一个变量被赋予了空值。它是 JavaScript 中的一个特殊关键字，用来表示空值或者缺少值的情况。通常你可以将 null 赋值给一个变量，来表示这个变量的值为空。
+>
+> 
+>
+> \```javascript
+>
+> let y = null;
+>
+> console.log(y); // 输出: null
+>
+> \```
+>
+> 
+>
+> 总的来说，undefined 通常表示变量未被赋值或属性不存在，而 null 表示变量被赋予了空值。在实际开发中，你可能会经常看到这两个值的使用，了解它们的差别有助于更好地理解代码行为。
+>
+> 
+>
+> ——————————————
+>
+> 你正在使用GPT3.5
 
+* 一个是未赋值，另一个代表赋值了空值。
 
 # context
 
@@ -2271,6 +2418,10 @@ function fn(a) { arguments[0] = 2; console.log(a) }
       console.log(a)
   })()
   ```
+
+## 不影响全局对象
+
+* let 是不影响全局对象的，比如声明一个 `let aaa = 2` window上是没有挂载这个属性的。
 
 ### 总结
 
@@ -2998,7 +3149,7 @@ buffer[0] = 97
 
 初始化长度是字节！！！
 
-## DataView 
+## DataView —— 一种混合视图
 
 [`DataView`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/DataView) 是一种底层接口，它提供有可以操作缓冲区中任意数据的访问器（getter/setter）API
 
@@ -3011,6 +3162,14 @@ var view = new DataView(buffer, 0);
 view.setInt16(1, 42);
 view.getInt16(1); // 42
 ```
+
+### 为什么需要混合视图？
+
+有一些场景获取到的数据类型可能是不同的，比如数字+对象，那么每一段使用的读取类型可能不同，比如第一段使用 Int8Array，第二段可能是2个字节需要使用 Int16Array 来操作
+
+### dataview
+
+本身就是一种混合视图的操作方式，可以指定操作的偏移量
 
 ## ArrayBuffer 和字符串转换
 
@@ -3047,6 +3206,29 @@ String.fromCharCode.apply(null, new Uint8Array(res))
 
 * 但是只能识别二个字节的编码，比如汉字（三个字节）就无法准确识别。
 
+## SharedArrayBuffer & Atomics
+
+参考：https://es6.ruanyifeng.com/#docs/arraybuffer#SharedArrayBuffer
+
+### SharedArrayBuffer
+
+一种共享内存，用于在不同线程间达到共享内存的效果。
+
+* 主要是因为线程间使用 postMessage 的方式进行通信效率太低，涉及到对象的序列化和反序列化。而使用共享内存的方式进行传递效率更高。
+* 需要再不同的线程间进行 sharedArrayBuffer 地址的传递
+
+### Atomics
+
+* 和 sharedArrayBuffer 进行配合使用，对操作内存进行加锁，达到操作原子化的目的。
+
+#### 为什么需要 atomics
+
+涉及到 CPU 执行的调度，两个不互相依赖的命令，CPU在执行的时候可能会因为调度优化而优先执行某一条，导致执行顺序不是固定的（CPU交替执行）
+
+> 编译器和 CPU 为了优化，可能会改变这两个操作的执行顺序（因为它们之间互不依赖）
+
+
+
 ## 获取字符串内容字节大小
 
 * 所有能把字符串转换为二进制buffer的都能够获取内容大小
@@ -3072,6 +3254,39 @@ res4.byteLength
 * 也就是可以被结构化和反结构化的对象，可以用来在不同的线程中传递。
 
 https://developer.mozilla.org/zh-CN/docs/Web/API/Web_Workers_API/Transferable_objects
+
+# clipboard —— 操作粘贴板
+
+## 简单的操作
+
+```js
+navigator.clipboard.wirteText()
+```
+
+## 写入图片等任意数据
+
+使用的是 `clipboard.write` 方法，不过传入这个方法的对象都需要构造一个 `clipboardItem` 对象。
+
+```typescript
+async function writeClipImg() {
+  try {
+    const imgURL = "/myimage.png";
+    const data = await fetch(imgURL);
+    const blob = await data.blob();
+
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        [blob.type]: blob,
+      }),
+    ]);
+    console.log("Fetched image copied.");
+  } catch (err) {
+    console.error(err.name, err.message);
+  }
+}
+```
+
+
 
 # **[Streams API](https://developer.mozilla.org/zh-CN/docs/Web/API/Streams_API)**
 
@@ -3269,6 +3484,12 @@ ClipboardEvent.clipboradData
 ## stopImmediatePropagation
 
 [`Event`](https://developer.mozilla.org/zh-CN/docs/Web/API/Event) 接口的 **`stopImmediatePropagation()`** 方法阻止监听同一事件的其他事件监听器被调用。
+
+* 不仅能阻止同一类型事件执行，还能阻止冒泡
+
+## stopPropagation
+
+能够阻止事件流转方向上的传递，比如：如果在捕获阶段添加了这个方法，那么后续捕获阶段和冒泡阶段都不会被触发了。
 
 
 
@@ -3588,7 +3809,16 @@ while(true) {
 
 
 
+## esm vs commonjs
 
+### 循环引用的场景
+
+参考：https://es6.ruanyifeng.com/#docs/module-loader#ES6-%E6%A8%A1%E5%9D%97%E4%B8%8E-CommonJS-%E6%A8%A1%E5%9D%97%E7%9A%84%E5%B7%AE%E5%BC%82
+
+cjs 和 esm 循环引用的场景并不一定会报错
+
+* 引用会缓存，不会重复执行
+* 引用到某个变量，立马使用的场景（比如函数），需要看执行时改函数是否已经定义了。
 
 
 
@@ -3910,6 +4140,10 @@ https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_expression
 
 [`(?:x)`](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Guide/Regular_expressions#special-non-capturing-parentheses)
 
+#### \w 改不改加括号呢？
+
+`(\w+)` 和 `(\w)+` 捕获的字符不一样，左边捕获了所有的字符串，右边捕获了单个字符。
+
 ### [使用正则表达式和 Unicode 字符](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/RegExp#使用正则表达式和_unicode_字符) —— 扩展正则的能力
 
 有一个问题，`\w` 或 `\W` 只会匹配基本的 ASCII 字符；如 `a` 到 `z`、 `A` 到 `Z`、 `0` 到 `9` 及 `_`。如果想要匹配其他国家的文字，要使用 `\uhhhh`，`hhhh` 表示以十六进制表示的字符的 Unicode 值。
@@ -3984,7 +4218,42 @@ str.match(/test\/str\/(.+)\/index/)
   // 第一个 \ 是转义
   ```
 
-  
+### 其他高级知识
+
+注意：只能用match方式进行捕获，不能使用test去检测，如果需要使用test去检测建议使用多个正则。
+
+1. 反捕获，更像是一种前向断言
+
+   如果在一个大的集合里面，不想捕获某些几个集合，可以使用反捕获： `(?:a)` 不捕获a，后面的全量集一定要加括号！！！
+
+   比如，把abc排除出去，后面的全量集`\w` 一定要加括号
+
+   ```js
+   let reg = /(?:abc)(\w+)/
+   'abcwdad'.match(reg)
+   // ['abcwdad', 'wdad', index: 0, input: 'abcwdad', groups: undefined]
+   ```
+
+2. 正向先行断言——也是非贪婪的一种
+
+   用来指定在某个子集的前面，比如使用 `(?=abc)` 指定在在abc字符串的前面
+
+   如下：捕获wd之前的字符串
+
+   ```js
+   let reg = /(\w+)(?=wd)/
+   'abcwdad'.match(reg)
+   // ['abc', 'abc', index: 0, input: 'abcwdad', groups: undefined]
+   ```
+
+​	数字千分位：
+
+```js
+let num = '1234567890'
+let reg = /(\d)(?=(\d{3})+$)/g
+num.replace(reg, '$1,')
+// ?= 断言后面也可以跟着完整的匹配逻辑，上面跟着从末尾开始的多个 3*n 数字
+```
 
 ### js中的与或非
 
@@ -4042,6 +4311,32 @@ str.match(/test\/str\/(.+)\/index/)
 ### 转换为数字
 
 相当于直接调用 `Number()`
+
+
+
+# 错误处理
+
+## 错误捕获
+
+参考：https://juejin.cn/post/7085004641791901726#heading-4
+
+* 方式1：一个前置的脚本，监听 error 事件
+
+```js
+window.onerror = e => {
+  console.log(e, '---error1')
+}
+```
+
+* 方式2：捕获Promise错误
+
+```js
+window.onunhandledrejection
+```
+
+## 追踪获取函数执行堆栈信息
+
+使用 `console.trace` 可以获取到函数调用的堆栈信息。
 
 
 
@@ -4332,6 +4627,81 @@ canvas.toBlob(blob => {
   // 当成 Blob 对象进行处理
 })
 ```
+
+
+
+# canvas
+
+## Canvas绘制与Dom绘制的区别是什么
+
+参考：https://xie.infoq.cn/article/6c379f696c4204fd1bdb95d98
+
+1. 绘制的图片格式不同
+
+​	DOM 使用矢量图进行页面渲染的，每个元素都是一个独立的DOM元素，作为一个独立的DOM元素，css和JavaScript都能直接操作DOM，对其进行监听。
+
+而canvas本质上是一张位图，其构成最小单位是像素，其中图形不会单独创建DOM元素。（说白了就想一张图片一样，不能精确的操作）
+
+2. 前面提到，DOM 作为矢量图进行渲染，如果页面内容复杂时，系统就会创建特别多的 DOM 元素。浏览器在渲染时就需要对所有的 DOM 元素进行解析计算，庞大的计算量易导致页面卡顿或者渲染过度。
+
+   在渲染 Canvas 时，浏览器的每次重绘都是基于代码的，只需要在内存中构建出画布，在 JS 引擎中执行绘制逻辑，然后遍历整个画布中像素点的颜色直接输出到屏幕就可以了。也就是说，不管 canvas 中的元素有多少个，浏览器在渲染阶段也只需要处理一张画布，而不是像矢量图那样，需要对所有的 DOM 元素进行计算。这也就是 Canvas 的最大优势：渲染性能。
+
+   * canvas 是在js引擎中绘制，然后遍历整个画布中像素点颜色直接输出到屏幕，理论上性能更优优势。
+
+
+
+# v8 引擎
+
+## 执行过程参考
+
+https://juejin.cn/post/7047462821352701966#heading-6
+
+> 1. 首先，V8对JS源代码进行词法分析、语法分析**生成AST抽象语法树**
+>
+> - **词法分析**：生成tokens数组，tokens数组由多个对象组成，对象中包含了type与value等（如：{ type: 'keywords', value: 'const'}）
+> - **语法分析**：对其中的每个对象进行分析，根据其type分析成具体的语法，生成AST抽象语法树
+>
+> 1. 拿到抽象语法树后，由ignition库（V8中的库）将**抽象语法树转成字节码**（字节码可跨平台）
+>
+> - 之所以不直接转为机器指令是因为JS运行环境是无法确定的（比如有可能运行在Mac上的Chrome，也可能运行在Windows上的Chrome），**不同环境的CPU不同，对应的机器码也不同**
+>
+> 1. V8再将字节码转成对应平台的机器指令
+> 2. Ignition库会收集函数执行频率等信息，如果执行频率过多，那么就会**由TurboFan库直接变为机器码**，就不用先转为字节码，再变为机器指令了（优化）
+> 3. 一旦发现下次执行机器指令时操作不同了，那么会进行反向优化，将优化的机器码转成字节码
+
+* 和编译原理是相近的
+
+  > 编译的第一阶段是分析源代码。这包括词法分析（Lexical Analysis）和语法分析（Syntactic Analysis）。在词法分析中，源代码会被拆分成词法单元（Token），例如标识符、关键字、运算符等。然后在语法分析中，这些词法单元会被组织成语法结构，形成抽象语法树（Abstract Syntax Tree，AST）。
+
+​	语法和词法分析：源码 -> tokens(标识符、关键词、运算符) -> AST
+
+​	AST 通过 ignition 库转化为字节码
+
+​	字节码 -> 机器指令
+
+# HTML 解析原理
+
+参考：https://zhuanlan.zhihu.com/p/23796198
+
+和编译原理基本一致的，解析过程包含两个过程：符号化以及构建树。
+
+1. 解析算法
+
+> 不能使用正则解析技术，浏览器为html定制了专属的解析器。
+>
+> [HTML5](https://link.zhihu.com/?target=http%3A//lib.csdn.net/base/html5)规范中描述了这个解析[算法](https://link.zhihu.com/?target=http%3A//lib.csdn.net/base/datastructure)，算法包括两个阶段——符号化及构建树。
+>
+> 　　符号化是词法分析的过程，将输入解析为符号，html的符号包括开始标签、结束标签、属性名及属性值。
+>
+> 　　符号识别器识别出符号后，将其传递给树构建器，并读取下一个字符，以识别下一个符号，这样直到处理完所有输入。
+
+* 对应编译原理 parse tokens 的过程，符号化是词法分析的过程，将输入解析为符号，html的符号包括开始标签、结束标签、属性名及属性值。
+
+2. 符号识别算法
+
+> 算法输出html符号，该算法用状态机表示。每次读取输入流中的一个或多个字符，并根据这些字符转移到下一个状态，当前的符号状态及构建树状态共同影响结果，这意味着，读取同样的字符，可能因为当前状态的不同，得到不同的结果以进入下一个正确的状态。
+
+* 相当于是一个栈（实际上是数组），然后先入后出，完成构建树的构建。
 
 
 
